@@ -22,26 +22,27 @@ public class OrderService
         _tableService = tableService;
     }
 
-    public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto orderIntent)
+    public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto)
     {
 
-        var totalAmount = orderIntent.Items.Sum(oi => oi.Price * oi.Quantity);
+        var totalAmount = placeOrderDto.Items.Sum(oi => oi.Price * oi.Quantity);
 
         var intent = new OrderIntent
         {
-            CustomerId = orderIntent.CustomerId,
-            BranchId = orderIntent.BranchId,
+            CustomerId = placeOrderDto.CustomerId,
+            BranchId = placeOrderDto.BranchId,
             Status = PaymentStatus.INITIATED,
             Amount = totalAmount,
-            PaymentMethod = orderIntent.PaymentMethod,
-            OrderType = orderIntent.OrderType,
-            PaymentProvider = orderIntent.PaymentMethod == "cash" ? "cash" : "paymob",
-            OrderItems = [.. orderIntent.Items.Select(oi => new OrderItemDto
+            PaymentMethod = placeOrderDto.PaymentMethod,
+            OrderType = placeOrderDto.OrderType,
+            PaymentProvider = placeOrderDto.PaymentMethod == "cash" ? "cash" : "paymob",
+            OrderItems = [.. placeOrderDto.Items.Select(oi => new OrderItemDto
             {
                 ItemId = oi.ItemId,
                 Quantity = oi.Quantity,
                 Price = oi.Price,
             })],
+            TableNumber = placeOrderDto.TableNumber,
         };
 
         var redirectUrl = string.Empty;
@@ -163,7 +164,7 @@ public class OrderService
                 break;
 
             case OrderType.DineIn:
-                var reservation = await _tableService.ReserveTable(orderDto, orderIntent.Seats ?? 1);
+                var reservation = await _tableService.ReserveTable(orderDto, orderIntent.TableNumber ?? 1);
                 orderDto.TableNumber = reservation.TableNumber;
                 break;
                 

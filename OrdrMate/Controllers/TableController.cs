@@ -82,7 +82,7 @@ public class TableController : ControllerBase
     public async Task<IActionResult> GetMinWaitingTime(string branchId, int seats)
     {
         var minWaitingTime = await _tableManager.GetMinimumWaitingTime(branchId, seats);
-        return Ok(new { minWaitingTime });
+        return Ok(minWaitingTime);
     }
 
     [HttpGet("estimated_waiting_time/{reservationId}")]
@@ -93,4 +93,11 @@ public class TableController : ControllerBase
         return Ok(new { estimatedWaitingTime });
     }
 
+    [HttpPut("dequeue/{branchId}/{tableNumber}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<IActionResult> DequeueReservation(string branchId, int tableNumber)
+    {
+        await _tableManager.DequeueReservation(branchId, tableNumber);
+        return NoContent();
+    }
 }

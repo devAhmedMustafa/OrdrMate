@@ -18,13 +18,12 @@ public class TableQueueManager
 
         foreach (var table in branch.Tables)
         {
-
-            _tableQueues[table.TableNumber] = new ReservationQueue(table.Seats);
-            Console.WriteLine($"Initialized queue for table {table.TableNumber} with {table.Seats} seats.");
+            Console.WriteLine($"Adding table {table.TableNumber} with {table.Seats} seats to the queue manager.");
+            _tableQueues[table.TableNumber] = new ReservationQueue(table.Seats, table.TableNumber);
         }
     }
 
-    public int ReserveTable(int seats, TableReservation reservation)
+    public int ReserveLessReservedTable(int seats, TableReservation reservation)
     {
 
         int minReserved = int.MaxValue;
@@ -47,6 +46,19 @@ public class TableQueueManager
         return bestTable;
     }
 
+    public void ReserveTable(int tableNumber, TableReservation reservation)
+    {
+        if (_tableQueues.TryGetValue(tableNumber, out var queue))
+        {
+            queue.EnqueueReservation(reservation);
+        }
+        else
+        {
+            Console.WriteLine($"No reservation queue found for table {tableNumber}.");
+            throw new InvalidOperationException($"Table {tableNumber} does not exist in the reservation system.");
+        }
+    }
+
     public TableReservation? DequeueReservation(int tableNumber)
     {
         if (_tableQueues.TryGetValue(tableNumber, out var queue))
@@ -57,6 +69,19 @@ public class TableQueueManager
         {
             Console.WriteLine($"No reservation queue found for table {tableNumber}.");
             return null;
+        }
+    }
+
+    public int GetTableReservationsCount(int tableNumber)
+    {
+        if (_tableQueues.TryGetValue(tableNumber, out var queue))
+        {
+            return queue.Count;
+        }
+        else
+        {
+            Console.WriteLine($"No reservation queue found for table {tableNumber}.");
+            return 0;
         }
     }
 
@@ -99,6 +124,34 @@ public class TableQueueManager
             Console.WriteLine($"No reservation queue found for table {tableNumber}.");
             return null;
         }
+    }
+
+    public Queue<TableReservation> GetQueue(int tableNumber)
+    {
+        if (_tableQueues.TryGetValue(tableNumber, out var queue))
+        {
+            return queue.Queue;
+        }
+        else
+        {
+            Console.WriteLine($"No reservation queue found for table {tableNumber}.");
+            return new Queue<TableReservation>();
+        }
+    }
+
+    public List<ReservationQueue> GetAllTablesWithSeats(int seats)
+    {
+        var tablesWithSeats = new List<ReservationQueue>();
+
+        foreach (var kvp in _tableQueues)
+        {
+            if (kvp.Value.Seats >= seats)
+            {
+                tablesWithSeats.Add(kvp.Value);
+            }
+        }
+
+        return tablesWithSeats;
     }
 
 }

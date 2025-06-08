@@ -7,6 +7,8 @@ public class TableReservation
     public required string CustomerId { get; set; }
     public required string OrderId { get; set; }
     public required DateTime ReservationTime { get; set; } = DateTime.UtcNow;
+    public DateTime SeatedTime { get; set; } = DateTime.MinValue;
+    public DateTime EndTime { get; set; } = DateTime.MaxValue;
     public int TableNumber { get; set; }
     public string ReservationStatus { get; set; } = "Queued";
 

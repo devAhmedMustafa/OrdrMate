@@ -5,12 +5,16 @@ namespace OrdrMate.Managers;
 public class ReservationQueue
 {
     private readonly Queue<TableReservation> _queue;
+    public Queue<TableReservation> Queue => _queue;
     private int _seats;
+    private int _tableNumber;
+    public int TableNumber => _tableNumber;
     public int Seats => _seats;
-    public ReservationQueue(int seats)
+    public ReservationQueue(int seats, int tableNumber)
     {
         _queue = new Queue<TableReservation>();
         _seats = seats;
+        _tableNumber = tableNumber;
     }
 
     public void EnqueueReservation(TableReservation reservation)

@@ -85,6 +85,7 @@ builder.Services.AddScoped<TableManager>();
 
 // Third-party services
 builder.Services.AddHttpClient<PaymobService>();
+builder.Services.AddHttpClient<AiService>();
 builder.Services.AddScoped<S3Service>();
 
 

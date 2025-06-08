@@ -98,7 +98,7 @@ public class TableRepo : ITableRepo
     public async Task<IEnumerable<TableReservation>> GetTableReservationsByBranchId(string branchId)
     {
         return await _context.TableReservation
-            .Include(r => r.Branch)
+            .Include(r => r.Branch).OrderBy(r => r.ReservationTime)
             .Include(r => r.Customer)
             .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item)
             .Where(r => r.BranchId == branchId)
@@ -113,6 +113,15 @@ public class TableRepo : ITableRepo
 
         existingReservation.ReservationStatus = status;
 
+        if (status == "Seated")
+        {
+            existingReservation.SeatedTime = DateTime.UtcNow;
+        }
+        else if (status == "Left")
+        {
+            existingReservation.EndTime = DateTime.UtcNow;
+        }
+
         await _context.SaveChangesAsync();
         return existingReservation;
     }
@@ -123,7 +132,10 @@ public class TableRepo : ITableRepo
             .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item)
             .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
 
-        if (reservation == null) return null;
+        if (reservation == null)
+        {
+            throw new InvalidOperationException($"Reservation with id {reservationId} does not exist.");
+        }
 
         return reservation.Order;
     }

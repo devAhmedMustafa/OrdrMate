@@ -25,5 +25,6 @@ public class OrderIntent
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
     public User? Customer { get; set; }
     public Branch? Branch { get; set; }
+    public int? TableNumber { get; set; }
     public int? Seats { get; set; }
 }

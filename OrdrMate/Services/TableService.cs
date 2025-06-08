@@ -50,7 +50,7 @@ public class TableService
         return await _tableRepo.DeleteTable(branchId, tableNum);
     }
 
-    public async Task<TableReservationDto> ReserveTable(OrderDto order, int seats)
+    public async Task<TableReservationDto> ReserveTable(OrderDto order, int tableNumber)
     {
         var reservation = new TableReservation
         {
@@ -58,17 +58,16 @@ public class TableService
             CustomerId = order.CustomerId,
             OrderId = order.OrderId,
             ReservationTime = DateTime.UtcNow,
+            TableNumber= tableNumber,
         };
 
-        var tableNumber = _tableManager.ReserveTable(seats, reservation);
+        await _tableManager.ReserveTable(tableNumber, reservation);
 
         reservation.TableNumber = tableNumber;
 
-        var createdReservation = await _tableRepo.CreateTableReservation(reservation);
-
         return new TableReservationDto
         {
-            TableNumber = createdReservation!.TableNumber,
+            TableNumber = tableNumber,
         };
     }
 
