@@ -1,9 +1,11 @@
 using System.Diagnostics;
+using System.Text.Json;
 using OrdrMate.DTOs.Table;
 using OrdrMate.Events;
 using OrdrMate.Models;
 using OrdrMate.Repositories;
 using OrdrMate.Services;
+using OrdrMate.Sockets;
 
 namespace OrdrMate.Managers;
 
@@ -92,6 +94,23 @@ public class TableManager
             {
                 await BindNextReservation(reservation.BranchId, tableNumber);
             }
+
+            var branchSocket = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<BranchSocketHandler>();
+
+            var json = new
+            {
+                Type = "TableReserved",
+                Reservation = new TableReservationResponseDto
+                {
+                    TableNumber = createdReservation.TableNumber,
+                    CustomerName = createdReservation.Customer?.Username ?? "Unknown",
+                    ReservationDate = createdReservation.ReservationTime,
+                    ReservationStatus = createdReservation.ReservationStatus,
+                    OrderId = createdReservation.OrderId,
+                }
+            };
+
+            await branchSocket.SendToBranch(reservation.BranchId, JsonSerializer.Serialize(json));
 
             return tableNumber;
         }

@@ -15,4 +15,5 @@ public interface ITableRepo
     Task<IEnumerable<TableReservation>> GetTableReservationsByCustomerId(string customerId);
     Task<TableReservation?> GetTableReservationByOrderId(string orderId);
     Task<TableReservation?> GetTableReservationById(string reservationId);
+    Task<IEnumerable<TableReservation>> GetTableReservationsInQueue(string branchId, int tableNumber);
 }

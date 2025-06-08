@@ -13,7 +13,7 @@ public class OrderManager
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IBranchRepo _branchRepo;
-    private readonly BranchOrdersSocketHandler _branchOrdersSocketHandler;
+    private readonly BranchSocketHandler _branchOrdersSocketHandler;
     private readonly CustomerOrdersSocketHandler _customerOrdersSocketHandler;
     private readonly CloudMessaging _cloudMessaging;
     public static readonly Dictionary<string, RestaurantQueueManager> restaurantManagers = [];
@@ -21,7 +21,7 @@ public class OrderManager
 
     public OrderManager(
         IBranchRepo branchRepo,
-        BranchOrdersSocketHandler branchOrdersSocketHandler,
+        BranchSocketHandler branchOrdersSocketHandler,
         IServiceScopeFactory scopeFactory,
         CustomerOrdersSocketHandler customerOrdersSocketHandler,
         CloudMessaging cloudMessaging)
@@ -36,7 +36,6 @@ public class OrderManager
 
         Init();
 
-        BranchEvents.BranchSocketConnected += OnBranchSocketConnected;
         BranchEvents.BranchCreated += OnBranchCreated;
         BranchEvents.BranchDeleted += OnBranchDeleted;
         OrderEvents.OrderPlaced += OnOrderPlaced;
@@ -53,20 +52,6 @@ public class OrderManager
         {
             restaurantManagers[restaurant.Id] = new RestaurantQueueManager(restaurant);
         }
-    }
-
-    public async void OnBranchSocketConnected(string branchId)
-    {
-        var items = restaurantManagers[branchId].PeekAllItems();
-
-        var json = JsonSerializer.Serialize(new
-        {
-            Type = "InitialData",
-            items,
-            Orders = restaurantManagers[branchId].GetRestaurantInfo()
-        });
-
-        await _branchOrdersSocketHandler.SendToBranch(branchId, json);
     }
 
     private void OnBranchCreated(Branch branch)
@@ -217,7 +202,8 @@ public class OrderManager
         await _customerOrdersSocketHandler.NotifyOrderReady(orderId, order.CustomerId);
 
         var firebaseToken = await _cloudMessaging.GetTokenByUserId(order.CustomerId);
-        if (string.IsNullOrEmpty(firebaseToken)) {
+        if (string.IsNullOrEmpty(firebaseToken))
+        {
             Console.WriteLine($"No Firebase token found for customer with ID {order.CustomerId}.");
             return;
         }
@@ -229,4 +215,19 @@ public class OrderManager
         );
     }
 
+    public List<QueueItem> GetItemQueues(string branchId)
+    {
+        if (!restaurantManagers.TryGetValue(branchId, out var restaurantManager))
+        {
+            throw new KeyNotFoundException($"No restaurant manager found for branch {branchId}.");
+        }
+
+        var itemQueues = restaurantManager.GetItemQueues();
+        if (itemQueues == null)
+        {
+            throw new Exception($"No item queues found for branch {branchId}.");
+        }
+
+        return itemQueues;
+    }
 }

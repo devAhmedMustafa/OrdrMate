@@ -20,5 +20,6 @@ public interface IOrderRepo
     Task<Order?> SetOrderPaidStatus(string orderId, bool isPaid);
     Task<Order?> SetOrderStatus(string orderId, OrderStatus status);
     Task<IEnumerable<Order>> GetReadyOrdersByBranchId(string branchId);
+    Task<IEnumerable<Order>> GetAllOrdersByBranchId(string branchId);
     Task<IEnumerable<Order>> GetUnpaidOrdersByBranchId(string branchId);
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using OrdrMate.DTOs.Branch;
 using OrdrMate.Repositories;
 using OrdrMate.Services;
+using OrdrMate.Sockets;
 
 namespace OrdrMate.Controllers;
 
@@ -13,12 +14,19 @@ public class BranchController : ControllerBase
     private readonly IBranchRequestRepo _branchRequestRepo;
     private readonly IAuthorizationService _authorizationService;
     private readonly BranchService _branchService;
+    private readonly BranchSocketHandler _branchSocketHandler;
 
-    public BranchController(IBranchRequestRepo branchRequestRepo, IAuthorizationService authorizationService, BranchService branchService)
+    public BranchController(
+        IBranchRequestRepo branchRequestRepo,
+        IAuthorizationService authorizationService,
+        BranchService branchService,
+        BranchSocketHandler branchSocketHandler
+    )
     {
         _authorizationService = authorizationService;
         _branchRequestRepo = branchRequestRepo;
         _branchService = branchService;
+        _branchSocketHandler = branchSocketHandler;
     }
 
     [HttpGet]
@@ -178,6 +186,27 @@ public class BranchController : ControllerBase
         {
             return NotFound($"Branch with ID {branchId} not found: {ex.Message}");
         }
+    }
+
+    [HttpGet("live/{branchId}")]
+    public async Task OrdersSocket(string branchId)
+    {
+        if (_branchSocketHandler == null)
+        {
+            HttpContext.Response.StatusCode = 500;
+            await HttpContext.Response.WriteAsync("BranchOrdersSocketHandler is not initialized.");
+            return;
+        }
+        if (!HttpContext.WebSockets.IsWebSocketRequest)
+        {
+            HttpContext.Response.StatusCode = 400;
+            await HttpContext.Response.WriteAsync("WebSocket request expected.");
+            return;
+        }
+
+        var socket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+        Console.WriteLine($"WebSocket connection established for branch {branchId}.");
+        await _branchSocketHandler.AddSocketAsync(branchId, socket);
     }
 
 }

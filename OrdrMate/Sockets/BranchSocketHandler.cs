@@ -4,11 +4,11 @@ using OrdrMate.Events;
 
 namespace OrdrMate.Sockets;
 
-public class BranchOrdersSocketHandler
+public class BranchSocketHandler
 {
     private static readonly ConcurrentDictionary<string, List<WebSocket>> _branchSockets = new();
 
-    public BranchOrdersSocketHandler()
+    public BranchSocketHandler()
     {
     }
 

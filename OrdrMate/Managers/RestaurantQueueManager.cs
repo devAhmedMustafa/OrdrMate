@@ -260,4 +260,18 @@ public class RestaurantQueueManager
         return maxTime;
     }
  
+    public List<QueueItem> GetItemQueues()
+    {
+        var allItems = new List<QueueItem>();
+        foreach (var kitchen in _restaurantQueues.Values)
+        {
+            foreach (var queue in kitchen)
+            {
+                allItems.AddRange(queue.PeekAllItems());
+            }
+        }
+
+        return allItems;
+    }
+
 }

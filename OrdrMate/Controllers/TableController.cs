@@ -100,4 +100,16 @@ public class TableController : ControllerBase
         await _tableManager.DequeueReservation(branchId, tableNumber);
         return NoContent();
     }
+
+    [HttpGet("queue/{branchId}/{tableNumber}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<IActionResult> GetReservationQueue(string branchId, int tableNumber)
+    {
+        var queue = await _tableService.GetTableReservationsInQueue(branchId, tableNumber);
+        if (queue == null)
+        {
+            return NotFound(new { err = "No reservation queue found for this table." });
+        }
+        return Ok(queue);
+    }
 }

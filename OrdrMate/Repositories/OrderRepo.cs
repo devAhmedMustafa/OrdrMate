@@ -156,4 +156,14 @@ public class OrderRepo : IOrderRepo
             .Include(o => o.Customer)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Order>> GetAllOrdersByBranchId(string branchId)
+    {
+        return await _db.Order
+            .OrderByDescending(o => o.OrderDate)
+            .OrderByDescending(o => o.OrderTime)
+            .Where(o => o.BranchId == branchId)
+            .Include(o => o.Customer)
+            .ToListAsync();
+    }
 }

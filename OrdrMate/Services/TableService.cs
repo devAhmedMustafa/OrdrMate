@@ -58,7 +58,7 @@ public class TableService
             CustomerId = order.CustomerId,
             OrderId = order.OrderId,
             ReservationTime = DateTime.UtcNow,
-            TableNumber= tableNumber,
+            TableNumber = tableNumber,
         };
 
         await _tableManager.ReserveTable(tableNumber, reservation);
@@ -93,7 +93,7 @@ public class TableService
             Order = r.Order
         });
     }
-    
+
     public async Task<TableReservationDto?> GetTableReservationByOrderId(string orderId)
     {
         var reservation = await _tableRepo.GetTableReservationByOrderId(orderId);
@@ -103,5 +103,19 @@ public class TableService
         {
             TableNumber = reservation.TableNumber,
         };
+    }
+    
+    public async Task<IEnumerable<TableReservationResponseDto>> GetTableReservationsInQueue(string branchId, int tableNumber)
+    {
+        var reservations = await _tableRepo.GetTableReservationsInQueue(branchId, tableNumber);
+        return reservations.Select(r => new TableReservationResponseDto
+        {
+            TableNumber = r.TableNumber,
+            CustomerName = r.Customer?.Username ?? "Unknown",
+            ReservationDate = r.ReservationTime,
+            ReservationStatus = r.ReservationStatus,
+            OrderId = r.OrderId,
+            OrderStatus = r.Order?.Status.ToString() ?? "Unknown"
+        });
     }
 }

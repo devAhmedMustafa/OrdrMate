@@ -90,9 +90,9 @@ public class TableRepo : ITableRepo
             .FirstOrDefaultAsync(u => u.Id == reservation.CustomerId);
         if (customer == null) throw new InvalidOperationException($"Customer with id {reservation.CustomerId} does not exist.");
 
-        _context.TableReservation.Add(reservation);
+        var created = _context.TableReservation.Add(reservation);
         await _context.SaveChangesAsync();
-        return reservation;
+        return created.Entity;
     }
 
     public async Task<IEnumerable<TableReservation>> GetTableReservationsByBranchId(string branchId)
@@ -158,7 +158,7 @@ public class TableRepo : ITableRepo
             .Include(r => r.Order)
             .FirstOrDefaultAsync(r => r.OrderId == orderId);
     }
-    
+
     public async Task<TableReservation?> GetTableReservationById(string reservationId)
     {
         return await _context.TableReservation
@@ -166,6 +166,15 @@ public class TableRepo : ITableRepo
             .Include(r => r.Customer)
             .Include(r => r.Order)
             .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
+    }
+    
+    public async Task<IEnumerable<TableReservation>> GetTableReservationsInQueue(string branchId, int tableNumber)
+    {
+        return await _context.TableReservation.OrderBy(r => r.ReservationTime)
+            .Where(r => r.BranchId == branchId && r.TableNumber == tableNumber && r.ReservationStatus == "Queued" || r.ReservationStatus == "Seated")
+            .Include(r => r.Customer)
+            .Include(r => r.Order)
+            .ToListAsync();
     }
 
 }

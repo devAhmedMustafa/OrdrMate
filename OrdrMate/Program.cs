@@ -76,7 +76,7 @@ builder.Services.AddScoped<PaymentService, PaymentService>();
 builder.Services.AddScoped<CloudMessaging>();
 
 // Sockets
-builder.Services.AddScoped<BranchOrdersSocketHandler>();
+builder.Services.AddScoped<BranchSocketHandler>();
 builder.Services.AddScoped<CustomerOrdersSocketHandler>();
 
 // Managers

@@ -103,7 +103,7 @@ public class OrderService
             Console.WriteLine($"Order with ID {orderIntent.OrderId} already exists. Skipping order creation.");
             return null;
         }
-        
+
         var order = new Order
         {
             BranchId = orderIntent.BranchId,
@@ -167,7 +167,7 @@ public class OrderService
                 var reservation = await _tableService.ReserveTable(orderDto, orderIntent.TableNumber ?? 1);
                 orderDto.TableNumber = reservation.TableNumber;
                 break;
-                
+
             default:
                 throw new NotImplementedException($"Order type {orderIntent.OrderType} is not implemented yet.");
         }
@@ -394,6 +394,31 @@ public class OrderService
         });
     }
 
+    public async Task<IEnumerable<OrderDto>> GetOrdersByBranch(string branchId)
+    {
+        var orders = await _orderRepo.GetAllOrdersByBranchId(branchId);
+
+        if (orders == null || !orders.Any())
+        {
+            Console.WriteLine($"No orders found for branch with ID: {branchId}");
+            return [];
+        }
+
+        return orders.Select(o => new OrderDto
+        {
+            OrderId = o.Id,
+            RestaurantName = o.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            Customer = o.Customer?.Username ?? "Unknown Customer",
+            OrderType = o.OrderType.ToString(),
+            PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
+            OrderDate = o.OrderDate,
+            OrderStatus = o.Status.ToString(),
+            TotalAmount = o.TotalAmount,
+            BranchId = o.BranchId,
+            IsPaid = o.IsPaid,
+            CustomerId = o.CustomerId,
+        });
+    }
 }
 
 public class IntentResponse
