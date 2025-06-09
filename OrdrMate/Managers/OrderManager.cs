@@ -5,7 +5,6 @@ using System.Text.Json;
 using OrdrMate.Sockets;
 using OrdrMate.DTOs.Order;
 using OrdrMate.Services;
-using System.Diagnostics;
 
 namespace OrdrMate.Managers;
 
@@ -14,23 +13,18 @@ public class OrderManager
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IBranchRepo _branchRepo;
     private readonly BranchSocketHandler _branchOrdersSocketHandler;
-    private readonly CustomerOrdersSocketHandler _customerOrdersSocketHandler;
-    private readonly CloudMessaging _cloudMessaging;
     public static readonly Dictionary<string, RestaurantQueueManager> restaurantManagers = [];
     private static bool _initialized = false;
 
     public OrderManager(
         IBranchRepo branchRepo,
         BranchSocketHandler branchOrdersSocketHandler,
-        IServiceScopeFactory scopeFactory,
-        CustomerOrdersSocketHandler customerOrdersSocketHandler,
-        CloudMessaging cloudMessaging)
+        IServiceScopeFactory scopeFactory
+        )
     {
         _scopeFactory = scopeFactory;
         _branchRepo = branchRepo;
         _branchOrdersSocketHandler = branchOrdersSocketHandler;
-        _customerOrdersSocketHandler = customerOrdersSocketHandler;
-        _cloudMessaging = cloudMessaging;
 
         if (_initialized) return;
 
@@ -217,20 +211,29 @@ public class OrderManager
             OrderId = order.Id,
         });
 
-        await _customerOrdersSocketHandler.NotifyOrderReady(orderId, order.CustomerId);
-
-        var firebaseToken = await _cloudMessaging.GetTokenByUserId(order.CustomerId);
-        if (string.IsNullOrEmpty(firebaseToken))
+        try
         {
-            Console.WriteLine($"No Firebase token found for customer with ID {order.CustomerId}.");
-            return;
+            var cloudMessaging = scope.ServiceProvider.GetRequiredService<CloudMessaging>();
+            var firebaseToken = await cloudMessaging.GetTokenByUserId(order.CustomerId);
+            
+            if (string.IsNullOrEmpty(firebaseToken))
+            {
+                Console.WriteLine($"No Firebase token found for customer with ID {order.CustomerId}.");
+                return;
+            }
+            await cloudMessaging.SendNotificationAsync(
+                firebaseToken,
+                "Your order is ready!",
+                $"Order #{order.Id} is ready for pickup at {order.Branch?.Restaurant?.Name}."
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error sending notification for order {orderId}: {ex.Message}");
         }
 
-        await _cloudMessaging.SendNotificationAsync(
-            firebaseToken,
-            "Your order is ready!",
-            $"Order #{order.Id} is ready for pickup at {order.Branch?.Restaurant?.Name}."
-        );
+        await _branchOrdersSocketHandler.SendToBranch(branchId, json);
+
     }
 
     public List<QueueItem> GetItemQueues(string branchId)

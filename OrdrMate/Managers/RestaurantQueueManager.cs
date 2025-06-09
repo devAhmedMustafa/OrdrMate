@@ -25,7 +25,7 @@ public class RestaurantQueueManager
                 _restaurantQueues[kp.Kitchen.Name] = [];
                 for (int i = 0; i < kp.Units; i++)
                 {
-                    _restaurantQueues[kp.Kitchen.Name][i] = new OrderQueue();
+                    _restaurantQueues[kp.Kitchen.Name].Add(new OrderQueue());
                 }
             }
         }
@@ -65,7 +65,7 @@ public class RestaurantQueueManager
 
         for (int i = _restaurantQueues[kitchenName].Count; i < units; i++)
         {
-            _restaurantQueues[kitchenName][i] = new OrderQueue();
+            _restaurantQueues[kitchenName].Add(new OrderQueue());
         }
     }
 
