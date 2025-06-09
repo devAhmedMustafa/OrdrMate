@@ -2,6 +2,8 @@ using OrdrMate.DTOs.Kitchen;
 using OrdrMate.Repositories;
 
 namespace OrdrMate.Services;
+
+using OrdrMate.Events;
 using OrdrMate.Models;
 
 public class KitchenService
@@ -145,6 +147,8 @@ public class KitchenService
         var updatedKitchenPower = await _kitchenRepo.UpdateKitchenPower(branchId, kitchenId, kitchenPower);
 
         if (updatedKitchenPower == null) return null;
+
+        BranchEvents.OnKitchenUpdate(branchId, updatedKitchenPower.Kitchen!.Name, updatedKitchenPower.Units);
 
         return new KitchenPowerDto
         {

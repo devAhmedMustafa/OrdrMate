@@ -419,6 +419,85 @@ public class OrderService
             CustomerId = o.CustomerId,
         });
     }
+
+    public async Task<OrderInvoiceDto> PickOrder(string orderId)
+    {
+        var order = await _orderRepo.GetDetailedOrderById(orderId) ?? throw new KeyNotFoundException($"Order with id {orderId} not found.");
+
+        if (order.Status != OrderStatus.Queued)
+        {
+            throw new InvalidOperationException($"Order with id {orderId} is not in a valid state for picking.");
+        }
+
+        if (order.IsPaid == false)
+        {
+            throw new InvalidOperationException($"Order with id {orderId} is not paid yet.");
+        }
+
+        if (order.Status != OrderStatus.Ready)
+        {
+            throw new InvalidOperationException($"Order with id {orderId} is not ready for pickup.");
+        }
+
+        order = await _orderRepo.SetOrderStatus(orderId, OrderStatus.Delivered);
+
+        if (order == null) throw new KeyNotFoundException($"Order with id {orderId} not found after updating status.");
+
+        string orderNumber = "";
+
+        switch (order.OrderType)
+        {
+            case OrderType.Takeaway:
+                var takeaway = await _orderRepo.GetTakeawayById(orderId);
+                if (takeaway != null)
+                {
+                    orderNumber = takeaway.OrderNumber.ToString();
+                }
+                break;
+
+            case OrderType.DineIn:
+                var indoor = await _tableService.GetTableReservationByOrderId(orderId);
+                if (indoor != null)
+                {
+                    orderNumber = $"Table {indoor.TableNumber}" + $" ({indoor.ReservationTime})";
+                }
+                break;
+
+            default:
+                throw new NotImplementedException($"Order type {order.OrderType} is not implemented yet.");
+        }
+
+        return new OrderInvoiceDto
+        {
+            OrderId = order.Id,
+            OrderNumber = orderNumber ?? "N/A",
+            RestaurantName = order.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            CustomerName = order.Customer?.Username ?? "Unknown Customer",
+            OrderType = order.OrderType.ToString(),
+            PaymentMethod = order.Payment?.PaymentMethod ?? "Cash",
+            OrderDate = order.OrderDate,
+            TotalAmount = order.TotalAmount,
+            BranchAddress = order.Branch?.Address ?? "Unknown Address",
+            IsPaid = order.IsPaid,
+            Items = order.OrderItems?.Select(oi => new OrderItemDto
+            {
+                ItemId = oi.ItemId,
+                Item = new DTOs.Item.ItemDto
+                {
+                    Id = oi.Item?.Id ?? string.Empty,
+                    Name = oi.Item?.Name ?? "Unknown Item",
+                    Description = oi.Item?.Description ?? "No description available",
+                    Price = oi.Item?.Price ?? 0,
+                    Category = oi.Item?.CategoryName ?? "Uncategorized",
+                    PreparationTime = oi.Item?.PreperationTime ?? 0,
+                    KitchenName = oi.Item?.Kitchen?.Name ?? "Unknown Kitchen"
+                },
+                Quantity = oi.Quantity,
+                Price = oi.Price,
+            }).ToList() ?? []
+        };
+    }
+
 }
 
 public class IntentResponse

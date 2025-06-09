@@ -40,6 +40,7 @@ public class OrderManager
         BranchEvents.BranchDeleted += OnBranchDeleted;
         OrderEvents.OrderPlaced += OnOrderPlaced;
         OrderEvents.OrderReady += OnOrderReady;
+        BranchEvents.KitchenUpdate += OnKitchenUpdate;
 
         _initialized = true;
     }
@@ -148,6 +149,23 @@ public class OrderManager
         catch (Exception ex)
         {
             throw new Exception($"Error fetching order status for branch {branchId}: {ex.Message}", ex);
+        }
+    }
+
+    public void OnKitchenUpdate(string branchId, string kitchenName, int units)
+    {
+        try
+        {
+            if (!restaurantManagers.ContainsKey(branchId))
+            {
+                restaurantManagers[branchId] = new RestaurantQueueManager(_branchRepo.GetDetailedBranchById(branchId).Result);
+            }
+
+            restaurantManagers[branchId].UpdateKitchen(kitchenName, units);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error updating kitchen for branch {branchId}: {ex.Message}", ex);
         }
     }
 

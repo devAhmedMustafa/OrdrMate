@@ -107,6 +107,7 @@ public class TableManager
                     ReservationDate = createdReservation.ReservationTime,
                     ReservationStatus = createdReservation.ReservationStatus,
                     OrderId = createdReservation.OrderId,
+                    OrderStatus = "Queued",
                 }
             };
 

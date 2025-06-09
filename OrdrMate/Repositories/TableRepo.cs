@@ -171,7 +171,7 @@ public class TableRepo : ITableRepo
     public async Task<IEnumerable<TableReservation>> GetTableReservationsInQueue(string branchId, int tableNumber)
     {
         return await _context.TableReservation.OrderBy(r => r.ReservationTime)
-            .Where(r => r.BranchId == branchId && r.TableNumber == tableNumber && r.ReservationStatus == "Queued" || r.ReservationStatus == "Seated")
+            .Where(r => r.BranchId == branchId && r.TableNumber == tableNumber && (r.ReservationStatus == "Queued" || r.ReservationStatus == "Seated"))
             .Include(r => r.Customer)
             .Include(r => r.Order)
             .ToListAsync();

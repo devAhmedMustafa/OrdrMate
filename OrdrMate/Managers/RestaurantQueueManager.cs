@@ -10,7 +10,7 @@ public class RestaurantQueueManager
 {
     private readonly Branch _restaurant;
     private readonly HashSet<string> _orderIds = [];
-    private readonly Dictionary<string, OrderQueue[]> _restaurantQueues = [];
+    private readonly Dictionary<string, List<OrderQueue>> _restaurantQueues = [];
 
     public RestaurantQueueManager(Branch restaurant)
     {
@@ -22,7 +22,7 @@ public class RestaurantQueueManager
             {
                 if (kp.Kitchen == null) continue;
 
-                _restaurantQueues[kp.Kitchen.Name] = new OrderQueue[kp.Units];
+                _restaurantQueues[kp.Kitchen.Name] = [];
                 for (int i = 0; i < kp.Units; i++)
                 {
                     _restaurantQueues[kp.Kitchen.Name][i] = new OrderQueue();
@@ -56,6 +56,19 @@ public class RestaurantQueueManager
         }
     }
 
+    public void UpdateKitchen(string kitchenName, int units)
+    {
+        if (!_restaurantQueues.ContainsKey(kitchenName))
+        {
+            _restaurantQueues[kitchenName] = [];
+        }
+
+        for (int i = _restaurantQueues[kitchenName].Count; i < units; i++)
+        {
+            _restaurantQueues[kitchenName][i] = new OrderQueue();
+        }
+    }
+
     public void AddItemToQueue(string kitchen, QueueItem order)
     {
         var kitchenQueues = _restaurantQueues.GetValueOrDefault(kitchen);
@@ -64,7 +77,7 @@ public class RestaurantQueueManager
         var bestQueue = -1;
         var minLength = int.MaxValue;
 
-        for (int i = 0; i < kitchenQueues.Length; i++)
+        for (int i = 0; i < kitchenQueues.Count; i++)
         {
             var queue = kitchenQueues[i];
             if (queue.Count < minLength)
@@ -97,7 +110,7 @@ public class RestaurantQueueManager
 
     public KeyValuePair<string, int>[] GetAllKitchens()
     {
-        return [.. _restaurantQueues.Select(kv => new KeyValuePair<string, int>(kv.Key, kv.Value.Length))];
+        return [.. _restaurantQueues.Select(kv => new KeyValuePair<string, int>(kv.Key, kv.Value.Count))];
     }
 
     public List<QueueItem> PeekAllItems()

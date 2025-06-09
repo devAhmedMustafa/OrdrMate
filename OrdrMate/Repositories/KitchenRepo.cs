@@ -91,6 +91,7 @@ public class KitchenRepo(OrdrMateDbContext context) : IKitchenRepo
     public async Task<KitchenPower?> UpdateKitchenPower(string branchId, string kitchenId, KitchenPower kitchenPower)
     {
         var existingKitchenPower = await _db.KitchenPower
+            .Include(kp => kp.Kitchen)
             .FirstOrDefaultAsync(kp => kp.BranchId == branchId && kp.KitchenId == kitchenId);
         if (existingKitchenPower == null)
         {

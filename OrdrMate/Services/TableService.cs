@@ -102,6 +102,8 @@ public class TableService
         return new TableReservationDto
         {
             TableNumber = reservation.TableNumber,
+            Order = reservation.Order,
+            ReservationTime = reservation.ReservationTime
         };
     }
     

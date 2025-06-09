@@ -255,12 +255,38 @@ public class OrderController : ControllerBase
             {
                 return NotFound($"No item queues found for branch {branchId}.");
             }
-            
+
             return Ok(itemQueues);
         }
         catch (Exception ex)
         {
             return StatusCode(500, $"An error occurred while retrieving item queues: {ex.Message}");
+        }
+    }
+
+    [HttpPut("pick/{orderId}")]
+    [Authorize(Roles = "Customer")]
+    public async Task<ActionResult> PickOrder(string orderId)
+    {
+        try
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return Forbid("User ID not found in claims.");
+
+            var order = await _orderService.PickOrder(orderId);
+            
+            if (order == null)
+            {
+                return NotFound($"Order with ID {orderId} not found or cannot be picked.");
+            }
+
+            return Ok("Order picked successfully.");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while picking the order: {ex.Message}");
         }
     }
 
