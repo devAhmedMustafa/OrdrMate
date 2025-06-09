@@ -166,4 +166,11 @@ public class OrderRepo : IOrderRepo
             .Include(o => o.Customer)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Order>> GetPaidOrdersOfBranch(string branchId)
+    {
+        return await _db.Order
+            .Where(o => o.BranchId == branchId && o.IsPaid == true)
+            .ToListAsync();
+    }
 }

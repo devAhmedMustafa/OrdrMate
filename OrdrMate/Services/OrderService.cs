@@ -498,6 +498,32 @@ public class OrderService
         };
     }
 
+    public async Task<IEnumerable<OrderDto>> GetPaidOrders(string branchId)
+    {
+        var orders = await _orderRepo.GetPaidOrdersOfBranch(branchId);
+
+        if (orders == null || !orders.Any())
+        {
+            Console.WriteLine($"No paid orders found for branch with ID: {branchId}");
+            return [];
+        }
+
+        return orders.Select(o => new OrderDto
+        {
+            OrderId = o.Id,
+            RestaurantName = o.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            Customer = o.Customer?.Username ?? "Unknown Customer",
+            OrderType = o.OrderType.ToString(),
+            PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
+            OrderDate = o.OrderDate,
+            OrderStatus = o.Status.ToString(),
+            TotalAmount = o.TotalAmount,
+            BranchId = o.BranchId,
+            IsPaid = o.IsPaid,
+            CustomerId = o.CustomerId,
+        });
+    }
+    
 }
 
 public class IntentResponse

@@ -189,7 +189,7 @@ public class BranchController : ControllerBase
     }
 
     [HttpGet("live/{branchId}")]
-    public async Task OrdersSocket(string branchId)
+    public async Task Socket(string branchId)
     {
         if (_branchSocketHandler == null)
         {
@@ -209,4 +209,34 @@ public class BranchController : ControllerBase
         await _branchSocketHandler.AddSocketAsync(branchId, socket);
     }
 
+    [HttpGet("balance/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<BranchBalanceDto>> GetBranchBalance(string branchId)
+    {
+        try
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to access this branch balance.");
+            }
+
+            var balance = await _branchService.GetBranchBalance(branchId);
+            if (balance == null)
+            {
+                return NotFound($"Branch with ID {branchId} not found.");
+            }
+
+            return Ok(balance);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound($"Branch with ID {branchId} not found: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving branch balance: {ex.Message}");
+        }
+    }
 }
