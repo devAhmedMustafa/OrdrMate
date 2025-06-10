@@ -139,4 +139,26 @@ public class ItemController : ControllerBase
         }
     }
 
+    [HttpGet("branch/{branchId}")]
+    public async Task<ActionResult<IEnumerable<ItemDto>>> GetBranchItems(string branchId)
+    {
+        try
+        {
+            var items = await _service.GetAvailableItems(branchId);
+            if (items == null || !items.Any())
+            {
+                return NotFound($"No items found for branch with ID {branchId}.");
+            }
+            return Ok(items);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound($"Branch with ID {branchId} not found: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving branch items: {ex.Message}");
+        }
+    }
+
 }

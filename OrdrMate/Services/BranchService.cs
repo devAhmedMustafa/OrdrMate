@@ -7,6 +7,7 @@ using OrdrMate.Repositories;
 using OrdrMate.Utils;
 using OrdrMate.Events;
 using OrdrMate.Managers;
+using OrdrMate.DTOs.Item;
 
 public class BranchService(
     IBranchRepo branchRepo,
@@ -153,12 +154,13 @@ public class BranchService(
             .Sum(o => o.TotalAmount);
 
         var totalEarnings = paidOrders.Sum(o => o.TotalAmount);
-        
+
         return new BranchBalanceDto
         {
             TotalEarnings = totalEarnings,
             TodayEarnings = todayEarnings,
         };
     }
+    
 
 }

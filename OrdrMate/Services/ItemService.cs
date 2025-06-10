@@ -148,4 +148,21 @@ public class ItemService(IItemRepo itemRepo)
             RestaurantId = item.RestaurantId,
         };
     }
+
+    
+    public async Task<IEnumerable<ItemDto>> GetAvailableItems(string branchId)
+    {
+        var items = await _itemRepo.GetAvailableItemsByBranchId(branchId);
+        return items.Select(i => new ItemDto
+        {
+            Id = i.Id,
+            Name = i.Name,
+            Price = i.Price,
+            Description = i.Description,
+            Category = i.CategoryName,
+            PreparationTime = i.PreperationTime,
+            KitchenName = i.Kitchen?.Name ?? "Unknown",
+            ImageUrl = i.ImageUrl,
+        });
+    }
 }

@@ -8,6 +8,7 @@ public interface IItemRepo
     Task<Item?> GetItem(string id);
     Task<IEnumerable<Item>> GetItems();
     Task<IEnumerable<Item>> GetItemsByRestaurantId(string restaurantId);
+    Task<IEnumerable<Item>> GetAvailableItemsByBranchId(string branchId);
     Task<Item?> UpdateItem(string id, Item item);
     Task<bool> DeleteItem(string id);
 }
