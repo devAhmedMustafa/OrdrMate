@@ -103,9 +103,10 @@ public class RestaurantQueueManager
         return _restaurantQueues[kitchen]?[kitchenIdx]?.GetPeekItem();
     }
 
-    public void DequeueItem(string kitchen, int kitchenIdx)
+    public QueueItem DequeueItem(string kitchen, int kitchenIdx)
     {
-        _restaurantQueues[kitchen]?[kitchenIdx]?.Deque();
+        return _restaurantQueues[kitchen]?[kitchenIdx]?.Deque()
+               ?? throw new InvalidOperationException($"No items in queue for kitchen {kitchen} at index {kitchenIdx}.");
     }
 
     public KeyValuePair<string, int>[] GetAllKitchens()
@@ -163,7 +164,14 @@ public class RestaurantQueueManager
     {
         _orderIds.RemoveWhere(orderId =>
         {
-            var isReady = !IsOrderInQueue(orderId) && !IsOrderInProcess(orderId);
+            var isInProgress = IsOrderInProcess(orderId);
+            if (isInProgress)
+            {
+                OrderEvents.OnOrderInProgress(orderId);
+                return false;
+            }
+
+            var isReady = !IsOrderInQueue(orderId);
             if (isReady) OrderEvents.OnOrderReady(orderId);
             return isReady;
         }

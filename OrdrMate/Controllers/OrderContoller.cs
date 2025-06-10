@@ -73,8 +73,8 @@ public class OrderController : ControllerBase
                 return Forbid("You do not have permission to check prepared items in this branch.");
             }
 
-            _orderManager.CheckPreparedInQueue(branchId, kitchenName, kitchenUnitId);
-            return Ok("Item checked and next item sent to clients.");
+            var response = _orderManager.CheckPreparedInQueue(branchId, kitchenName, kitchenUnitId);
+            return Ok(response);
         }
         catch (Exception ex)
         {

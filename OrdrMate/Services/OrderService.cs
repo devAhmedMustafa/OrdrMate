@@ -111,7 +111,7 @@ public class OrderService
             OrderType = orderIntent.OrderType,
             TotalAmount = orderIntent.Amount,
             OrderDate = DateTime.UtcNow,
-            Status = OrderStatus.Queued,
+            Status = orderIntent.OrderType == OrderType.DineIn ? OrderStatus.Pending : OrderStatus.Queued,
             IsPaid = isPaid,
         };
 
