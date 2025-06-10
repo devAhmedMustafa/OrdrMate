@@ -10,5 +10,6 @@ public class BranchInfoDto
     public required decimal MaxWaitingTime { get; set; }
     public required decimal AverageWaitingTime { get; set; }
     public required int FreeTables { get; set; }
+    public required int TotalTables { get; set; }
     public required int OrdersInQueue { get; set; }
 }

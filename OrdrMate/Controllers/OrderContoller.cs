@@ -266,7 +266,7 @@ public class OrderController : ControllerBase
 
     [HttpPut("pick/{orderId}")]
     [Authorize(Roles = "Customer")]
-    public async Task<ActionResult> PickOrder(string orderId)
+    public async Task<ActionResult<OrderInvoiceDto>> PickOrder(string orderId)
     {
         try
         {
@@ -282,7 +282,7 @@ public class OrderController : ControllerBase
                 return NotFound($"Order with ID {orderId} not found or cannot be picked.");
             }
 
-            return Ok("Order picked successfully.");
+            return Ok(order);
         }
         catch (Exception ex)
         {

@@ -243,6 +243,7 @@ public class OrderService
         });
 
         var orders = takeawayDtos.Concat(indoorDtos);
+        orders = orders.OrderByDescending(o => o.OrderDate);
 
         return orders;
 
@@ -420,28 +421,23 @@ public class OrderService
         });
     }
 
-    public async Task<OrderInvoiceDto> PickOrder(string orderId)
+    public async Task<OrderInvoiceDto?> PickOrder(string orderId)
     {
         var order = await _orderRepo.GetDetailedOrderById(orderId) ?? throw new KeyNotFoundException($"Order with id {orderId} not found.");
 
-        if (order.Status != OrderStatus.Queued)
+        if (order.Status > OrderStatus.Ready)
         {
+            Console.WriteLine($"Order with id {orderId} is already picked or delivered.");
             throw new InvalidOperationException($"Order with id {orderId} is not in a valid state for picking.");
         }
 
         if (order.IsPaid == false)
         {
-            throw new InvalidOperationException($"Order with id {orderId} is not paid yet.");
+            Console.WriteLine($"Order with id {orderId} is not paid yet.");
+            return null!;
         }
 
-        if (order.Status != OrderStatus.Ready)
-        {
-            throw new InvalidOperationException($"Order with id {orderId} is not ready for pickup.");
-        }
-
-        order = await _orderRepo.SetOrderStatus(orderId, OrderStatus.Delivered);
-
-        if (order == null) throw new KeyNotFoundException($"Order with id {orderId} not found after updating status.");
+        await _orderRepo.SetOrderStatus(orderId, OrderStatus.Delivered);
 
         string orderNumber = "";
 

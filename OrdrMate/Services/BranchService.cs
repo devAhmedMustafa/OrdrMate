@@ -126,7 +126,8 @@ public class BranchService(
         }
 
         var ordersInQueue = await _branchRepo.GetOrdersInQueue(branchId);
-        var freeTables = await _branchRepo.GetFreeTables(branchId);
+        var tableCount = await _branchRepo.GetTableCount(branchId);
+        var freeTables = await _branchRepo.GetAvailableTables(branchId);
         var waitingTimes = await _orderManager.GetEstimatedTimes(branchId);
 
         return new BranchInfoDto
@@ -136,6 +137,7 @@ public class BranchService(
             BranchPhoneNumber = branch.Phone,
             RestaurantName = branch.Restaurant?.Name ?? "Unknown",
             FreeTables = freeTables,
+            TotalTables = tableCount,
             OrdersInQueue = ordersInQueue,
             MinWaitingTime = waitingTimes.MinWaitingTime,
             MaxWaitingTime = waitingTimes.MaxWaitingTime,

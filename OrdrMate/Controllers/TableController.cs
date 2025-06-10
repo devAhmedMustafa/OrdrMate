@@ -78,7 +78,7 @@ public class TableController : ControllerBase
     }
 
     [HttpGet("min_waiting_time/{branchId}/{seats}")]
-    [Authorize(Roles = "Customer")]
+    // [Authorize(Roles = "Customer")]
     public async Task<IActionResult> GetMinWaitingTime(string branchId, int seats)
     {
         var minWaitingTime = await _tableManager.GetMinimumWaitingTime(branchId, seats);
