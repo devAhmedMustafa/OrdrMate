@@ -9,6 +9,7 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<User> User => Set<User>();
     public DbSet<FirebaseToken> FirebaseToken => Set<FirebaseToken>();
     public DbSet<Restaurant> Restaurant => Set<Restaurant>();
+    public DbSet<RestaurantProfile> RestaurantProfile => Set<RestaurantProfile>();
     public DbSet<Item> Item => Set<Item>();
     public DbSet<Category> Category => Set<Category>();
     public DbSet<Branch> Branch => Set<Branch>();
@@ -49,6 +50,14 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .HasOne(r => r.Manager)
             .WithMany()
             .HasForeignKey(r => r.ManagerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // RestaurantProfile
+        modelBuilder.Entity<RestaurantProfile>().HasKey(rp => rp.RestaurantId);
+        modelBuilder.Entity<RestaurantProfile>()
+            .HasOne(rp => rp.Restaurant)
+            .WithOne(r => r.Profile)
+            .HasForeignKey<RestaurantProfile>(rp => rp.RestaurantId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Category
