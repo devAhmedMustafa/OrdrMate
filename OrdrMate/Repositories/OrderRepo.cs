@@ -62,6 +62,8 @@ public class OrderRepo : IOrderRepo
         var saved = _db.OrderItem.Add(orderItem);
         await _db.SaveChangesAsync();
         await _db.Entry(saved.Entity).Reference(oi => oi.Item).LoadAsync();
+        await _db.Entry(saved.Entity).Reference(oi => oi.Order).LoadAsync();
+        await _db.Entry(saved.Entity.Item!).Reference(i => i.Kitchen).LoadAsync();
         return saved.Entity;
     }
 

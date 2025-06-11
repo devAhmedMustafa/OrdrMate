@@ -129,7 +129,7 @@ public class TableRepo : ITableRepo
     public async Task<Order?> GetTableOrderByReservationId(string reservationId)
     {
         var reservation = await _context.TableReservation
-            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item)
+            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i=> i.Kitchen)
             .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
 
         if (reservation == null)

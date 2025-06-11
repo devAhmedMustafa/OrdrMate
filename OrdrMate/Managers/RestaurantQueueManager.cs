@@ -34,7 +34,7 @@ public class RestaurantQueueManager
         {
             foreach (var order in restaurant.Orders)
             {
-                if (order.Status != OrderStatus.Queued) continue;
+                if (order.Status != OrderStatus.Queued && order.Status != OrderStatus.InProgress) continue;
                 if (order.OrderItems == null) continue;
                 foreach (var orderItem in order.OrderItems)
                 {
@@ -69,10 +69,21 @@ public class RestaurantQueueManager
         }
     }
 
-    public void AddItemToQueue(string kitchen, QueueItem order)
+    public bool AddItemToQueue(string kitchen, QueueItem order)
     {
+
+        if (_orderIds.Contains(order.OrderId))
+        {
+            Console.WriteLine($"Order {order.OrderId} is already in the queue for kitchen {kitchen}. Skipping.");
+            return false;
+        }
+
         var kitchenQueues = _restaurantQueues.GetValueOrDefault(kitchen);
-        if (kitchenQueues == null) return;
+        if (kitchenQueues == null)
+        {
+            Console.WriteLine($"No kitchen found with name {kitchen}. Cannot add item to queue.");
+            return false;
+        }
 
         var bestQueue = -1;
         var minLength = int.MaxValue;
@@ -91,11 +102,17 @@ public class RestaurantQueueManager
         {
             kitchenQueues[bestQueue].AddItem(order);
         }
+        else
+        {
+            Console.WriteLine($"No available queue found for kitchen {kitchen}. Cannot add item to queue.");
+            return false;
+        }
 
         order.KitchenUnitId = bestQueue;
         _orderIds.Add(order.OrderId);
 
         OrderEvents.OnItemInQueue(_restaurant.Id, order.OrderId, order.ItemId);
+        return true;
     }
 
     public QueueItem? GetNextItem(string kitchen, int kitchenIdx)

@@ -9,6 +9,7 @@ public class OrderQueue
     public void AddItem(QueueItem items)
     {
         _items.Enqueue(items);
+        Console.WriteLine($"Added item to queue: {items.ItemName} for order {items.OrderId}");
 
         if (_items.Count == 1)
         {

@@ -169,6 +169,7 @@ public class TableManager
         }
 
         await tableRepo.UpdateTableReservationStatus(peekReservation.ReservationId, "Seated");
+        Console.WriteLine($"Reservation {peekReservation.ReservationId} for table {tableNumber} in branch {branchId} is now seated.");
         OrderEvents.OnOrderPlaced(peekReservation.BranchId, [.. order.OrderItems]);
     }
 

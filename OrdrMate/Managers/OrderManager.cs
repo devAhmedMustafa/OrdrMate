@@ -75,11 +75,13 @@ public class OrderManager
 
         foreach (var oi in orderItems)
         {
-            if (restaurantManager == null) continue;
-
             var kitchenName = oi.Item?.Kitchen?.Name;
 
-            if (kitchenName == null) continue;
+            if (kitchenName == null)
+            {
+                Console.WriteLine($"Item {oi.Item?.Name ?? "Unknown"} does not have a kitchen assigned. Skipping item.");
+                continue;
+            }
 
             var item = new QueueItem
             {
@@ -95,9 +97,12 @@ public class OrderManager
             };
 
             Console.WriteLine($"Adding item to queue: {item.ItemName}, OrderId: {item.OrderId}, Kitchen: {kitchenName}");
-            restaurantManager.AddItemToQueue(kitchenName, item);
+            if (!restaurantManager.AddItemToQueue(kitchenName, item))
+            {
+                Console.WriteLine($"Failed to add item {item.ItemName} to queue for kitchen {kitchenName} in branch {branchId}.");
+                continue;
+            }
 
-            // Expose to socket clients
 
             var json = JsonSerializer.Serialize(new
             {
@@ -107,6 +112,9 @@ public class OrderManager
 
             await _branchOrdersSocketHandler.SendToBranch(branchId, json);
         }
+
+        var orderRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<IOrderRepo>();
+        var order = await orderRepo.SetOrderStatus(orderItems[0].OrderId, Enums.OrderStatus.Queued);
 
         var jsonOrder = JsonSerializer.Serialize(new
         {

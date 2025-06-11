@@ -111,7 +111,7 @@ public class OrderService
             OrderType = orderIntent.OrderType,
             TotalAmount = orderIntent.Amount,
             OrderDate = DateTime.UtcNow,
-            Status = orderIntent.OrderType == OrderType.DineIn ? OrderStatus.Pending : OrderStatus.Queued,
+            Status = OrderStatus.Pending,
             IsPaid = isPaid,
         };
 
@@ -146,8 +146,8 @@ public class OrderService
                     Price = item.Price,
                 };
 
-                orderItem = await _orderRepo.CreateOrderItem(orderItem);
-                orderItems.Add(orderItem);
+                var savedOrderItem = await _orderRepo.CreateOrderItem(orderItem);
+                orderItems.Add(savedOrderItem);
             }
 
             order.OrderItems = orderItems;
