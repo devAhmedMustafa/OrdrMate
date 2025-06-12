@@ -59,7 +59,7 @@ public class TableRepo : ITableRepo
         await _context.SaveChangesAsync();
         return existingTable;
     }
-    
+
     public async Task<bool> DeleteTable(string branchId, int tableNum)
     {
         var table = await _context.Table
@@ -74,4 +74,107 @@ public class TableRepo : ITableRepo
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<TableReservation?> CreateTableReservation(TableReservation reservation)
+    {
+        var existingReservation = await _context.TableReservation
+            .FirstOrDefaultAsync(r => r.TableNumber == reservation.TableNumber && r.BranchId == reservation.BranchId && r.ReservationTime == reservation.ReservationTime);
+
+        if (existingReservation != null) throw new InvalidOperationException($"A reservation already exists for table {reservation.TableNumber} at branch {reservation.BranchId} at the specified time.");
+
+        var branch = await _context.Branch
+            .FirstOrDefaultAsync(b => b.Id == reservation.BranchId);
+
+        if (branch == null) throw new InvalidOperationException($"Branch with id {reservation.BranchId} does not exist.");
+        var customer = await _context.User
+            .FirstOrDefaultAsync(u => u.Id == reservation.CustomerId);
+        if (customer == null) throw new InvalidOperationException($"Customer with id {reservation.CustomerId} does not exist.");
+
+        var created = _context.TableReservation.Add(reservation);
+        await _context.SaveChangesAsync();
+        return created.Entity;
+    }
+
+    public async Task<IEnumerable<TableReservation>> GetTableReservationsByBranchId(string branchId)
+    {
+        return await _context.TableReservation
+            .Include(r => r.Branch).OrderBy(r => r.ReservationTime)
+            .Include(r => r.Customer)
+            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item)
+            .Where(r => r.BranchId == branchId)
+            .ToListAsync();
+    }
+
+    public async Task<TableReservation> UpdateTableReservationStatus(string reservationId, string status)
+    {
+        var existingReservation = await _context.TableReservation
+            .FirstOrDefaultAsync(r => r.ReservationId == reservationId)
+            ?? throw new InvalidOperationException($"Reservation with id {reservationId} does not exist.");
+
+        existingReservation.ReservationStatus = status;
+
+        if (status == "Seated")
+        {
+            existingReservation.SeatedTime = DateTime.UtcNow;
+        }
+        else if (status == "Left")
+        {
+            existingReservation.EndTime = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
+        return existingReservation;
+    }
+
+    public async Task<Order?> GetTableOrderByReservationId(string reservationId)
+    {
+        var reservation = await _context.TableReservation
+            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i=> i.Kitchen)
+            .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
+
+        if (reservation == null)
+        {
+            throw new InvalidOperationException($"Reservation with id {reservationId} does not exist.");
+        }
+
+        return reservation.Order;
+    }
+
+    public async Task<IEnumerable<TableReservation>> GetTableReservationsByCustomerId(string customerId)
+    {
+        return await _context.TableReservation
+            .Include(r => r.Branch)
+            .Include(r => r.Customer)
+            .Include(r => r.Order)
+            .Where(r => r.CustomerId == customerId)
+            .ToListAsync();
+    }
+
+    public async Task<TableReservation?> GetTableReservationByOrderId(string orderId)
+    {
+        return await _context.TableReservation
+            .Include(r => r.Branch)
+            .Include(r => r.Customer)
+            .Include(r => r.Order)
+            .FirstOrDefaultAsync(r => r.OrderId == orderId);
+    }
+
+    public async Task<TableReservation?> GetTableReservationById(string reservationId)
+    {
+        return await _context.TableReservation
+            .Include(r => r.Branch)
+            .Include(r => r.Customer)
+            .Include(r => r.Order)
+            .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
+    }
+    
+    public async Task<IEnumerable<TableReservation>> GetTableReservationsInQueue(string branchId, int tableNumber)
+    {
+        return await _context.TableReservation.OrderBy(r => r.ReservationTime)
+            .Where(r => r.BranchId == branchId && r.TableNumber == tableNumber && (r.ReservationStatus == "Queued" || r.ReservationStatus == "Seated"))
+            .Include(r => r.Customer)
+            .Include(r => r.Order)
+            .ToListAsync();
+    }
+
 }

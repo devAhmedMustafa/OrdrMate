@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using OrdrMate.DTOs.Branch;
 using OrdrMate.Repositories;
 using OrdrMate.Services;
+using OrdrMate.Sockets;
 
 namespace OrdrMate.Controllers;
 
@@ -13,12 +14,19 @@ public class BranchController : ControllerBase
     private readonly IBranchRequestRepo _branchRequestRepo;
     private readonly IAuthorizationService _authorizationService;
     private readonly BranchService _branchService;
+    private readonly BranchSocketHandler _branchSocketHandler;
 
-    public BranchController(IBranchRequestRepo branchRequestRepo, IAuthorizationService authorizationService, BranchService branchService)
+    public BranchController(
+        IBranchRequestRepo branchRequestRepo,
+        IAuthorizationService authorizationService,
+        BranchService branchService,
+        BranchSocketHandler branchSocketHandler
+    )
     {
         _authorizationService = authorizationService;
         _branchRequestRepo = branchRequestRepo;
         _branchService = branchService;
+        _branchSocketHandler = branchSocketHandler;
     }
 
     [HttpGet]
@@ -180,4 +188,55 @@ public class BranchController : ControllerBase
         }
     }
 
+    [HttpGet("live/{branchId}")]
+    public async Task Socket(string branchId)
+    {
+        if (_branchSocketHandler == null)
+        {
+            HttpContext.Response.StatusCode = 500;
+            await HttpContext.Response.WriteAsync("BranchOrdersSocketHandler is not initialized.");
+            return;
+        }
+        if (!HttpContext.WebSockets.IsWebSocketRequest)
+        {
+            HttpContext.Response.StatusCode = 400;
+            await HttpContext.Response.WriteAsync("WebSocket request expected.");
+            return;
+        }
+
+        var socket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+        Console.WriteLine($"WebSocket connection established for branch {branchId}.");
+        await _branchSocketHandler.AddSocketAsync(branchId, socket);
+    }
+
+    [HttpGet("balance/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<BranchBalanceDto>> GetBranchBalance(string branchId)
+    {
+        try
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to access this branch balance.");
+            }
+
+            var balance = await _branchService.GetBranchBalance(branchId);
+            if (balance == null)
+            {
+                return NotFound($"Branch with ID {branchId} not found.");
+            }
+
+            return Ok(balance);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound($"Branch with ID {branchId} not found: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving branch balance: {ex.Message}");
+        }
+    }
 }

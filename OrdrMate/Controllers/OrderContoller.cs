@@ -17,26 +17,23 @@ public class OrderController : ControllerBase
     private readonly OrderService _orderService;
     private readonly OrderManager _orderManager;
     private readonly IAuthorizationService _authorizationService;
-    private readonly BranchOrdersSocketHandler _branchOrdersSocketHandler;
     private readonly CustomerOrdersSocketHandler _customerOrderSocketHandler;
 
     public OrderController(
         OrderService orderService,
         IAuthorizationService authorizationService,
-        BranchOrdersSocketHandler branchOrdersSocketHandler,
         OrderManager orderManager,
         CustomerOrdersSocketHandler customerOrderSocketHandler)
     {
         _orderService = orderService;
         _authorizationService = authorizationService;
-        _branchOrdersSocketHandler = branchOrdersSocketHandler;
         _orderManager = orderManager;
         _customerOrderSocketHandler = customerOrderSocketHandler;
     }
 
     [HttpPost]
     [Authorize(Roles = "Customer")]
-    public async Task<ActionResult> PlaceOrder([FromBody] PlaceOrderDto placeOrderDto)
+    public async Task<ActionResult<OrderIntentDto>> PlaceOrder([FromBody] PlaceOrderDto placeOrderDto)
     {
         try
         {
@@ -48,14 +45,14 @@ public class OrderController : ControllerBase
             placeOrderDto.CustomerId = userId;
 
 
-            var order = await _orderService.PlaceOrder(placeOrderDto);
-            if (order == null)
+            var orderIntent = await _orderService.CreateOrderIntent(placeOrderDto);
+            if (orderIntent == null)
             {
                 Console.WriteLine("Order placement failed. Order is null.");
                 return BadRequest("Failed to place order. Please check your order details and try again.");
             }
 
-            return CreatedAtAction(nameof(PlaceOrder), new { orderId = order.OrderId }, order);
+            return CreatedAtAction(nameof(PlaceOrder), new { id = orderIntent.OrderIntentId }, orderIntent);
 
         }
         catch (Exception ex)
@@ -63,48 +60,6 @@ public class OrderController : ControllerBase
             return StatusCode(500, $"An error occurred while processing your request: {ex.Message}");
         }
 
-    }
-
-    [HttpGet("live/branch/{branchId}")]
-    public async Task OrdersSocket(string branchId)
-    {
-        if (_branchOrdersSocketHandler == null)
-        {
-            HttpContext.Response.StatusCode = 500;
-            await HttpContext.Response.WriteAsync("BranchOrdersSocketHandler is not initialized.");
-            return;
-        }
-        if (!HttpContext.WebSockets.IsWebSocketRequest)
-        {
-            HttpContext.Response.StatusCode = 400;
-            await HttpContext.Response.WriteAsync("WebSocket request expected.");
-            return;
-        }
-
-        var socket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-        Console.WriteLine($"WebSocket connection established for branch {branchId}.");
-        await _branchOrdersSocketHandler.AddSocketAsync(branchId, socket);
-    }
-
-    [HttpGet("live/customer/{customerId}")]
-    public async Task CustomerOrdersSocket(string customerId)
-    {
-        if (_branchOrdersSocketHandler == null)
-        {
-            HttpContext.Response.StatusCode = 500;
-            await HttpContext.Response.WriteAsync("BranchOrdersSocketHandler is not initialized.");
-            return;
-        }
-        if (!HttpContext.WebSockets.IsWebSocketRequest)
-        {
-            HttpContext.Response.StatusCode = 400;
-            await HttpContext.Response.WriteAsync("WebSocket request expected.");
-            return;
-        }
-        
-        var socket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-        Console.WriteLine($"WebSocket connection established for customer {customerId}.");
-        await _customerOrderSocketHandler.AddSocketAsync(customerId, socket);
     }
 
     [HttpPost("check-prepared/{branchId}/{kitchenName}/{kitchenUnitId}")]
@@ -118,8 +73,8 @@ public class OrderController : ControllerBase
                 return Forbid("You do not have permission to check prepared items in this branch.");
             }
 
-            _orderManager.CheckPreparedInQueue(branchId, kitchenName, kitchenUnitId);
-            return Ok("Item checked and next item sent to clients.");
+            var response = _orderManager.CheckPreparedInQueue(branchId, kitchenName, kitchenUnitId);
+            return Ok(response);
         }
         catch (Exception ex)
         {
@@ -261,6 +216,77 @@ public class OrderController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"An error occurred while retrieving ready orders: {ex.Message}");
+        }
+    }
+
+    [HttpGet("list/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetOrdersByBranch(string branchId)
+    {
+        try
+        {
+            var orders = await _orderService.GetOrdersByBranch(branchId);
+            if (orders == null || !orders.Any())
+            {
+                return NotFound($"No orders found for branch {branchId}.");
+            }
+            return Ok(orders);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving orders for branch {branchId}: {ex.Message}");
+        }
+    }
+
+    [HttpGet("item_queues/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult> GetItemQueues(string branchId)
+    {
+        try
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to view item queues for this branch.");
+            }
+
+            var itemQueues = _orderManager.GetItemQueues(branchId);
+            if (itemQueues == null || itemQueues.Count == 0)
+            {
+                return NotFound($"No item queues found for branch {branchId}.");
+            }
+
+            return Ok(itemQueues);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving item queues: {ex.Message}");
+        }
+    }
+
+    [HttpPut("pick/{orderId}")]
+    [Authorize(Roles = "Customer")]
+    public async Task<ActionResult<OrderInvoiceDto>> PickOrder(string orderId)
+    {
+        try
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return Forbid("User ID not found in claims.");
+
+            var order = await _orderService.PickOrder(orderId);
+            
+            if (order == null)
+            {
+                return NotFound($"Order with ID {orderId} not found or cannot be picked.");
+            }
+
+            return Ok(order);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while picking the order: {ex.Message}");
         }
     }
 

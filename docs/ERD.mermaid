@@ -103,6 +103,15 @@ erDiagram
         branchId uuid FK
     }
 
+    TableReservation {
+        id uuid PK
+        branchId uuid FK
+        tableNumber int
+        reservationTime timestamp
+        reservationDate date
+        customerId uuid FK
+    }
+
     Restaurant ||--|{ Branch : has
     Restaurant ||--o{ Item : includes
     User ||--o| Restaurant : manages

@@ -23,8 +23,8 @@ public class BranchRepo : IBranchRepo
     public async Task<Branch> GetDetailedBranchById(string id)
     {
         return await _context.Branch
-        .Include(b => b.KitchenPowers).ThenInclude(kp => kp.Kitchen)
-        .Include(b => b.Orders.OrderBy(o => o.OrderDate)).ThenInclude(o => o.OrderItems).ThenInclude(oi => oi.Item).ThenInclude(i => i.Kitchen)
+        .Include(b => b.KitchenPowers)!.ThenInclude(kp => kp.Kitchen)
+        .Include(b => b.Orders!.OrderBy(o => o.OrderDate)).ThenInclude(o => o.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i => i.Kitchen)
         .Include(b => b.Tables)
         .AsSplitQuery()
         .AsNoTracking()
@@ -37,8 +37,8 @@ public class BranchRepo : IBranchRepo
         return await _context.Branch
         .Include(b => b.Restaurant)
         .Include(b => b.Tables)
-        .Include(b => b.Orders.OrderBy(o => o.OrderDate)).ThenInclude(o => o.OrderItems).ThenInclude(oi => oi.Item).ThenInclude(i => i.Kitchen)
-        .Include(b => b.KitchenPowers).ThenInclude(kp => kp.Kitchen)
+        .Include(b => b.Orders!.OrderBy(o => o.OrderDate)).ThenInclude(o => o.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i => i.Kitchen)
+        .Include(b => b.KitchenPowers)!.ThenInclude(kp => kp.Kitchen)
         .AsSplitQuery()
         .AsNoTracking()
         .ToListAsync();
@@ -111,10 +111,30 @@ public class BranchRepo : IBranchRepo
         return restaurant?.ManagerId == managerId;
     }
 
-    public async Task<int> GetFreeTables(string branchId)
+    public async Task<int> GetTableCount(string branchId)
     {
-        var tables = await _context.Table.CountAsync(t => t.BranchId == branchId);
-        return tables;
+        return await _context.Table
+            .Where(t => t.BranchId == branchId)
+            .CountAsync();
+    }
+
+    public async Task<int> GetAvailableTables(string branchId)
+    {
+
+        var reservations = await _context.TableReservation
+            .Where(r => r.BranchId == branchId && (r.ReservationStatus == "Queued" || r.ReservationStatus == "Seated"))
+            .ToListAsync();
+
+        var reservedTables = reservations
+            .Select(r => r.TableNumber)
+            .Distinct()
+            .ToList();
+
+        var totalTables = await _context.Table
+            .Where(t => t.BranchId == branchId)
+            .CountAsync();
+            
+        return totalTables - reservedTables.Count;
     }
 
     public async Task<int> GetOrdersInQueue(string branchId)

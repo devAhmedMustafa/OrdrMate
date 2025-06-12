@@ -12,48 +12,32 @@ public class PaymentService
     {
         _paymentRepo = paymentRepo;
     }
-    public async Task<PaymentDto> AddCashPayment(string orderId, decimal amount)
+    public async Task<PaymentDto> AddPayment(OrderIntent orderIntent, string transactionId)
     {
 
         var payment = new Payment
         {
-            OrderId = orderId,
-            Amount = amount,
-            PaymentMethod = "Cash",
-            Provider = "Cash",
-            Status = PaymentStatus.Pending,
-        };
-
-        var paymentDto = new PaymentDto
-        {
-            OrderId = orderId,
+            OrderId = orderIntent.OrderId!,
+            Amount = orderIntent.Amount,
+            PaymentMethod = orderIntent.PaymentMethod,
+            Provider = orderIntent.PaymentProvider,
+            TransactionId = transactionId,
             PaidAt = DateTime.UtcNow,
-            PaymentMethod = "Cash",
-            Amount = 100.00m,
-            Status = PaymentStatus.Pending.ToString(),
-            Provider = "Cash"
+            ExternalRef = orderIntent.Id,
         };
 
         await _paymentRepo.CreatePayment(payment);
 
+        var paymentDto = new PaymentDto
+        {
+            OrderId = payment.OrderId,
+            PaidAt = payment.PaidAt,
+            TransactionId = payment.TransactionId,
+            PaymentMethod = orderIntent.PaymentMethod,
+            Amount = orderIntent.Amount,
+            Provider = payment.Provider,
+        };
+
         return paymentDto;
-    }
-
-    public async Task<bool> UpdatePaymentStatus(string orderId, PaymentStatus status)
-    {
-        var payment = await _paymentRepo.GetPaymentByOrderId(orderId);
-        if (payment == null)
-        {
-            throw new KeyNotFoundException($"Payment with id {orderId} not found.");
-        }
-
-        payment.Status = status;
-        if (status == PaymentStatus.Completed)
-        {
-            payment.PaidAt = DateTime.UtcNow;
-        }
-
-        var updatedPayment = await _paymentRepo.UpdatePayment(payment);
-        return updatedPayment != null;
     }
 }

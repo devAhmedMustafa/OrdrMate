@@ -5,6 +5,7 @@ using System.Text.Json;
 using OrdrMate.Sockets;
 using OrdrMate.DTOs.Order;
 using OrdrMate.Services;
+using OrdrMate.DTOs.Item;
 
 namespace OrdrMate.Managers;
 
@@ -12,34 +13,30 @@ public class OrderManager
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IBranchRepo _branchRepo;
-    private readonly BranchOrdersSocketHandler _branchOrdersSocketHandler;
-    private readonly CustomerOrdersSocketHandler _customerOrdersSocketHandler;
-    private readonly CloudMessaging _cloudMessaging;
+    private readonly BranchSocketHandler _branchOrdersSocketHandler;
     public static readonly Dictionary<string, RestaurantQueueManager> restaurantManagers = [];
     private static bool _initialized = false;
 
     public OrderManager(
         IBranchRepo branchRepo,
-        BranchOrdersSocketHandler branchOrdersSocketHandler,
-        IServiceScopeFactory scopeFactory,
-        CustomerOrdersSocketHandler customerOrdersSocketHandler,
-        CloudMessaging cloudMessaging)
+        BranchSocketHandler branchOrdersSocketHandler,
+        IServiceScopeFactory scopeFactory
+        )
     {
         _scopeFactory = scopeFactory;
         _branchRepo = branchRepo;
         _branchOrdersSocketHandler = branchOrdersSocketHandler;
-        _customerOrdersSocketHandler = customerOrdersSocketHandler;
-        _cloudMessaging = cloudMessaging;
 
         if (_initialized) return;
 
         Init();
 
-        BranchEvents.BranchSocketConnected += OnBranchSocketConnected;
         BranchEvents.BranchCreated += OnBranchCreated;
         BranchEvents.BranchDeleted += OnBranchDeleted;
         OrderEvents.OrderPlaced += OnOrderPlaced;
         OrderEvents.OrderReady += OnOrderReady;
+        BranchEvents.KitchenUpdate += OnKitchenUpdate;
+        OrderEvents.OrderInProgress += OnOrderInProgress;
 
         _initialized = true;
     }
@@ -52,20 +49,6 @@ public class OrderManager
         {
             restaurantManagers[restaurant.Id] = new RestaurantQueueManager(restaurant);
         }
-    }
-
-    public async void OnBranchSocketConnected(string branchId)
-    {
-        var items = restaurantManagers[branchId].PeekAllItems();
-
-        var json = JsonSerializer.Serialize(new
-        {
-            Type = "InitialData",
-            items,
-            Orders = restaurantManagers[branchId].GetRestaurantInfo()
-        });
-
-        await _branchOrdersSocketHandler.SendToBranch(branchId, json);
     }
 
     private void OnBranchCreated(Branch branch)
@@ -92,11 +75,13 @@ public class OrderManager
 
         foreach (var oi in orderItems)
         {
-            if (restaurantManager == null) continue;
-
             var kitchenName = oi.Item?.Kitchen?.Name;
 
-            if (kitchenName == null) continue;
+            if (kitchenName == null)
+            {
+                Console.WriteLine($"Item {oi.Item?.Name ?? "Unknown"} does not have a kitchen assigned. Skipping item.");
+                continue;
+            }
 
             var item = new QueueItem
             {
@@ -112,9 +97,12 @@ public class OrderManager
             };
 
             Console.WriteLine($"Adding item to queue: {item.ItemName}, OrderId: {item.OrderId}, Kitchen: {kitchenName}");
-            restaurantManager.AddItemToQueue(kitchenName, item);
+            if (!restaurantManager.AddItemToQueue(kitchenName, item))
+            {
+                Console.WriteLine($"Failed to add item {item.ItemName} to queue for kitchen {kitchenName} in branch {branchId}.");
+                continue;
+            }
 
-            // Expose to socket clients
 
             var json = JsonSerializer.Serialize(new
             {
@@ -124,6 +112,9 @@ public class OrderManager
 
             await _branchOrdersSocketHandler.SendToBranch(branchId, json);
         }
+
+        var orderRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<IOrderRepo>();
+        var order = await orderRepo.SetOrderStatus(orderItems[0].OrderId, Enums.OrderStatus.Queued);
 
         var jsonOrder = JsonSerializer.Serialize(new
         {
@@ -136,12 +127,25 @@ public class OrderManager
 
     }
 
-    public void CheckPreparedInQueue(string branchId, string kitchenName, int kitchenUnitId)
+    public NextInQueueDto CheckPreparedInQueue(string branchId, string kitchenName, int kitchenUnitId)
     {
         try
         {
-            restaurantManagers[branchId].DequeueItem(kitchenName, kitchenUnitId);
+            var itemDequed = restaurantManagers[branchId].DequeueItem(kitchenName, kitchenUnitId);
+
+            if (itemDequed == null) throw new Exception($"No items found in queue for branch {branchId}, kitchen {kitchenName}, unit {kitchenUnitId}.");
+
             restaurantManagers[branchId].CleanupFinishedOrderIds();
+
+            var nextItem = restaurantManagers[branchId].GetNextItem(kitchenName, kitchenUnitId);
+
+            return new NextInQueueDto
+            {
+                DequeudItemId = itemDequed.ItemId,
+                NextItemId = nextItem?.ItemId,
+                KitchenName = kitchenName,
+                KitchenUnit = kitchenUnitId,
+            };
         }
         catch (Exception ex)
         {
@@ -162,6 +166,23 @@ public class OrderManager
         catch (Exception ex)
         {
             throw new Exception($"Error fetching order status for branch {branchId}: {ex.Message}", ex);
+        }
+    }
+
+    public void OnKitchenUpdate(string branchId, string kitchenName, int units)
+    {
+        try
+        {
+            if (!restaurantManagers.ContainsKey(branchId))
+            {
+                restaurantManagers[branchId] = new RestaurantQueueManager(_branchRepo.GetDetailedBranchById(branchId).Result);
+            }
+
+            restaurantManagers[branchId].UpdateKitchen(kitchenName, units);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error updating kitchen for branch {branchId}: {ex.Message}", ex);
         }
     }
 
@@ -213,19 +234,97 @@ public class OrderManager
             OrderId = order.Id,
         });
 
-        await _customerOrdersSocketHandler.NotifyOrderReady(orderId, order.CustomerId);
+        try
+        {
+            var cloudMessaging = scope.ServiceProvider.GetRequiredService<CloudMessaging>();
+            var firebaseToken = await cloudMessaging.GetTokenByUserId(order.CustomerId);
+            
+            if (string.IsNullOrEmpty(firebaseToken))
+            {
+                Console.WriteLine($"No Firebase token found for customer with ID {order.CustomerId}.");
+                return;
+            }
+            await cloudMessaging.SendNotificationAsync(
+                firebaseToken,
+                "Your order is ready!",
+                $"Order #{order.Id} is ready for pickup at {order.Branch?.Restaurant?.Name}."
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error sending notification for order {orderId}: {ex.Message}");
+        }
 
-        var firebaseToken = await _cloudMessaging.GetTokenByUserId(order.CustomerId);
-        if (string.IsNullOrEmpty(firebaseToken)) {
-            Console.WriteLine($"No Firebase token found for customer with ID {order.CustomerId}.");
+        await _branchOrdersSocketHandler.SendToBranch(branchId, json);
+
+    }
+
+    public async void OnOrderInProgress(string orderId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var orderRepo = scope.ServiceProvider.GetRequiredService<IOrderRepo>();
+
+        Console.WriteLine($"Order {orderId} is in progress.");
+        var branchId = restaurantManagers.FirstOrDefault(x => x.Value.IsOrderInProcess(orderId)).Key;
+
+        if (branchId == null)
+        {
+            Console.WriteLine($"No branch found for order {orderId}.");
             return;
         }
 
-        await _cloudMessaging.SendNotificationAsync(
-            firebaseToken,
-            "Your order is ready!",
-            $"Order #{order.Id} is ready for pickup at {order.Branch?.Restaurant?.Name}."
-        );
+        var order = await orderRepo.SetOrderStatus(orderId, Enums.OrderStatus.InProgress);
+
+
+        var json = JsonSerializer.Serialize(new
+        {
+            Type = "OrderInProgress",
+            OrderId = orderId,
+        });
+
+        try
+        {
+            var cloudMessaging = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<CloudMessaging>();
+
+            if (order == null)
+            {
+                Console.WriteLine($"Order with ID {orderId} not found.");
+                return;
+            }
+            var firebaseToken = cloudMessaging.GetTokenByUserId(order.CustomerId).Result;
+
+            if (string.IsNullOrEmpty(firebaseToken))
+            {
+                Console.WriteLine($"No Firebase token found for customer with ID {order.CustomerId}.");
+                return;
+            }
+            cloudMessaging.SendNotificationAsync(
+                firebaseToken,
+                "Your order is in progress!",
+                $"Order is being prepared at {order.Branch?.Restaurant?.Name}."
+            ).Wait();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error sending notification for order {orderId}: {ex.Message}");
+        }
+
+        _branchOrdersSocketHandler.SendToBranch(branchId, json).Wait();
     }
 
+    public List<QueueItem> GetItemQueues(string branchId)
+    {
+        if (!restaurantManagers.TryGetValue(branchId, out var restaurantManager))
+        {
+            throw new KeyNotFoundException($"No restaurant manager found for branch {branchId}.");
+        }
+
+        var itemQueues = restaurantManager.GetItemQueues();
+        if (itemQueues == null)
+        {
+            throw new Exception($"No item queues found for branch {branchId}.");
+        }
+
+        return itemQueues;
+    }
 }

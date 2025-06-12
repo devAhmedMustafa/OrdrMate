@@ -1,0 +1,24 @@
+classDiagram
+    class TableManager {
+        - branches: Map~string, TableQueueManager~
+        - Init()
+        + addRestaurant(restaurantId: string) void
+        + removeRestaurant(restaurantId: string) void
+        + reserveTable(restaurantId: string, seats: int) void
+    }
+
+    class TableQueueManager{
+        - seatMap: Map~int, ReservationQueue~
+        + TableQueueManager(branch: Branch)
+        + reserveTable(seats: int) void
+    }
+
+    class ReservationQueue {
+        - queue: Queue~TableReservation~
+        + enqueReservation(reservation: TableReservation) void
+        + getPeek() TableReservation
+        + dequeue() TableReservation
+    }
+
+    TableManager "1" *-- "0..*" TableQueueManager : manages
+    TableQueueManager "1" *-- "0..*" ReservationQueue : manages

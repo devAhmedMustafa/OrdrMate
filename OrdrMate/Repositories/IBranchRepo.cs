@@ -14,6 +14,7 @@ public interface IBranchRepo
     Task<bool> BranchExists(string id);
     Task<bool> HasAccess(string branchId, string managerId);
     Task<Branch> GetDetailedBranchById(string id);
-    Task<int> GetFreeTables(string branchId);
+    Task<int> GetTableCount(string branchId);
+    Task<int> GetAvailableTables(string branchId);
     Task<int> GetOrdersInQueue(string branchId);
 }

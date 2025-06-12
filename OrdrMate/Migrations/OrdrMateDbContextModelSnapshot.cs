@@ -294,6 +294,61 @@ namespace OrdrMate.Migrations
                     b.ToTable("Order");
                 });
 
+            modelBuilder.Entity("OrdrMate.Models.OrderIntent", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CustomerId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OrderId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OrderItemsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("OrderType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentProvider")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("Seats")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TableNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.ToTable("OrderIntent");
+                });
+
             modelBuilder.Entity("OrdrMate.Models.OrderItem", b =>
                 {
                     b.Property<string>("OrderId")
@@ -342,9 +397,6 @@ namespace OrdrMate.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
                     b.Property<string>("TransactionId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -388,6 +440,28 @@ namespace OrdrMate.Migrations
                     b.ToTable("Restaurant");
                 });
 
+            modelBuilder.Entity("OrdrMate.Models.RestaurantProfile", b =>
+                {
+                    b.Property<string>("RestaurantId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CoverImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LogoUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("RestaurantId");
+
+                    b.ToTable("RestaurantProfile");
+                });
+
             modelBuilder.Entity("OrdrMate.Models.Table", b =>
                 {
                     b.Property<int>("TableNumber")
@@ -410,6 +484,54 @@ namespace OrdrMate.Migrations
                         .IsUnique();
 
                     b.ToTable("Table");
+                });
+
+            modelBuilder.Entity("OrdrMate.Models.TableReservation", b =>
+                {
+                    b.Property<string>("ReservationId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CustomerId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("OrderId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReservationStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ReservationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("SeatedTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("TableNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ReservationId");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.HasIndex("TableNumber", "BranchId", "ReservationTime")
+                        .IsUnique();
+
+                    b.ToTable("TableReservation");
                 });
 
             modelBuilder.Entity("OrdrMate.Models.Takeaway", b =>
@@ -595,6 +717,25 @@ namespace OrdrMate.Migrations
                     b.Navigation("Customer");
                 });
 
+            modelBuilder.Entity("OrdrMate.Models.OrderIntent", b =>
+                {
+                    b.HasOne("OrdrMate.Models.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OrdrMate.Models.User", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Customer");
+                });
+
             modelBuilder.Entity("OrdrMate.Models.OrderItem", b =>
                 {
                     b.HasOne("OrdrMate.Models.Item", "Item")
@@ -636,6 +777,17 @@ namespace OrdrMate.Migrations
                     b.Navigation("Manager");
                 });
 
+            modelBuilder.Entity("OrdrMate.Models.RestaurantProfile", b =>
+                {
+                    b.HasOne("OrdrMate.Models.Restaurant", "Restaurant")
+                        .WithOne("Profile")
+                        .HasForeignKey("OrdrMate.Models.RestaurantProfile", "RestaurantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Restaurant");
+                });
+
             modelBuilder.Entity("OrdrMate.Models.Table", b =>
                 {
                     b.HasOne("OrdrMate.Models.Branch", "Branch")
@@ -645,6 +797,33 @@ namespace OrdrMate.Migrations
                         .IsRequired();
 
                     b.Navigation("Branch");
+                });
+
+            modelBuilder.Entity("OrdrMate.Models.TableReservation", b =>
+                {
+                    b.HasOne("OrdrMate.Models.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OrdrMate.Models.User", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OrdrMate.Models.Order", "Order")
+                        .WithOne()
+                        .HasForeignKey("OrdrMate.Models.TableReservation", "OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("OrdrMate.Models.Takeaway", b =>
@@ -690,6 +869,8 @@ namespace OrdrMate.Migrations
                     b.Navigation("Items");
 
                     b.Navigation("Kitchens");
+
+                    b.Navigation("Profile");
                 });
 #pragma warning restore 612, 618
         }

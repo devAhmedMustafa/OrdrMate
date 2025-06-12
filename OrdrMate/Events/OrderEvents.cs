@@ -5,6 +5,7 @@ namespace OrdrMate.Events;
 public static class OrderEvents
 {
     public static event Action<string, List<OrderItem>>? OrderPlaced;
+    public static event Action<string>? OrderInProgress;
     public static event Action<string, string>? OrderCancelled;
     public static event Action<string>? OrderReady;
     public static event Action<string, string, string>? OrderCompleted;
@@ -23,5 +24,10 @@ public static class OrderEvents
     public static void OnOrderReady(string orderId)
     {
         OrderReady?.Invoke(orderId);
+    }
+
+    public static void OnOrderInProgress(string orderId)
+    {
+        OrderInProgress?.Invoke(orderId);
     }
 }

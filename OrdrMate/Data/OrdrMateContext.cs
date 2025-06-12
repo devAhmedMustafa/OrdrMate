@@ -9,11 +9,13 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<User> User => Set<User>();
     public DbSet<FirebaseToken> FirebaseToken => Set<FirebaseToken>();
     public DbSet<Restaurant> Restaurant => Set<Restaurant>();
+    public DbSet<RestaurantProfile> RestaurantProfile => Set<RestaurantProfile>();
     public DbSet<Item> Item => Set<Item>();
     public DbSet<Category> Category => Set<Category>();
     public DbSet<Branch> Branch => Set<Branch>();
     public DbSet<BranchRequest> BranchRequest => Set<BranchRequest>();
     public DbSet<Table> Table => Set<Table>();
+    public DbSet<TableReservation> TableReservation => Set<TableReservation>();
     public DbSet<Kitchen> Kitchen => Set<Kitchen>();
     public DbSet<KitchenPower> KitchenPower => Set<KitchenPower>();
     public DbSet<Order> Order => Set<Order>();
@@ -21,6 +23,7 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<Takeaway> Takeaway => Set<Takeaway>();
     public DbSet<OrderItem> OrderItem => Set<OrderItem>();
     public DbSet<Payment> Payment => Set<Payment>();
+    public DbSet<OrderIntent> OrderIntent => Set<OrderIntent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,6 +50,14 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .HasOne(r => r.Manager)
             .WithMany()
             .HasForeignKey(r => r.ManagerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // RestaurantProfile
+        modelBuilder.Entity<RestaurantProfile>().HasKey(rp => rp.RestaurantId);
+        modelBuilder.Entity<RestaurantProfile>()
+            .HasOne(rp => rp.Restaurant)
+            .WithOne(r => r.Profile)
+            .HasForeignKey<RestaurantProfile>(rp => rp.RestaurantId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Category
@@ -119,6 +130,26 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .HasForeignKey(t => t.BranchId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // TableReservation
+
+        modelBuilder.Entity<TableReservation>().HasKey(tr => tr.ReservationId);
+        modelBuilder.Entity<TableReservation>().HasIndex(tr => new { tr.TableNumber, tr.BranchId, tr.ReservationTime }).IsUnique();
+        modelBuilder.Entity<TableReservation>()
+            .HasOne(tr => tr.Branch)
+            .WithMany()
+            .HasForeignKey(tr => tr.BranchId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<TableReservation>()
+            .HasOne(tr => tr.Customer)
+            .WithMany()
+            .HasForeignKey(tr => tr.CustomerId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<TableReservation>()
+            .HasOne(tr => tr.Order)
+            .WithOne()
+            .HasForeignKey<TableReservation>(tr => tr.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Kitchen
 
         modelBuilder.Entity<Kitchen>().HasKey(k => k.Id);
@@ -139,6 +170,21 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .HasOne(kp => kp.Branch)
             .WithMany(b => b.KitchenPowers)
             .HasForeignKey(kp => kp.BranchId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // OrderIntent
+
+        modelBuilder.Entity<OrderIntent>().HasKey(oi => oi.Id);
+        modelBuilder.Entity<OrderIntent>().HasIndex(oi => oi.OrderId).IsUnique();
+        modelBuilder.Entity<OrderIntent>()
+            .HasOne(oi => oi.Customer)
+            .WithMany()
+            .HasForeignKey(oi => oi.CustomerId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<OrderIntent>()
+            .HasOne(oi => oi.Branch)
+            .WithMany()
+            .HasForeignKey(oi => oi.BranchId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Order

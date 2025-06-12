@@ -1,0 +1,24 @@
+sequenceDiagram
+
+    actor User
+    participant Order Endpoints
+    participant OrderService
+    participant TableService
+    participant TableRepository
+    participant TableManager
+    participant TableQueueManager
+    participant TableReservationQueue
+
+    User->>+Order Endpoints: Place Order
+    Order Endpoints->>+OrderService: CreateOrderIntent
+    alt orderType is dine-in
+        OrderService->>+TableService: ReserveTable
+        TableService->>TableManager: ReserveTable(branchId, tableId)
+        TableManager->>TableQueueManager: AddReservationToTableQueue
+        TableQueueManager->>TableReservationQueue: Add Reservation
+        TableService-)+TableRepository: Add Reservation
+        TableRepository--)-TableService: Reservation Added
+        TableService-->>-OrderService: Table Reserved
+    end
+    OrderService-->>-Order Endpoints: Order Created with Table Reservation
+    Order Endpoints-->>-User: Order Confirmation with Table Reservation

@@ -147,4 +147,61 @@ public class RestaurantService(IRestaurantRepo r, IUserRepo m)
         }
     }
 
+    public async Task<RestaurantProfileDto> GetRestaurantProfile(string restaurantId)
+    {
+        try
+        {
+            var profile = await _repo.GetRestaurantProfile(restaurantId);
+            if (profile == null)
+            {
+                throw new Exception("No profile for restaurant with " + restaurantId + " id");
+            }
+
+            return new RestaurantProfileDto
+            {
+                RestaurantId = profile.RestaurantId,
+                Description = profile.Description,
+                LogoUrl = profile.LogoUrl,
+                CoverImageUrl = profile.CoverImageUrl
+            };
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Error getting restaurant profile: {e.Message}");
+        }
+    }
+
+    public async Task<RestaurantProfileDto> UpdateRestaurantProfile(string id, UpdateRestaurantProfileDto profileDto)
+    {
+        try
+        {
+            var profile = new RestaurantProfile
+            {
+                RestaurantId = id,
+                Description = profileDto.Description,
+                LogoUrl = profileDto.LogoUrl,
+                CoverImageUrl = profileDto.CoverImageUrl
+            };
+
+            var updatedProfile = await _repo.UpdateRestaurantProfile(id, profile);
+
+            if (updatedProfile == null)
+            {
+                throw new Exception("No profile found for restaurant with " + id + " id");
+            }
+
+            return new RestaurantProfileDto
+            {
+                RestaurantId = updatedProfile.RestaurantId,
+                Description = updatedProfile.Description,
+                LogoUrl = updatedProfile.LogoUrl,
+                CoverImageUrl = updatedProfile.CoverImageUrl
+            };
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Error updating restaurant profile: {e.Message}");
+        }
+    }
+
 }

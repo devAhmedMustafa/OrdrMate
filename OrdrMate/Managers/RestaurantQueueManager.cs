@@ -10,7 +10,7 @@ public class RestaurantQueueManager
 {
     private readonly Branch _restaurant;
     private readonly HashSet<string> _orderIds = [];
-    private readonly Dictionary<string, OrderQueue[]> _restaurantQueues = [];
+    private readonly Dictionary<string, List<OrderQueue>> _restaurantQueues = [];
 
     public RestaurantQueueManager(Branch restaurant)
     {
@@ -22,10 +22,10 @@ public class RestaurantQueueManager
             {
                 if (kp.Kitchen == null) continue;
 
-                _restaurantQueues[kp.Kitchen.Name] = new OrderQueue[kp.Units];
+                _restaurantQueues[kp.Kitchen.Name] = [];
                 for (int i = 0; i < kp.Units; i++)
                 {
-                    _restaurantQueues[kp.Kitchen.Name][i] = new OrderQueue();
+                    _restaurantQueues[kp.Kitchen.Name].Add(new OrderQueue());
                 }
             }
         }
@@ -34,7 +34,7 @@ public class RestaurantQueueManager
         {
             foreach (var order in restaurant.Orders)
             {
-                if (order.Status != OrderStatus.Queued) continue;
+                if (order.Status != OrderStatus.Queued && order.Status != OrderStatus.InProgress) continue;
                 if (order.OrderItems == null) continue;
                 foreach (var orderItem in order.OrderItems)
                 {
@@ -56,15 +56,39 @@ public class RestaurantQueueManager
         }
     }
 
-    public void AddItemToQueue(string kitchen, QueueItem order)
+    public void UpdateKitchen(string kitchenName, int units)
     {
+        if (!_restaurantQueues.ContainsKey(kitchenName))
+        {
+            _restaurantQueues[kitchenName] = [];
+        }
+
+        for (int i = _restaurantQueues[kitchenName].Count; i < units; i++)
+        {
+            _restaurantQueues[kitchenName].Add(new OrderQueue());
+        }
+    }
+
+    public bool AddItemToQueue(string kitchen, QueueItem order)
+    {
+
+        if (_orderIds.Contains(order.OrderId))
+        {
+            Console.WriteLine($"Order {order.OrderId} is already in the queue for kitchen {kitchen}. Skipping.");
+            return false;
+        }
+
         var kitchenQueues = _restaurantQueues.GetValueOrDefault(kitchen);
-        if (kitchenQueues == null) return;
+        if (kitchenQueues == null)
+        {
+            Console.WriteLine($"No kitchen found with name {kitchen}. Cannot add item to queue.");
+            return false;
+        }
 
         var bestQueue = -1;
         var minLength = int.MaxValue;
 
-        for (int i = 0; i < kitchenQueues.Length; i++)
+        for (int i = 0; i < kitchenQueues.Count; i++)
         {
             var queue = kitchenQueues[i];
             if (queue.Count < minLength)
@@ -78,11 +102,17 @@ public class RestaurantQueueManager
         {
             kitchenQueues[bestQueue].AddItem(order);
         }
+        else
+        {
+            Console.WriteLine($"No available queue found for kitchen {kitchen}. Cannot add item to queue.");
+            return false;
+        }
 
         order.KitchenUnitId = bestQueue;
         _orderIds.Add(order.OrderId);
 
         OrderEvents.OnItemInQueue(_restaurant.Id, order.OrderId, order.ItemId);
+        return true;
     }
 
     public QueueItem? GetNextItem(string kitchen, int kitchenIdx)
@@ -90,14 +120,15 @@ public class RestaurantQueueManager
         return _restaurantQueues[kitchen]?[kitchenIdx]?.GetPeekItem();
     }
 
-    public void DequeueItem(string kitchen, int kitchenIdx)
+    public QueueItem DequeueItem(string kitchen, int kitchenIdx)
     {
-        _restaurantQueues[kitchen]?[kitchenIdx]?.Deque();
+        return _restaurantQueues[kitchen]?[kitchenIdx]?.Deque()
+               ?? throw new InvalidOperationException($"No items in queue for kitchen {kitchen} at index {kitchenIdx}.");
     }
 
     public KeyValuePair<string, int>[] GetAllKitchens()
     {
-        return [.. _restaurantQueues.Select(kv => new KeyValuePair<string, int>(kv.Key, kv.Value.Length))];
+        return [.. _restaurantQueues.Select(kv => new KeyValuePair<string, int>(kv.Key, kv.Value.Count))];
     }
 
     public List<QueueItem> PeekAllItems()
@@ -150,7 +181,14 @@ public class RestaurantQueueManager
     {
         _orderIds.RemoveWhere(orderId =>
         {
-            var isReady = !IsOrderInQueue(orderId) && !IsOrderInProcess(orderId);
+            var isInProgress = IsOrderInProcess(orderId);
+            if (isInProgress)
+            {
+                OrderEvents.OnOrderInProgress(orderId);
+                return false;
+            }
+
+            var isReady = !IsOrderInQueue(orderId);
             if (isReady) OrderEvents.OnOrderReady(orderId);
             return isReady;
         }
@@ -260,4 +298,18 @@ public class RestaurantQueueManager
         return maxTime;
     }
  
+    public List<QueueItem> GetItemQueues()
+    {
+        var allItems = new List<QueueItem>();
+        foreach (var kitchen in _restaurantQueues.Values)
+        {
+            foreach (var queue in kitchen)
+            {
+                allItems.AddRange(queue.PeekAllItems());
+            }
+        }
+
+        return allItems;
+    }
+
 }

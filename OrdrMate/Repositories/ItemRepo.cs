@@ -103,6 +103,23 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
         await _context.SaveChangesAsync();
         return true;
     }
-    
 
+    public async Task<IEnumerable<Item>> GetAvailableItemsByBranchId(string branchId)
+    {
+        var branch = await _context.Branch
+        .Include(b => b.KitchenPowers)!.ThenInclude(kp => kp.Kitchen)
+        .FirstOrDefaultAsync(b => b.Id == branchId);
+
+        if (branch == null) throw new Exception("Branch not found");
+        if (branch.KitchenPowers == null) throw new Exception("Branch has no kitchen powers defined");
+
+        var items = await _context.Item
+            .Where(i => i.RestaurantId == branch.RestaurantId)
+            .ToListAsync();
+
+        var availableItems = items
+            .Where(i => branch.KitchenPowers.Any(kp => kp.KitchenId == i.KitchenId && kp.Units > 0));
+
+        return availableItems;
+    }
 }

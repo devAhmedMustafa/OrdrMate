@@ -4,17 +4,28 @@ public class OrderQueue
 {
     private readonly Queue<QueueItem> _items = new();
 
+    private TimeOnly _startTime;
+
     public void AddItem(QueueItem items)
     {
         _items.Enqueue(items);
+        Console.WriteLine($"Added item to queue: {items.ItemName} for order {items.OrderId}");
+
+        if (_items.Count == 1)
+        {
+            ResetStartTime();
+        }
     }
 
-    public void Deque()
+    public QueueItem Deque()
     {
         if (_items.Count > 0)
         {
-            _items.Dequeue();
+            if (_items.Count > 0) ResetStartTime();
+            return _items.Dequeue();
         }
+
+        throw new InvalidOperationException("Queue is empty, cannot dequeue.");
     }
 
     public QueueItem? GetPeekItem()
@@ -25,6 +36,11 @@ public class OrderQueue
         }
 
         return _items.Peek();
+    }
+
+    public void ResetStartTime()
+    {
+        _startTime = TimeOnly.FromDateTime(DateTime.Now);
     }
 
     public bool IsOrderInProcess(string orderId)
@@ -86,6 +102,12 @@ public class OrderQueue
         }
 
         if (orderTriggered == 0) return 0.0m;
+
+        var timeSinceStart = TimeOnly.FromDateTime(DateTime.Now).ToTimeSpan() - _startTime.ToTimeSpan();
+        if (timeSinceStart.TotalSeconds > 0)
+        {
+            totalTime += (decimal)timeSinceStart.TotalMinutes;
+        }
 
         return totalTime;
     }

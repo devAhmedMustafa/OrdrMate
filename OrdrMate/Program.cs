@@ -75,15 +75,19 @@ builder.Services.AddScoped<PaymentService, PaymentService>();
 
 builder.Services.AddScoped<CloudMessaging>();
 
-// AWS S3 Configuration
-builder.Services.AddScoped<S3Service>();
-
 // Sockets
-builder.Services.AddScoped<BranchOrdersSocketHandler>();
+builder.Services.AddScoped<BranchSocketHandler>();
 builder.Services.AddScoped<CustomerOrdersSocketHandler>();
 
 // Managers
 builder.Services.AddScoped<OrderManager>();
+builder.Services.AddScoped<TableManager>();
+
+// Third-party services
+builder.Services.AddHttpClient<PaymobService>();
+builder.Services.AddHttpClient<AiService>();
+builder.Services.AddScoped<S3Service>();
+
 
 builder.Services.AddControllers();
 

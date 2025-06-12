@@ -14,6 +14,35 @@ public class OrderRepo : IOrderRepo
         _db = context;
     }
 
+    public async Task<OrderIntent> CreateOrderIntent(OrderIntent orderIntent)
+    {
+        var savedOrderIntent = _db.OrderIntent.Add(orderIntent);
+        await _db.SaveChangesAsync();
+        return savedOrderIntent.Entity;
+    }
+
+    public async Task<OrderIntent?> GetOrderIntentById(string orderIntentId)
+    {
+        return await _db.OrderIntent
+            .Include(o => o.Customer)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(oi => oi.Id == orderIntentId);
+    }
+
+    public async Task<OrderIntent?> UpdateOrderIntentStatus(string orderIntentId, PaymentStatus status)
+    {
+        var orderIntent = await _db.OrderIntent
+            .FirstOrDefaultAsync(oi => oi.Id == orderIntentId);
+        if (orderIntent == null)
+        {
+            throw new KeyNotFoundException($"OrderIntent with id {orderIntentId} not found.");
+        }
+        orderIntent.Status = status;
+        _db.OrderIntent.Update(orderIntent);
+        await _db.SaveChangesAsync();
+        return orderIntent;
+    }
+
     public async Task<Order> CreateOrder(Order order)
     {
         var savedOrder = _db.Order.Add(order);
@@ -33,6 +62,8 @@ public class OrderRepo : IOrderRepo
         var saved = _db.OrderItem.Add(orderItem);
         await _db.SaveChangesAsync();
         await _db.Entry(saved.Entity).Reference(oi => oi.Item).LoadAsync();
+        await _db.Entry(saved.Entity).Reference(oi => oi.Order).LoadAsync();
+        await _db.Entry(saved.Entity.Item!).Reference(i => i.Kitchen).LoadAsync();
         return saved.Entity;
     }
 
@@ -125,6 +156,22 @@ public class OrderRepo : IOrderRepo
             .Where(o => o.BranchId == branchId && o.IsPaid == false)
             .Include(o => o.Payment)
             .Include(o => o.Customer)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Order>> GetAllOrdersByBranchId(string branchId)
+    {
+        return await _db.Order
+            .OrderByDescending(o => o.OrderDate)
+            .Where(o => o.BranchId == branchId)
+            .Include(o => o.Customer)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Order>> GetPaidOrdersOfBranch(string branchId)
+    {
+        return await _db.Order
+            .Where(o => o.BranchId == branchId && o.IsPaid == true)
             .ToListAsync();
     }
 }

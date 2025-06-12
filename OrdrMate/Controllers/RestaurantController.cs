@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrdrMate.DTOs.Restaurant;
 using OrdrMate.Services;
@@ -7,9 +8,10 @@ namespace OrdrMate.Controllers;
 
 [ApiController]
 [Route("/api/[controller]")]
-public class RestaurantController(RestaurantService r) : ControllerBase
+public class RestaurantController(RestaurantService r, IAuthorizationService auth) : ControllerBase
 {
     private readonly RestaurantService _service = r;
+    private readonly IAuthorizationService _authorizationService = auth;
 
     [HttpPost]
     public async Task<ActionResult<RestaurantController>> CreateRestaurant([FromBody] CreateRestaurantDto dto)
@@ -97,6 +99,48 @@ public class RestaurantController(RestaurantService r) : ControllerBase
                 return NotFound(new { err = "No categories found for this restaurant" });
             }
             return Ok(categories);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new { err = e.Message });
+        }
+    }
+
+    [HttpGet("profile/{restaurantId}")]
+    public async Task<ActionResult<RestaurantProfileDto>> GetRestaurantProfile(string restaurantId)
+    {
+        try
+        {
+            var profile = await _service.GetRestaurantProfile(restaurantId);
+            if (profile == null)
+            {
+                return NotFound(new { err = "No profile found for this restaurant" });
+            }
+            return Ok(profile);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new { err = e.Message });
+        }
+    }
+
+    [HttpPut("profile/{restaurantId}")]
+    public async Task<ActionResult<RestaurantProfileDto>> UpdateRestaurantProfile(string restaurantId, [FromBody] UpdateRestaurantProfileDto profileDto)
+    {
+        try
+        {
+            var authorization = await _authorizationService.AuthorizeAsync(User, restaurantId, "CanManageRestaurant");
+            if (!authorization.Succeeded)
+            {
+                return Forbid();
+            }   
+
+            var updatedProfile = await _service.UpdateRestaurantProfile(restaurantId, profileDto);
+            if (updatedProfile == null)
+            {
+                return NotFound(new { err = "No profile found for this restaurant" });
+            }
+            return Ok(updatedProfile);
         }
         catch (Exception e)
         {

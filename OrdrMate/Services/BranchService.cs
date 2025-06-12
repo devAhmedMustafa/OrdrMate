@@ -7,21 +7,21 @@ using OrdrMate.Repositories;
 using OrdrMate.Utils;
 using OrdrMate.Events;
 using OrdrMate.Managers;
+using OrdrMate.DTOs.Item;
 
-public class BranchService
+public class BranchService(
+    IBranchRepo branchRepo,
+    ManagerService managerService,
+    RestaurantService restaurantService,
+    OrderManager orderManager,
+    OrderService orderService
+    )
 {
-    private readonly IBranchRepo _branchRepo;
-    private readonly ManagerService _managerService;
-    private readonly OrderManager _orderManager;
-    private readonly RestaurantService _restaurantService;
-
-    public BranchService(IBranchRepo branchRepo, ManagerService managerService, RestaurantService restaurantService, OrderManager orderManager)
-    {
-        _branchRepo = branchRepo;
-        _managerService = managerService;
-        _restaurantService = restaurantService;
-        _orderManager = orderManager;
-    }
+    private readonly IBranchRepo _branchRepo = branchRepo;
+    private readonly ManagerService _managerService = managerService;
+    private readonly OrderManager _orderManager = orderManager;
+    private readonly RestaurantService _restaurantService = restaurantService;
+    private readonly OrderService _orderService = orderService;
 
     public async Task<BranchDto> GetBranchById(string id)
     {
@@ -127,7 +127,8 @@ public class BranchService
         }
 
         var ordersInQueue = await _branchRepo.GetOrdersInQueue(branchId);
-        var freeTables = await _branchRepo.GetFreeTables(branchId);
+        var tableCount = await _branchRepo.GetTableCount(branchId);
+        var freeTables = await _branchRepo.GetAvailableTables(branchId);
         var waitingTimes = await _orderManager.GetEstimatedTimes(branchId);
 
         return new BranchInfoDto
@@ -137,11 +138,29 @@ public class BranchService
             BranchPhoneNumber = branch.Phone,
             RestaurantName = branch.Restaurant?.Name ?? "Unknown",
             FreeTables = freeTables,
+            TotalTables = tableCount,
             OrdersInQueue = ordersInQueue,
             MinWaitingTime = waitingTimes.MinWaitingTime,
             MaxWaitingTime = waitingTimes.MaxWaitingTime,
             AverageWaitingTime = waitingTimes.AverageWaitingTime
         };
     }
+
+    public async Task<BranchBalanceDto> GetBranchBalance(string branchId)
+    {
+        var paidOrders = await _orderService.GetPaidOrders(branchId);
+        var todayEarnings = paidOrders
+            .Where(o => o.OrderDate.Date == DateTime.UtcNow.Date)
+            .Sum(o => o.TotalAmount);
+
+        var totalEarnings = paidOrders.Sum(o => o.TotalAmount);
+
+        return new BranchBalanceDto
+        {
+            TotalEarnings = totalEarnings,
+            TodayEarnings = todayEarnings,
+        };
+    }
+    
 
 }
