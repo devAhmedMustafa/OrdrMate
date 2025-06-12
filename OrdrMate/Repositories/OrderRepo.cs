@@ -163,7 +163,6 @@ public class OrderRepo : IOrderRepo
     {
         return await _db.Order
             .OrderByDescending(o => o.OrderDate)
-            .OrderByDescending(o => o.OrderTime)
             .Where(o => o.BranchId == branchId)
             .Include(o => o.Customer)
             .ToListAsync();
