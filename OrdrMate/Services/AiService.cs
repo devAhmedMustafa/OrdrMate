@@ -3,12 +3,14 @@ using System.Text.Json;
 using OrdrMate.Managers;
 using OrdrMate.Models;
 using OrdrMate.Repositories;
+using System.Net.Http.Headers;
 
 namespace OrdrMate.Services;
 
 public class AiService
 {
     private static string _aiBaseUrl = "http://localhost:8000/api/ai";
+    private readonly string _token = "your_api";
     private readonly HttpClient _httpClient;
     private readonly IWebHostEnvironment _env;
     private readonly OrderManager _orderManager;
@@ -27,6 +29,9 @@ public class AiService
         _orderManager = orderManager;
         _orderRepo = orderRepo;
         _env = env;
+
+        _token = configuration["Ai:Token"] ?? "your_api_token";
+
 
         if (_env.IsDevelopment())
         {
@@ -88,6 +93,9 @@ public class AiService
                 }
             }
         };
+
+        // Headers
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
 
         var response = await _httpClient.PostAsJsonAsync(requestUrl, body);
         if (!response.IsSuccessStatusCode)
