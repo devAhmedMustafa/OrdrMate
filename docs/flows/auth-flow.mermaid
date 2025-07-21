@@ -1,0 +1,165 @@
+---
+title: Authentication & Authorization Flow
+config:
+  theme: default
+---
+sequenceDiagram
+    participant U as User
+    participant MA as Mobile App
+    participant WEB as Web Dashboard
+    participant API as OrdrMate API
+    participant JWT as JWT Service
+    participant AUTH as Auth Middleware
+    participant GOOGLE as Google OAuth
+    participant DB as Database
+    participant ADMIN as Admin Handler
+    participant BM as Branch Manager Handler
+    participant RM as Restaurant Manager Handler
+
+    Note over U, RM: User Registration Flow
+    U->>MA: Register new account
+    MA->>API: POST /api/customer/register (RegisterUserDto)
+    API->>API: Validate user data
+    API->>DB: Check if user exists
+    DB-->>API: User existence check
+    
+    alt User Already Exists
+        API-->>MA: Error: User already registered
+    else New User
+        API->>DB: Create new user record
+        DB-->>API: User created successfully
+        API->>JWT: GenerateToken(user)
+        JWT-->>API: JWT token
+        API-->>MA: Registration success + token
+    end
+
+    Note over U, RM: Google OAuth Login Flow
+    U->>MA: Login with Google
+    MA->>GOOGLE: Initialize OAuth flow
+    GOOGLE->>U: Google consent screen
+    U->>GOOGLE: Grant permissions
+    GOOGLE->>MA: OAuth callback with code
+    MA->>API: POST /api/customer/google-login (GoogleTokenDto)
+    API->>GOOGLE: Verify token with Google
+    GOOGLE-->>API: User profile data
+    
+    API->>DB: Find or create user
+    alt Existing User
+        DB-->>API: User found
+    else New User
+        API->>DB: Create user from Google profile
+        DB-->>API: New user created
+    end
+    
+    API->>JWT: GenerateToken(user)
+    JWT-->>API: JWT token
+    API-->>MA: Login success + token
+
+    Note over U, RM: Email/Password Login Flow
+    U->>MA: Login with email/password
+    MA->>API: POST /api/customer/login (LoginDto)
+    API->>DB: Find user by email
+    DB-->>API: User data
+    
+    alt User Not Found
+        API-->>MA: Error: Invalid credentials
+    else User Found
+        API->>API: Verify password hash
+        alt Password Invalid
+            API-->>MA: Error: Invalid credentials
+        else Password Valid
+            API->>JWT: GenerateToken(user)
+            JWT-->>API: JWT token
+            API-->>MA: Login success + token
+        end
+    end
+
+    Note over U, RM: Dashboard Access Flow (Admin/Manager)
+    U->>WEB: Access admin dashboard
+    WEB->>API: Request with JWT token
+    API->>+AUTH: ValidateJwtToken()
+    AUTH->>JWT: VerifyToken()
+    JWT-->>AUTH: Token validation result
+
+    alt Token Invalid/Expired
+        AUTH-->>API: Unauthorized
+        API-->>WEB: 401 Unauthorized
+        WEB-->>U: Redirect to login
+    else Token Valid
+        AUTH->>DB: Get user details
+        DB-->>AUTH: User data with roles
+        AUTH-->>-API: Authenticated user context
+        
+        Note over API, RM: Role-Based Authorization
+        alt Admin Access Required
+            API->>+ADMIN: Handle authorization
+            ADMIN->>ADMIN: Check if user has Admin role
+            alt User is Admin
+                ADMIN-->>API: Authorization granted
+                API-->>WEB: Protected resource data
+            else User not Admin
+                ADMIN-->>-API: 403 Forbidden
+                API-->>WEB: Access denied
+            end
+        
+        else Branch Manager Access Required
+            API->>+BM: Handle authorization
+            BM->>BM: Check if user manages this branch
+            BM->>DB: Verify branch management relationship
+            DB-->>BM: Branch relationship data
+            alt User manages branch
+                BM-->>-API: Authorization granted
+                API-->>WEB: Branch-specific data
+            else User doesn't manage branch
+                BM-->>API: 403 Forbidden
+                API-->>WEB: Access denied
+            end
+        
+        else Restaurant Manager Access Required
+            API->>+RM: Handle authorization
+            RM->>RM: Check if user owns restaurant
+            RM->>DB: Verify restaurant ownership
+            DB-->>RM: Ownership data
+            alt User owns restaurant
+                RM-->>API: Authorization granted
+                API-->>WEB: Restaurant management data
+            else User doesn't own restaurant
+                RM-->>-API: 403 Forbidden
+                API-->>WEB: Access denied
+            end
+        end
+    end
+
+    Note over U, RM: Token Refresh Flow
+    MA->>API: Request with expired token
+    API->>AUTH: ValidateJwtToken()
+    AUTH-->>API: Token expired
+    API-->>MA: 401 Unauthorized + token expired
+    
+    MA->>API: POST /api/customer/refresh-token
+    API->>JWT: ValidateRefreshToken()
+    alt Refresh Token Valid
+        JWT->>JWT: Generate new access token
+        JWT-->>API: New JWT token
+        API-->>MA: New token issued
+        MA->>MA: Update stored token
+        MA->>API: Retry original request with new token
+    else Refresh Token Invalid
+        JWT-->>API: Invalid refresh token
+        API-->>MA: Please login again
+        MA-->>U: Redirect to login
+    end
+
+    Note over U, RM: Role Elevation Flow
+    U->>WEB: Request to become restaurant manager
+    WEB->>API: POST /api/customer/upgrade-role
+    API->>AUTH: Validate current user
+    AUTH-->>API: Current user context
+    
+    API->>DB: Update user role to RestaurantManager
+    DB-->>API: Role updated
+    
+    API->>JWT: GenerateTokenWithNewRole(user)
+    JWT-->>API: Updated JWT token
+    API-->>WEB: Role elevation success + new token
+    WEB-->>U: Access granted to management features

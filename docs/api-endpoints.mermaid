@@ -1,0 +1,250 @@
+---
+title: OrdrMate REST API Endpoints Documentation
+config:
+  theme: default
+---
+graph LR
+    subgraph "Authentication Endpoints"
+        subgraph "Customer Auth - /api/customer"
+            CA1[POST /register<br/>RegisterUserDto]
+            CA2[POST /login<br/>LoginDto]
+            CA3[POST /google-login<br/>GoogleTokenDto]
+            CA4[POST /refresh-token<br/>RefreshTokenDto]
+            CA5[PUT /upgrade-role<br/>UpgradeRoleDto]
+            CA6[GET /profile<br/>Get Current User]
+        end
+    end
+
+    subgraph "Restaurant Management"
+        subgraph "Restaurant - /api/restaurant"
+            R1[GET /<br/>Get All Restaurants]
+            R2[GET /-id-<br/>Get Restaurant Details]
+            R3[POST /<br/>CreateRestaurantDto]
+            R4[PUT /-id-<br/>UpdateRestaurantDto]
+            R5[DELETE /-id-<br/>Delete Restaurant]
+            R6[GET /user/-userId-<br/>Get User Restaurants]
+        end
+        
+        subgraph "Branch - /api/branch"
+            B1[GET /restaurant/-restaurantId-<br/>Get Restaurant Branches]
+            B2[GET /-id-<br/>Get Branch Details]
+            B3[POST /<br/>CreateBranchDto]
+            B4[PUT /-id-<br/>UpdateBranchDto]
+            B5[DELETE /-id-<br/>Delete Branch]
+            B6[GET /manager/-managerId-<br/>Get Manager Branches]
+        end
+        
+        subgraph "Manager - /api/manager"
+            M1[GET /branch/-branchId-<br/>Get Branch Managers]
+            M2[POST /assign<br/>AssignManagerDto]
+            M3[DELETE /remove/-managerId-/-branchId-<br/>Remove Manager]
+            M4[PUT /permissions<br/>UpdatePermissionsDto]
+        end
+    end
+
+    subgraph "Menu Management"
+        subgraph "Items - /api/item"
+            I1[GET /restaurant/-restaurantId-<br/>Get Restaurant Items]
+            I2[GET /branch/-branchId-<br/>Get Branch Items]
+            I3[GET /-id-<br/>Get Item Details]
+            I4[POST /<br/>CreateItemDto]
+            I5[PUT /-id-<br/>UpdateItemDto]
+            I6[DELETE /-id-<br/>Delete Item]
+            I7[PUT /-id-/availability<br/>UpdateAvailabilityDto]
+            I8[GET /category/-category-<br/>Get Items by Category]
+        end
+    end
+
+    subgraph "Table Management"
+        subgraph "Tables - /api/table"
+            T1[GET /restaurant/-restaurantId-<br/>Get Restaurant Tables]
+            T2[GET /branch/-branchId-<br/>Get Branch Tables]
+            T3[GET /-id-<br/>Get Table Details]
+            T4[POST /<br/>CreateTableDto]
+            T5[PUT /-id-<br/>UpdateTableDto]
+            T6[DELETE /-id-<br/>Delete Table]
+            T7[POST /reserve<br/>ReserveTableDto]
+            T8[PUT /free/-id-<br/>Free Table]
+            T9[GET /available/-branchId-<br/>Get Available Tables]
+            T10[POST /join-queue<br/>JoinQueueDto]
+            T11[GET /queue-status/-customerId-<br/>Get Queue Status]
+            T12[DELETE /leave-queue/-queueId-<br/>Leave Queue]
+        end
+    end
+
+    subgraph "Order Processing"
+        subgraph "Orders - /api/order"
+            O1[GET /customer/-customerId-<br/>Get Customer Orders]
+            O2[GET /branch/-branchId-<br/>Get Branch Orders]
+            O3[GET /-id-<br/>Get Order Details]
+            O4[POST /<br/>PlaceOrderDto]
+            O5[PUT /-id-/status<br/>UpdateOrderStatusDto]
+            O6[PUT /pick/-id-<br/>Pick Order]
+            O7[GET /item_queues/-branchId-<br/>Get Kitchen Queues]
+            O8[POST /check-prepared/-branchId-/-kitchen-/-unit-<br/>Mark Item Prepared]
+            O9[GET /analytics/-branchId-<br/>Get Order Analytics]
+            O10[PUT /cancel/-id-<br/>Cancel Order]
+        end
+    end
+
+    subgraph "Kitchen Operations"
+        subgraph "Kitchen - /api/kitchen"
+            K1[GET /branch/-branchId-<br/>Get Kitchen Status]
+            K2[PUT /-id-/status<br/>UpdateKitchenStatusDto]
+            K3[GET /queues/-branchId-<br/>Get All Kitchen Queues]
+            K4[POST /item/-itemId-/start<br/>Start Item Preparation]
+            K5[POST /item/-itemId-/complete<br/>Complete Item]
+            K6[GET /performance/-branchId-<br/>Get Performance Metrics]
+            K7[PUT /capacity/-branchId-<br/>Update Kitchen Capacity]
+        end
+    end
+
+    subgraph "Queue Management"
+        subgraph "Queues - /api/queues"
+            Q1[GET /branch/-branchId-<br/>Get All Branch Queues]
+            Q2[GET /order/-branchId-<br/>Get Order Queues]
+            Q3[GET /table/-branchId-<br/>Get Table Queues]
+            Q4[GET /kitchen/-branchId-<br/>Get Kitchen Queues]
+            Q5[PUT /priority/-customerId-<br/>Move to Priority]
+            Q6[GET /analytics/-branchId-<br/>Get Queue Analytics]
+            Q7[PUT /optimize/-branchId-<br/>Optimize Queues]
+        end
+    end
+
+    subgraph "File Management"
+        subgraph "Upload - /api/upload"
+            U1[POST /image<br/>Upload Image File]
+            U2[POST /document<br/>Upload Document]
+            U3[GET /file/-fileName-<br/>Get File URL]
+            U4[DELETE /file/-fileName-<br/>Delete File]
+            U5[POST /bulk<br/>Upload Multiple Files]
+        end
+    end
+
+    subgraph "Payment Integration"
+        subgraph "Webhook - /webhook/paymob"
+            W1[POST /<br/>Payment Confirmation]
+            W2[POST /transaction<br/>Transaction Update]
+            W3[POST /refund<br/>Refund Notification]
+        end
+    end
+
+    %% HTTP Methods and Status Codes
+    subgraph "HTTP Methods & Responses"
+        GET[GET Requests<br/>200 OK, 404 Not Found]
+        POST[POST Requests<br/>201 Created, 400 Bad Request]
+        PUT[PUT Requests<br/>200 OK, 404 Not Found]
+        DELETE[DELETE Requests<br/>204 No Content, 404 Not Found]
+    end
+
+    %% Authentication Requirements
+    subgraph "Authorization Levels"
+        PUBLIC[🌐 Public Access]
+        USER[🔐 Authenticated User]
+        MANAGER[👔 Branch Manager]
+        OWNER[👑 Restaurant Owner]
+        ADMIN[⚡ System Admin]
+    end
+
+    %% Endpoint Authorization Mapping
+    CA1 --> PUBLIC
+    CA2 --> PUBLIC
+    CA3 --> PUBLIC
+    W1 --> PUBLIC
+    W2 --> PUBLIC
+    W3 --> PUBLIC
+    
+    CA4 --> USER
+    CA5 --> USER
+    CA6 --> USER
+    R1 --> USER
+    R2 --> USER
+    I1 --> USER
+    I8 --> USER
+    T1 --> USER
+    T7 --> USER
+    T9 --> USER
+    T10 --> USER
+    T11 --> USER
+    T12 --> USER
+    O1 --> USER
+    O3 --> USER
+    O4 --> USER
+    O6 --> USER
+    O10 --> USER
+    
+    B1 --> MANAGER
+    B2 --> MANAGER
+    M1 --> MANAGER
+    I2 --> MANAGER
+    T2 --> MANAGER
+    T8 --> MANAGER
+    O2 --> MANAGER
+    O5 --> MANAGER
+    O7 --> MANAGER
+    O8 --> MANAGER
+    O9 --> MANAGER
+    K1 --> MANAGER
+    K2 --> MANAGER
+    K3 --> MANAGER
+    K4 --> MANAGER
+    K5 --> MANAGER
+    K6 --> MANAGER
+    K7 --> MANAGER
+    Q1 --> MANAGER
+    Q2 --> MANAGER
+    Q3 --> MANAGER
+    Q4 --> MANAGER
+    Q5 --> MANAGER
+    Q6 --> MANAGER
+    Q7 --> MANAGER
+    
+    R3 --> OWNER
+    R4 --> OWNER
+    R6 --> OWNER
+    B3 --> OWNER
+    B4 --> OWNER
+    I3 --> OWNER
+    I4 --> OWNER
+    I5 --> OWNER
+    I7 --> OWNER
+    T3 --> OWNER
+    T4 --> OWNER
+    T5 --> OWNER
+    M2 --> OWNER
+    M4 --> OWNER
+    U1 --> OWNER
+    U2 --> OWNER
+    U3 --> OWNER
+    U5 --> OWNER
+    
+    R5 --> ADMIN
+    B5 --> ADMIN
+    I6 --> ADMIN
+    T6 --> ADMIN
+    M3 --> ADMIN
+    U4 --> ADMIN
+
+    %% Request/Response Flow Examples
+    subgraph "Common API Flows"
+        FLOW1[Customer Places Order:<br/>1. POST /api/order<br/>2. Webhook payment confirmation<br/>3. GET /api/order/-id- for status]
+        FLOW2[Manager Processes Kitchen:<br/>1. GET /api/kitchen/queues/-branchId-<br/>2. POST /api/order/check-prepared<br/>3. WebSocket updates]
+        FLOW3[Table Reservation:<br/>1. GET /api/table/available/-branchId-<br/>2. POST /api/table/reserve<br/>3. PUT /api/table/free/-id-]
+    end
+
+    %% Styling
+    classDef publicEndpoint fill:#e8f5e8,stroke:#4caf50
+    classDef userEndpoint fill:#e3f2fd,stroke:#2196f3
+    classDef managerEndpoint fill:#fff3e0,stroke:#ff9800
+    classDef ownerEndpoint fill:#fce4ec,stroke:#e91e63
+    classDef adminEndpoint fill:#f3e5f5,stroke:#9c27b0
+    classDef httpMethod fill:#f5f5f5,stroke:#757575
+    classDef authLevel fill:#fff8e1,stroke:#ffa000
+
+    class CA1,CA2,CA3,W1,W2,W3 publicEndpoint
+    class CA4,CA5,CA6,R1,R2,I1,I8,T1,T7,T9,T10,T11,T12,O1,O3,O4,O6,O10 userEndpoint
+    class B1,B2,M1,I2,T2,T8,O2,O5,O7,O8,O9,K1,K2,K3,K4,K5,K6,K7,Q1,Q2,Q3,Q4,Q5,Q6,Q7 managerEndpoint
+    class R3,R4,R6,B3,B4,I3,I4,I5,I7,T3,T4,T5,M2,M4,U1,U2,U3,U5 ownerEndpoint
+    class R5,B5,I6,T6,M3,U4 adminEndpoint
+    class GET,POST,PUT,DELETE httpMethod
+    class PUBLIC,USER,MANAGER,OWNER,ADMIN authLevel

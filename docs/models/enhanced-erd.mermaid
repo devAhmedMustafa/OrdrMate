@@ -1,0 +1,235 @@
+---
+title: OrdrMate Enhanced Entity Relationship Diagram
+config:
+  theme: default
+---
+erDiagram
+    %% User Management Domain
+    User {
+        string id PK "Primary identifier"
+        string username UK "Unique username"
+        string password "Hashed password"
+        int role "UserRole enum: TopManager=0, BranchManager=1, Admin=2, Customer=3"
+        datetime created_at "Account creation timestamp"
+        datetime updated_at "Last update timestamp"
+    }
+
+    FirebaseToken {
+        string token PK "Firebase messaging token"
+        string userId FK "Reference to User"
+        datetime created_at "Token creation time"
+    }
+
+    %% Restaurant Management Domain
+    Restaurant {
+        string id PK "Unique restaurant identifier"
+        string name UK "Restaurant name"
+        string phone "Contact phone number"
+        string email "Contact email"
+        string managerId FK "Reference to managing User"
+        datetime created_at "Registration timestamp"
+        datetime updated_at "Last modification time"
+    }
+
+    RestaurantProfile {
+        string restaurantId PK,FK "Reference to Restaurant"
+        string description "Restaurant description"
+        string logoUrl "Logo image URL"
+        string coverImageUrl "Cover image URL"
+        datetime created_at "Profile creation time"
+        datetime updated_at "Last update time"
+    }
+
+    Branch {
+        string id PK "Unique branch identifier"
+        float latitude "Geographic latitude"
+        float longitude "Geographic longitude"
+        string address "Physical address"
+        string phone UK "Branch contact number"
+        string restaurantId FK "Reference to Restaurant"
+        string branchManagerId FK "Reference to managing User"
+        datetime created_at "Branch opening date"
+        datetime updated_at "Last modification time"
+    }
+
+    BranchRequest {
+        string id PK "Request identifier"
+        float latitude "Proposed latitude"
+        float longitude "Proposed longitude"
+        string address "Proposed address"
+        string phone "Proposed contact number"
+        string restaurantId FK "Reference to Restaurant"
+        datetime created_at "Request submission time"
+        string status "Request status: Pending, Approved, Rejected"
+    }
+
+    %% Menu Management Domain
+    Category {
+        string name PK "Category name"
+        string restaurantId PK,FK "Reference to Restaurant"
+        datetime created_at "Category creation time"
+    }
+
+    Item {
+        string id PK "Unique item identifier"
+        string name "Item name"
+        string description "Item description"
+        string imageUrl "Item image URL"
+        decimal price "Item price"
+        decimal preparationTime "Estimated preparation time in minutes"
+        string categoryName FK "Reference to Category name"
+        string restaurantId FK "Reference to Restaurant"
+        string kitchenId FK "Reference to Kitchen"
+        datetime created_at "Item creation time"
+        datetime updated_at "Last modification time"
+    }
+
+    Kitchen {
+        string id PK "Unique kitchen identifier"
+        string name "Kitchen name"
+        string description "Kitchen description"
+        string restaurantId FK "Reference to Restaurant"
+        datetime created_at "Kitchen setup time"
+    }
+
+    KitchenPower {
+        string branchId PK,FK "Reference to Branch"
+        string kitchenId PK,FK "Reference to Kitchen"
+        int units "Number of operational units"
+        int status "KitchenStatus enum: Operational=0, Maintenance=1, Closed=2"
+        datetime created_at "Configuration time"
+        datetime updated_at "Last status update"
+    }
+
+    %% Table Management Domain
+    Table {
+        int tableNumber PK "Table identifier within branch"
+        string branchId PK,FK "Reference to Branch"
+        int seats "Number of seats"
+        bool isAvailable "Current availability status"
+        datetime created_at "Table setup time"
+    }
+
+    TableReservation {
+        string reservationId PK "Unique reservation identifier"
+        string branchId FK "Reference to Branch"
+        string customerId FK "Reference to Customer User"
+        string orderId FK "Reference to Order"
+        datetime reservationTime "Reservation timestamp"
+        datetime seatedTime "When customer was seated"
+        datetime endTime "When table was freed"
+        int tableNumber "Reserved table number"
+        string reservationStatus "Status: Queued, Seated, Completed, Cancelled"
+        datetime created_at "Reservation creation time"
+    }
+
+    %% Order Management Domain
+    Order {
+        string id PK "Unique order identifier"
+        string branchId FK "Reference to Branch"
+        string customerId FK "Reference to Customer User"
+        time orderTime "Time of order placement"
+        date orderDate "Date of order"
+        int orderType "OrderType enum: DineIn=0, Takeaway=1"
+        int status "OrderStatus enum: Pending=0, Queued=1, InProgress=2, Ready=3, Delivered=4, Cancelled=-1"
+        decimal totalAmount "Total order amount"
+        bool isPaid "Payment status"
+        datetime created_at "Order placement time"
+        datetime updated_at "Last status update"
+    }
+
+    OrderItem {
+        string orderId PK,FK "Reference to Order"
+        string itemId PK,FK "Reference to Item"
+        int quantity "Quantity ordered"
+        decimal price "Item price at time of order"
+        datetime created_at "Order item creation time"
+    }
+
+    OrderIntent {
+        string id PK "Payment intent identifier"
+        string branchId FK "Reference to Branch"
+        string customerId FK "Reference to Customer"
+        string orderId FK "Reference to Order (nullable)"
+        decimal amount "Intent amount"
+        int orderType "OrderType enum"
+        string orderItemsJson "Serialized order items"
+        string paymentMethod "Payment method"
+        string paymentProvider "Payment provider"
+        int status "Intent status"
+        int tableNumber "Table number for dine-in (nullable)"
+        int seats "Number of seats (nullable)"
+        datetime created_at "Intent creation time"
+    }
+
+    Takeaway {
+        string orderId PK,FK "Reference to Order"
+        int orderNumber PK "Sequential order number"
+        datetime created_at "Takeaway creation time"
+    }
+
+    Indoor {
+        int tableNumber PK "Table number"
+        string branchId PK,FK "Reference to Branch"
+        string orderId UK,FK "Reference to Order"
+        datetime created_at "Indoor order creation time"
+    }
+
+    %% Payment Management Domain
+    Payment {
+        string id PK "Unique payment identifier"
+        string orderId UK,FK "Reference to Order"
+        decimal amount "Payment amount"
+        string paymentMethod "Payment method used"
+        string provider "Payment provider"
+        string transactionId "External transaction ID"
+        datetime paidAt "Payment completion time"
+        string externalRef "External reference"
+        datetime created_at "Payment record creation time"
+    }
+
+    %% User Management Relationships
+    User ||--o| Restaurant : "manages (TopManager)"
+    User ||--o{ Branch : "manages (BranchManager)"
+    User ||--o{ TableReservation : "makes (Customer)"
+    User ||--o{ Order : "places (Customer)"
+    User ||--o{ OrderIntent : "creates"
+    User ||--o| FirebaseToken : "has"
+
+    %% Restaurant Structure Relationships
+    Restaurant ||--o| RestaurantProfile : "has profile"
+    Restaurant ||--o{ Branch : "operates"
+    Restaurant ||--o{ BranchRequest : "requests"
+    Restaurant ||--o{ Category : "defines"
+    Restaurant ||--o{ Item : "offers"
+    Restaurant ||--o{ Kitchen : "operates"
+
+    %% Branch Operations Relationships
+    Branch ||--o{ Table : "contains"
+    Branch ||--o{ Order : "receives"
+    Branch ||--o{ TableReservation : "manages"
+    Branch ||--o{ Indoor : "serves"
+    Branch ||--o{ KitchenPower : "configures"
+    Branch ||--o{ OrderIntent : "processes"
+
+    %% Menu and Kitchen Relationships
+    Category ||--o{ Item : "categorizes"
+    Kitchen ||--o{ Item : "prepares"
+    Kitchen ||--o{ KitchenPower : "powers"
+
+    %% Table Management Relationships
+    Table ||--o{ TableReservation : "reserved for"
+    Table ||--o{ Indoor : "assigned to"
+
+    %% Order Processing Relationships
+    Order ||--o{ OrderItem : "contains"
+    Order ||--o| Payment : "paid via"
+    Order ||--o| Takeaway : "fulfilled as"
+    Order ||--o| Indoor : "served as"
+    Order ||--o| TableReservation : "reserved for"
+
+    %% Order Item Relationships
+    Item ||--o{ OrderItem : "included in"
+
+    %% Payment Flow Relationships
+    OrderIntent ||--o| Order : "materializes into"

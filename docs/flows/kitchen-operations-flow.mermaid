@@ -1,0 +1,226 @@
+---
+title: Kitchen Operations & Queue Management Flow
+config:
+  theme: default
+---
+sequenceDiagram
+    participant OM as Order Manager
+    participant KS as Kitchen Service
+    participant KQM as Kitchen Queue Manager
+    participant K1 as Grill Kitchen
+    participant K2 as Fryer Kitchen
+    participant K3 as Beverage Station
+    participant K4 as Dessert Station
+    participant WS as WebSocket Handler
+    participant BM as Branch Manager
+    participant FCM as Firebase Messaging
+    participant C as Customer
+
+    Note over OM, C: Order Processing Initiation
+    OM->>+KS: ProcessNewOrder(order)
+    KS->>KQM: AnalyzeOrderItems(orderItems)
+    KQM->>KQM: Categorize items by kitchen type
+    
+    Note over KQM, K4: Kitchen Assignment Logic
+    loop For each order item
+        alt Grilled Items (burgers, steaks)
+            KQM->>K1: AddToGrillQueue(item, priority)
+            K1->>K1: Calculate cooking time
+            K1-->>KQM: Queue position & estimated time
+        
+        else Fried Items (fries, nuggets)
+            KQM->>K2: AddToFryerQueue(item, priority)
+            K2->>K2: Check fryer capacity
+            K2-->>KQM: Queue position & estimated time
+        
+        else Beverages (drinks, smoothies)
+            KQM->>K3: AddToBeverageQueue(item, priority)
+            K3->>K3: Check ingredient availability
+            K3-->>KQM: Queue position & estimated time
+        
+        else Desserts (ice cream, cakes)
+            KQM->>K4: AddToDessertQueue(item, priority)
+            K4->>K4: Check preparation requirements
+            K4-->>KQM: Queue position & estimated time
+        end
+    end
+    
+    KQM->>OM: CalculateOverallOrderTime()
+    OM->>OM: Determine order completion estimate
+    KS-->>-OM: Kitchen processing initiated
+
+    Note over OM, C: Real-time Kitchen Dashboard Updates
+    KQM->>WS: NotifyKitchenQueueUpdate()
+    WS->>BM: Real-time queue status
+    BM->>BM: Display kitchen workload visualization
+    
+    OM->>FCM: NotifyCustomerOrderInProgress()
+    FCM->>C: Order being prepared notification
+
+    Note over OM, C: Parallel Kitchen Processing
+    par Grill Kitchen Operations
+        loop Process Grill Queue
+            K1->>K1: Start cooking next item
+            K1->>K1: Monitor cooking progress
+            K1->>WS: NotifyItemStarted()
+            WS->>BM: Item cooking notification
+            
+            K1->>K1: Item cooking completed
+            BM->>API: POST /api/order/check-prepared/{branchId}/grill/{unit}
+            API->>KQM: MarkItemPrepared(grill, unit)
+            KQM->>KQM: Move to completed items
+            KQM->>WS: NotifyItemCompleted()
+            WS->>BM: Item ready notification
+        end
+    
+    and Fryer Kitchen Operations
+        loop Process Fryer Queue
+            K2->>K2: Start frying next batch
+            K2->>K2: Monitor frying time & temperature
+            K2->>WS: NotifyFryingStarted()
+            WS->>BM: Fryer status update
+            
+            K2->>K2: Frying completed
+            BM->>API: POST /api/order/check-prepared/{branchId}/fryer/{unit}
+            API->>KQM: MarkItemPrepared(fryer, unit)
+            KQM->>KQM: Update fryer queue
+            KQM->>WS: NotifyFryerReady()
+            WS->>BM: Fried items ready
+        end
+    
+    and Beverage Station Operations
+        loop Process Beverage Queue
+            K3->>K3: Prepare beverages
+            K3->>K3: Check ingredient levels
+            
+            alt Ingredients Available
+                K3->>K3: Complete beverage preparation
+                BM->>API: POST /api/order/check-prepared/{branchId}/beverage/{unit}
+                API->>KQM: MarkItemPrepared(beverage, unit)
+                KQM->>WS: NotifyBeverageReady()
+                WS->>BM: Beverage completed
+            else Ingredients Low
+                K3->>WS: NotifyIngredientShortage()
+                WS->>BM: Ingredient shortage alert
+                BM->>BM: Request ingredient restock
+            end
+        end
+    
+    and Dessert Station Operations
+        loop Process Dessert Queue
+            K4->>K4: Prepare dessert items
+            K4->>K4: Assembly and presentation
+            K4->>K4: Quality check
+            
+            K4->>K4: Dessert ready
+            BM->>API: POST /api/order/check-prepared/{branchId}/dessert/{unit}
+            API->>KQM: MarkItemPrepared(dessert, unit)
+            KQM->>WS: NotifyDessertReady()
+            WS->>BM: Dessert completed notification
+        end
+    end
+
+    Note over OM, C: Order Completion Coordination
+    KQM->>KQM: Monitor all kitchen stations
+    
+    loop Check Order Completion
+        KQM->>OM: CheckOrderReadiness(orderId)
+        OM->>OM: Verify all items completed
+        
+        alt All Items Ready
+            OM->>OM: Mark order as ready
+            OM->>FCM: NotifyCustomerOrderReady()
+            FCM->>C: Order ready for pickup
+            OM->>WS: NotifyOrderReady()
+            WS->>BM: Order completion alert
+            
+            Note over BM, C: Final Assembly & Quality Check
+            BM->>BM: Perform final quality inspection
+            BM->>BM: Package order for delivery/pickup
+            BM->>API: PUT /api/order/finalize/{orderId}
+            API->>OM: FinalizeOrder()
+            OM->>OM: Generate order invoice
+            
+        else Items Still Pending
+            KQM->>WS: NotifyPartialCompletion()
+            WS->>BM: Progress update
+        end
+    end
+
+    Note over OM, C: Kitchen Performance Analytics
+    rect rgb(240, 255, 240)
+        KQM->>KQM: Track preparation times
+        KQM->>KQM: Monitor queue efficiency
+        KQM->>KQM: Calculate kitchen utilization
+        
+        KS->>KS: Generate performance reports
+        KS->>WS: SendPerformanceMetrics()
+        WS->>BM: Kitchen analytics dashboard
+        
+        Note over KS, BM: Performance Metrics Include:
+        Note over KS, BM: • Average preparation time per item type
+        Note over KS, BM: • Kitchen station utilization rates
+        Note over KS, BM: • Peak hour analysis
+        Note over KS, BM: • Ingredient consumption tracking
+        Note over KS, BM: • Order completion time trends
+    end
+
+    Note over OM, C: Kitchen Error Handling
+    rect rgb(255, 240, 240)
+        Note over K1, K4: Equipment Failure Scenarios
+        alt Kitchen Equipment Malfunction
+            K1->>K1: Detect equipment failure
+            K1->>WS: NotifyEquipmentFailure()
+            WS->>BM: Equipment failure alert
+            BM->>KQM: RedistributeQueue(failedKitchen)
+            KQM->>K2: TransferGrillItemsToBackup()
+            KQM->>FCM: NotifyOrderDelay()
+            FCM->>C: Estimated delay notification
+        end
+        
+        Note over K1, K4: Ingredient Shortage
+        alt Critical Ingredient Missing
+            K3->>K3: Detect ingredient shortage
+            K3->>WS: NotifyShortage(ingredient)
+            WS->>BM: Ingredient shortage alert
+            BM->>OM: CheckAffectedOrders(ingredient)
+            OM->>FCM: NotifyIngredientUnavailable()
+            FCM->>C: Item substitution options
+        end
+        
+        Note over K1, K4: Order Modification
+        alt Customer Modifies Order
+            C->>FCM: Request order modification
+            FCM->>OM: ProcessOrderChange()
+            OM->>KQM: UpdateKitchenQueues()
+            KQM->>K1: RemoveFromQueue(oldItem)
+            KQM->>K2: AddToQueue(newItem)
+            KQM->>WS: NotifyQueueChange()
+            WS->>BM: Order modification update
+        end
+    end
+
+    Note over OM, C: Kitchen Capacity Management
+    rect rgb(240, 240, 255)
+        KQM->>KQM: Monitor kitchen load
+        
+        alt High Demand Period
+            KQM->>OM: NotifyHighDemand()
+            OM->>OM: Implement delay estimation
+            OM->>FCM: NotifyExtendedWaitTimes()
+            FCM->>C: Updated delivery times
+            
+            BM->>API: PUT /api/kitchen/boost-capacity
+            API->>KQM: ActivateBoostMode()
+            KQM->>K1: IncreaseCookingParallelism()
+            KQM->>K2: OptimizeFryerBatches()
+        end
+        
+        alt Low Demand Period
+            KQM->>KQM: Optimize energy usage
+            KQM->>K1: ReduceStandbyPower()
+            KQM->>OM: SuggestMenuPromotion()
+            OM->>FCM: SendPromotionalOffers()
+            FCM->>C: Special offers notification
+        end
+    end

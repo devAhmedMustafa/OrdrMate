@@ -1,0 +1,350 @@
+---
+title: OrdrMate Core Components & Class Relationships
+config:
+  theme: default
+---
+classDiagram
+    %% Core Entity Models
+    class User {
+        +string Id
+        +string Email
+        +string PasswordHash
+        +string FirstName
+        +string LastName
+        +string? PhoneNumber
+        +UserRole Role
+        +DateTime CreatedAt
+        +DateTime UpdatedAt
+        +List~Restaurant~ OwnedRestaurants
+        +List~Branch~ ManagedBranches
+        +List~Order~ Orders
+        +ValidatePassword(string password) bool
+        +UpdateProfile(UserProfileDto dto) void
+        +AssignRole(UserRole role) void
+    }
+
+    class Restaurant {
+        +string Id
+        +string Name
+        +string Description
+        +string? LogoUrl
+        +string? CoverImageUrl
+        +string Address
+        +string PhoneNumber
+        +string Email
+        +TimeSpan OpeningTime
+        +TimeSpan ClosingTime
+        +bool IsActive
+        +string OwnerId
+        +User Owner
+        +List~Branch~ Branches
+        +List~Item~ Items
+        +DateTime CreatedAt
+        +UpdateDetails(RestaurantDto dto) void
+        +AddBranch(Branch branch) void
+        +DeactivateRestaurant() void
+    }
+
+    class Branch {
+        +string Id
+        +string Name
+        +string Address
+        +string PhoneNumber
+        +string? Email
+        +TimeSpan OpeningTime
+        +TimeSpan ClosingTime
+        +bool IsActive
+        +string RestaurantId
+        +Restaurant Restaurant
+        +List~User~ Managers
+        +List~Table~ Tables
+        +List~Order~ Orders
+        +List~Kitchen~ Kitchens
+        +DateTime CreatedAt
+        +AssignManager(User manager) void
+        +UpdateOperatingHours(TimeSpan open, TimeSpan close) void
+        +GetCurrentCapacity() int
+    }
+
+    class Order {
+        +string Id
+        +string CustomerId
+        +string BranchId
+        +OrderType Type
+        +OrderStatus Status
+        +PaymentStatus PaymentStatus
+        +PaymentMethods PaymentMethod
+        +decimal TotalAmount
+        +decimal? TaxAmount
+        +decimal? ServiceCharge
+        +string? TableId
+        +string? SpecialInstructions
+        +DateTime OrderTime
+        +DateTime? EstimatedDeliveryTime
+        +DateTime? CompletedAt
+        +User Customer
+        +Branch Branch
+        +Table? Table
+        +List~OrderItem~ OrderItems
+        +List~Payment~ Payments
+        +CalculateTotal() decimal
+        +UpdateStatus(OrderStatus status) void
+        +ProcessPayment(PaymentDto dto) bool
+        +GenerateInvoice() Invoice
+    }
+
+    class OrderItem {
+        +string Id
+        +string OrderId
+        +string ItemId
+        +int Quantity
+        +decimal Price
+        +string? SpecialInstructions
+        +bool IsPrepared
+        +DateTime? PreparedAt
+        +Order Order
+        +Item Item
+        +CalculateSubtotal() decimal
+        +MarkAsPrepared() void
+        +UpdateQuantity(int newQuantity) void
+    }
+
+    class Item {
+        +string Id
+        +string Name
+        +string Description
+        +decimal Price
+        +string? ImageUrl
+        +string Category
+        +bool IsAvailable
+        +bool IsVegetarian
+        +bool IsVegan
+        +bool IsGlutenFree
+        +List~string~ Allergens
+        +int PreparationTime
+        +string RestaurantId
+        +Restaurant Restaurant
+        +List~OrderItem~ OrderItems
+        +UpdateAvailability(bool available) void
+        +UpdatePrice(decimal newPrice) void
+        +AddAllergen(string allergen) void
+    }
+
+    class Table {
+        +string Id
+        +string Number
+        +int Capacity
+        +bool IsAvailable
+        +string? CurrentOrderId
+        +string BranchId
+        +Branch Branch
+        +List~Order~ Orders
+        +List~TableReservation~ Reservations
+        +ReserveTable(string customerId) bool
+        +FreeTable() void
+        +GetEstimatedWaitTime() TimeSpan
+    }
+
+    class Kitchen {
+        +string Id
+        +string Name
+        +KitchenStatus Status
+        +string Type
+        +int Capacity
+        +bool IsActive
+        +string BranchId
+        +Branch Branch
+        +List~OrderItem~ CurrentItems
+        +StartPreparation(OrderItem item) void
+        +CompleteItem(string itemId) void
+        +UpdateStatus(KitchenStatus status) void
+        +GetWorkload() int
+    }
+
+    class Payment {
+        +string Id
+        +string OrderId
+        +PaymentMethods Method
+        +PaymentStatus Status
+        +decimal Amount
+        +string? TransactionId
+        +string? PaymobOrderId
+        +DateTime ProcessedAt
+        +DateTime? CompletedAt
+        +Order Order
+        +ProcessPayment() bool
+        +RefundPayment(decimal amount) bool
+        +UpdateStatus(PaymentStatus status) void
+    }
+
+    %% Service Layer Classes
+    class OrderService {
+        -IOrderRepository _orderRepository
+        -IPaymentService _paymentService
+        -INotificationService _notificationService
+        -OrderManager _orderManager
+        +CreateOrderIntent(PlaceOrderDto dto) OrderIntentDto
+        +ProceedTransaction(string orderId) OrderDto
+        +GetCustomerOrders(string customerId) List~OrderDto~
+        +UpdateOrderStatus(string orderId, OrderStatus status) void
+        +CancelOrder(string orderId) bool
+        +GetOrderAnalytics(string branchId) OrderAnalyticsDto
+    }
+
+    class RestaurantService {
+        -IRestaurantRepository _restaurantRepository
+        -IBranchRepository _branchRepository
+        -IItemRepository _itemRepository
+        +CreateRestaurant(CreateRestaurantDto dto) RestaurantDto
+        +UpdateRestaurant(string id, UpdateRestaurantDto dto) RestaurantDto
+        +GetRestaurantsByOwner(string ownerId) List~RestaurantDto~
+        +AddMenuItem(CreateItemDto dto) ItemDto
+        +UpdateMenuItemAvailability(string itemId, bool available) void
+        +GetRestaurantAnalytics(string restaurantId) RestaurantAnalyticsDto
+    }
+
+    class PaymentService {
+        -IPaymentRepository _paymentRepository
+        -PaymobService _paymobService
+        +ProcessPaymentWebhook(PaymobWebhookDto dto) bool
+        +InitiatePayment(string orderId, decimal amount) PaymentUrlDto
+        +RefundPayment(string paymentId, decimal amount) bool
+        +GetPaymentStatus(string transactionId) PaymentStatus
+        +ProcessFailedPayment(string orderId) void
+    }
+
+    class NotificationService {
+        -FCMService _fcmService
+        +SendOrderConfirmation(string customerId, OrderDto order) void
+        +SendOrderStatusUpdate(string customerId, string orderId, OrderStatus status) void
+        +SendQueueNotification(string customerId, QueueStatusDto status) void
+        +SendPaymentNotification(string customerId, PaymentDto payment) void
+        +SendBranchNotification(string branchId, string message) void
+    }
+
+    %% Queue Management Classes
+    class OrderManager {
+        -OrderQueue _orderQueue
+        -List~Kitchen~ _kitchens
+        +ConfirmOrder(Order order) void
+        +GetItemQueues(string branchId) ItemQueuesDto
+        +CheckPreparedInQueue(string branchId, string kitchen, int unit) void
+        +CalculateEstimatedTime(List~OrderItem~ items) TimeSpan
+        +OptimizeKitchenLoad() void
+    }
+
+    class TableManager {
+        -ITableRepository _tableRepository
+        -TableQueueManager _queueManager
+        +ReserveTable(ReserveTableDto dto) TableReservationDto
+        +FreeTable(string tableId) void
+        +GetAvailableTables(string branchId) List~TableDto~
+        +CalculateWaitingTime(string branchId) TimeSpan
+        +ProcessTableQueue() void
+    }
+
+    class RestaurantQueueManager {
+        -Dictionary~string, OrderQueue~ _orderQueues
+        -Dictionary~string, TableQueueManager~ _tableQueues
+        +GetBranchQueues(string branchId) BranchQueuesDto
+        +OptimizeQueues(string branchId) void
+        +GetQueueAnalytics(string branchId) QueueAnalyticsDto
+        +ProcessEmergencyMode(string branchId) void
+    }
+
+    %% Enumeration Classes
+    class UserRole {
+        <<enumeration>>
+        Customer
+        BranchManager
+        RestaurantManager
+        Admin
+    }
+
+    class OrderStatus {
+        <<enumeration>>
+        Pending
+        Confirmed
+        InProgress
+        Ready
+        Delivered
+        Cancelled
+    }
+
+    class OrderType {
+        <<enumeration>>
+        DineIn
+        Takeaway
+        Delivery
+    }
+
+    class PaymentStatus {
+        <<enumeration>>
+        Pending
+        Processing
+        Completed
+        Failed
+        Refunded
+    }
+
+    class PaymentMethods {
+        <<enumeration>>
+        CreditCard
+        DebitCard
+        Cash
+        DigitalWallet
+        BankTransfer
+    }
+
+    class KitchenStatus {
+        <<enumeration>>
+        Active
+        Inactive
+        Maintenance
+        Busy
+    }
+
+    %% Relationships
+    User "1" --o "*" Restaurant : owns
+    User "1" --o "*" Branch : manages
+    User "1" --o "*" Order : places
+    Restaurant "1" --o "*" Branch : has
+    Restaurant "1" --o "*" Item : contains
+    Branch "1" --o "*" Table : has
+    Branch "1" --o "*" Order : receives
+    Branch "1" --o "*" Kitchen : operates
+    Order "1" --o "*" OrderItem : contains
+    Order "1" --o "*" Payment : has
+    Order "1" --o "*" Table : reserved_for
+    Item "*" --o "1" Item : references
+    Kitchen "1" --o "*" OrderItem : prepares
+
+    %% Service Dependencies
+    OrderService --> Order
+    OrderService --> OrderManager
+    OrderService --> PaymentService
+    OrderService --> NotificationService
+    
+    RestaurantService --> Restaurant
+    RestaurantService --> Branch
+    RestaurantService --> Item
+    
+    PaymentService --> Payment
+    PaymentService --> Order
+    
+    OrderManager --> Kitchen
+    OrderManager --> OrderItem
+    
+    TableManager --> Table
+    TableManager --> RestaurantQueueManager
+    
+    %% Enum Usage
+    %% User --> UserRole
+    %% Order --> OrderStatus
+    %% Order --> OrderType
+    %% Order --> PaymentStatus
+    %% Payment --> PaymentMethods
+    %% Payment --> PaymentStatus
+    %% Kitchen --> KitchenStatus
+
+   

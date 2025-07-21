@@ -1,0 +1,247 @@
+---
+title: OrdrMate API Architecture - Service Layer & Endpoints
+config:
+  theme: default
+---
+graph TB
+    subgraph "Client Layer"
+        MA[Mobile App]
+        WEB[Web Dashboard]
+        EXTERNAL[External Systems]
+    end
+
+    subgraph "API Gateway & Middleware"
+        CORS[CORS Middleware]
+        JWT[JWT Authentication]
+        AUTH[Authorization Policies]
+        RATE[Rate Limiting]
+        LOG[Request Logging]
+    end
+
+    subgraph "Controller Layer"
+        subgraph "Authentication Controllers"
+            CC[CustomerController]
+            AC[AuthController]
+        end
+        
+        subgraph "Business Controllers"
+            RC[RestaurantController]
+            BC[BranchController]
+            MC[ManagerController]
+            TC[TableController]
+            IC[ItemController]
+            OC[OrderController]
+            KC[KitchenController]
+            QC[QueuesController]
+        end
+        
+        subgraph "Utility Controllers"
+            UC[UploadController]
+            WHC[PaymobWebhookController]
+        end
+    end
+
+    subgraph "Service Layer"
+        subgraph "Core Business Services"
+            RS[RestaurantService]
+            OS[OrderService]
+            PS[PaymentService]
+            NS[NotificationService]
+            US[UploadService]
+        end
+        
+        subgraph "External Integration Services"
+            PMS[PaymobService]
+            FCMS[FCMService]
+            S3S[S3Service]
+            GOOGLES[GoogleAuthService]
+        end
+        
+        subgraph "Queue Management Services"
+            OM[OrderManager]
+            OQ[OrderQueue]
+            RQ[ReservationQueue]
+            RQM[RestaurantQueueManager]
+            TM[TableManager]
+            TQM[TableQueueManager]
+        end
+    end
+
+    subgraph "Repository Layer"
+        subgraph "Entity Repositories"
+            UREPO[UserRepository]
+            RREPO[RestaurantRepository]
+            BREPO[BranchRepository]
+            OREPO[OrderRepository]
+            IREPO[ItemRepository]
+            TREPO[TableRepository]
+            PREPO[PaymentRepository]
+        end
+        
+        subgraph "Data Access"
+            EF[Entity Framework Core]
+            CONTEXT[OrdrMateContext]
+        end
+    end
+
+    subgraph "Database Layer"
+        PG[(PostgreSQL Database)]
+        subgraph "Database Tables"
+            USERS[Users]
+            REST[Restaurants]
+            BRANCHES[Branches]
+            ORDERS[Orders]
+            ITEMS[Items]
+            TABLES[Tables]
+            PAYMENTS[Payments]
+            ORDERITEMS[OrderItems]
+        end
+    end
+
+    subgraph "Real-time Communication"
+        WS[WebSocket Hubs]
+        SSE[Server-Sent Events]
+        PUSH[Push Notifications]
+    end
+
+    subgraph "External Services"
+        PAYMOB[Paymob Payment Gateway]
+        FCM[Firebase Cloud Messaging]
+        S3[AWS S3 Storage]
+        GOOGLE[Google OAuth]
+    end
+
+    %% Client to API Gateway flow
+    MA --> CORS
+    WEB --> CORS
+    EXTERNAL --> CORS
+
+    %% Middleware chain
+    CORS --> JWT
+    JWT --> AUTH
+    AUTH --> RATE
+    RATE --> LOG
+
+    %% Controller routing
+    LOG --> CC
+    LOG --> RC
+    LOG --> BC
+    LOG --> MC
+    LOG --> TC
+    LOG --> IC
+    LOG --> OC
+    LOG --> KC
+    LOG --> QC
+    LOG --> UC
+    LOG --> WHC
+
+    %% Controller to Service dependencies
+    CC --> US
+    CC --> NS
+    CC --> GOOGLES
+    
+    RC --> RS
+    RC --> US
+    
+    BC --> RS
+    BC --> OM
+    
+    OC --> OS
+    OC --> OM
+    OC --> PS
+    OC --> NS
+    
+    TC --> TM
+    TC --> TQM
+    TC --> NS
+    
+    IC --> RS
+    IC --> US
+    
+    KC --> OM
+    KC --> NS
+    
+    QC --> OM
+    QC --> OQ
+    QC --> RQ
+    QC --> RQM
+    
+    UC --> S3S
+    
+    WHC --> PMS
+    WHC --> OS
+
+    %% Service to Repository dependencies
+    RS --> RREPO
+    RS --> BREPO
+    RS --> IREPO
+    
+    OS --> OREPO
+    OS --> UREPO
+    OS --> OM
+    
+    PS --> PREPO
+    PS --> PMS
+    
+    NS --> FCMS
+    
+    US --> S3S
+    
+    OM --> OREPO
+    OM --> TREPO
+    
+    TM --> TREPO
+    TQM --> TREPO
+
+    %% Repository to Database
+    UREPO --> EF
+    RREPO --> EF
+    BREPO --> EF
+    OREPO --> EF
+    IREPO --> EF
+    TREPO --> EF
+    PREPO --> EF
+    
+    EF --> CONTEXT
+    CONTEXT --> PG
+
+    %% Database tables
+    PG --> USERS
+    PG --> REST
+    PG --> BRANCHES
+    PG --> ORDERS
+    PG --> ITEMS
+    PG --> TABLES
+    PG --> PAYMENTS
+    PG --> ORDERITEMS
+
+    %% Real-time communication
+    OM --> WS
+    TM --> WS
+    NS --> SSE
+    NS --> PUSH
+
+    %% External service integrations
+    PMS --> PAYMOB
+    FCMS --> FCM
+    S3S --> S3
+    GOOGLES --> GOOGLE
+
+    %% Styling
+    classDef clientLayer fill:#e1f5fe
+    classDef middlewareLayer fill:#f3e5f5
+    classDef controllerLayer fill:#e8f5e8
+    classDef serviceLayer fill:#fff3e0
+    classDef repositoryLayer fill:#fce4ec
+    classDef databaseLayer fill:#e0f2f1
+    classDef externalLayer fill:#fff8e1
+    classDef realtimeLayer fill:#f1f8e9
+
+    class MA,WEB,EXTERNAL clientLayer
+    class CORS,JWT,AUTH,RATE,LOG middlewareLayer
+    class CC,AC,RC,BC,MC,TC,IC,OC,KC,QC,UC,WHC controllerLayer
+    class RS,OS,PS,NS,US,PMS,FCMS,S3S,GOOGLES,OM,OQ,RQ,RQM,TM,TQM serviceLayer
+    class UREPO,RREPO,BREPO,OREPO,IREPO,TREPO,PREPO,EF,CONTEXT repositoryLayer
+    class PG,USERS,REST,BRANCHES,ORDERS,ITEMS,TABLES,PAYMENTS,ORDERITEMS databaseLayer
+    class PAYMOB,FCM,S3,GOOGLE externalLayer
+    class WS,SSE,PUSH realtimeLayer
