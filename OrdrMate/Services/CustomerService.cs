@@ -18,6 +18,7 @@ public class CustomerService
 
     public async Task<GoogleLoginCredentialsDto> AuthenticateCustomer(GoogleLoginRequestDto dto)
     {
+
         var validPayload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, new GoogleJsonWebSignature.ValidationSettings
         {
             Audience = [_configuration["Authentication:Google:ClientId"]]

@@ -63,6 +63,24 @@ public class BranchRepo : IBranchRepo
         await _context.Branch.AddAsync(branch);
         await _context.SaveChangesAsync();
 
+        var restaurant = await _context.Restaurant
+            .Include(r => r.Kitchens)
+            .FirstOrDefaultAsync(r => r.Id == branch.RestaurantId) ?? throw new KeyNotFoundException($"Restaurant with id {branch.RestaurantId} not found.");
+
+        if (restaurant.Kitchens == null)
+        {
+            throw new InvalidOperationException($"Restaurant with id {branch.RestaurantId} has no kitchens defined.");
+        }
+
+        foreach (var kitchen in restaurant.Kitchens)
+        {
+            await _context.KitchenPower.AddAsync(new KitchenPower
+            {
+                KitchenId = kitchen.Id,
+                BranchId = branch.Id
+            });
+        }
+
         return branch;
     }
 

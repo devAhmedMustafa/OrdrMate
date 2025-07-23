@@ -1,0 +1,293 @@
+---
+title: OrdrMate Deployment Architecture & Infrastructure
+config:
+  theme: default
+---
+graph TB
+    subgraph "Client Tier"
+        subgraph "Mobile Applications"
+            IOS[iOS App<br/>Swift/SwiftUI]
+            ANDROID[Android App<br/>Kotlin/Jetpack Compose]
+            WEB_APP[Web App<br/>React/Vue.js]
+        end
+        
+        subgraph "Management Dashboard"
+            ADMIN_WEB[Admin Dashboard<br/>React/Angular]
+            MANAGER_WEB[Manager Portal<br/>React/Vue.js]
+            OWNER_WEB[Owner Dashboard<br/>React/Next.js]
+        end
+    end
+
+    subgraph "CDN & Load Balancing"
+        CDN[Content Delivery Network<br/>CloudFlare/AWS CloudFront]
+        LB[Load Balancer<br/>AWS ALB/Azure Load Balancer]
+        WAF[Web Application Firewall<br/>CloudFlare/AWS WAF]
+    end
+
+    subgraph "API Gateway Tier"
+        subgraph "Reverse Proxy"
+            NGINX[Nginx Reverse Proxy<br/>SSL Termination<br/>Rate Limiting]
+        end
+        
+        subgraph "API Management"
+            GATEWAY[API Gateway<br/>AWS API Gateway<br/>Azure API Management]
+            THROTTLE[Rate Limiting & Throttling]
+            MONITOR[API Monitoring<br/>Health Checks]
+        end
+    end
+
+    subgraph "Application Tier"
+        subgraph "Container Orchestration"
+            DOCKER[Docker Containers]
+            K8S[Kubernetes Cluster<br/>Container Orchestration]
+            HELM[Helm Charts<br/>Package Management]
+        end
+        
+        subgraph "Application Instances"
+            APP1[OrdrMate API Instance 1<br/>ASP.NET Core 8.0]
+            APP2[OrdrMate API Instance 2<br/>ASP.NET Core 8.0]
+            APP3[OrdrMate API Instance 3<br/>ASP.NET Core 8.0]
+            WS_HUB[WebSocket Hub<br/>SignalR/Socket.io]
+        end
+        
+        subgraph "Background Services"
+            QUEUE_WORKER[Queue Worker Service<br/>Order Processing]
+            NOTIFICATION_SERVICE[Notification Service<br/>FCM/Push Notifications]
+            PAYMENT_PROCESSOR[Payment Processor<br/>Paymob Integration]
+            SCHEDULER[Task Scheduler<br/>Cron Jobs/Quartz.NET]
+        end
+    end
+
+    subgraph "Data Tier"
+        subgraph "Primary Database"
+            PG_PRIMARY[PostgreSQL Primary<br/>Read/Write Operations]
+            PG_REPLICA1[PostgreSQL Read Replica 1]
+            PG_REPLICA2[PostgreSQL Read Replica 2]
+        end
+        
+        subgraph "Caching Layer"
+            REDIS_CLUSTER[Redis Cluster<br/>Session Storage<br/>Real-time Data Cache]
+            MEMCACHED[Memcached<br/>Object Caching]
+        end
+        
+        subgraph "Search & Analytics"
+            ELASTICSEARCH[Elasticsearch<br/>Search & Logging]
+            KIBANA[Kibana<br/>Log Visualization]
+        end
+    end
+
+    subgraph "File Storage"
+        subgraph "Object Storage"
+            S3[AWS S3 / Azure Blob<br/>Static Files<br/>Images & Documents]
+            S3_CDN[S3 CloudFront<br/>Global Content Delivery]
+        end
+        
+        subgraph "Backup Storage"
+            GLACIER[AWS Glacier<br/>Long-term Backup<br/>Archival Storage]
+        end
+    end
+
+    subgraph "External Services"
+        subgraph "Payment Integration"
+            PAYMOB[Paymob Payment Gateway<br/>Credit Card Processing]
+            STRIPE[Stripe<br/>Alternative Payment Processing]
+        end
+        
+        subgraph "Communication Services"
+            FCM[Firebase Cloud Messaging<br/>Push Notifications]
+            TWILIO[Twilio<br/>SMS Notifications]
+            SENDGRID[SendGrid<br/>Email Services]
+        end
+        
+        subgraph "Authentication"
+            GOOGLE_OAUTH[Google OAuth 2.0<br/>Social Authentication]
+            FACEBOOK_AUTH[Facebook Login<br/>Social Authentication]
+            AUTH0[Auth0<br/>Identity Management]
+        end
+        
+        subgraph "Analytics & Monitoring"
+            GOOGLE_ANALYTICS[Google Analytics<br/>User Behavior Tracking]
+            MIXPANEL[Mixpanel<br/>Event Analytics]
+        end
+    end
+
+    subgraph "Monitoring & Observability"
+        subgraph "Application Monitoring"
+            APM[Application Performance Monitoring<br/>New Relic/Datadog]
+            LOGS[Centralized Logging<br/>ELK Stack/Splunk]
+            METRICS[Metrics Collection<br/>Prometheus/Grafana]
+        end
+        
+        subgraph "Infrastructure Monitoring"
+            INFRA_MONITOR[Infrastructure Monitoring<br/>AWS CloudWatch/Azure Monitor]
+            UPTIME[Uptime Monitoring<br/>Pingdom/StatusPage]
+            ALERTS[Alert Management<br/>PagerDuty/Slack Integration]
+        end
+    end
+
+    subgraph "Security Layer"
+        subgraph "Network Security"
+            VPC[Virtual Private Cloud<br/>Network Isolation]
+            FIREWALL[Network Firewall<br/>Port & Protocol Control]
+            VPN[VPN Gateway<br/>Secure Admin Access]
+        end
+        
+        subgraph "Application Security"
+            JWT_AUTH[JWT Authentication<br/>Stateless Auth Tokens]
+            RBAC[Role-Based Access Control<br/>Authorization Policies]
+            ENCRYPTION[Data Encryption<br/>AES-256 at Rest & Transit]
+        end
+        
+        subgraph "Secrets Management"
+            VAULT[HashiCorp Vault<br/>AWS Secrets Manager<br/>Secret Storage]
+            KEY_ROTATION[Automatic Key Rotation<br/>Certificate Management]
+        end
+    end
+
+    subgraph "CI/CD Pipeline"
+        subgraph "Source Control"
+            GIT[Git Repository<br/>GitHub/GitLab]
+            BRANCH[Feature Branches<br/>Pull Request Workflow]
+        end
+        
+        subgraph "Build Pipeline"
+            BUILD[Build Server<br/>GitHub Actions/Jenkins]
+            TEST[Automated Testing<br/>Unit/Integration Tests]
+            SCAN[Security Scanning<br/>SAST/DAST Tools]
+        end
+        
+        subgraph "Deployment"
+            STAGING[Staging Environment<br/>Pre-production Testing]
+            PROD_DEPLOY[Production Deployment<br/>Blue-Green/Rolling Updates]
+            ROLLBACK[Automatic Rollback<br/>Failure Recovery]
+        end
+    end
+
+    %% Client to CDN flow
+    IOS --> CDN
+    ANDROID --> CDN
+    WEB_APP --> CDN
+    ADMIN_WEB --> CDN
+    MANAGER_WEB --> CDN
+    OWNER_WEB --> CDN
+
+    %% CDN to Load Balancer
+    CDN --> WAF
+    WAF --> LB
+
+    %% Load Balancer to API Gateway
+    LB --> NGINX
+    NGINX --> GATEWAY
+    GATEWAY --> THROTTLE
+    THROTTLE --> MONITOR
+
+    %% API Gateway to Application Tier
+    MONITOR --> APP1
+    MONITOR --> APP2
+    MONITOR --> APP3
+    MONITOR --> WS_HUB
+
+    %% Application to Background Services
+    APP1 --> QUEUE_WORKER
+    APP2 --> NOTIFICATION_SERVICE
+    APP3 --> PAYMENT_PROCESSOR
+    WS_HUB --> SCHEDULER
+
+    %% Application to Data Tier
+    APP1 --> PG_PRIMARY
+    APP2 --> PG_REPLICA1
+    APP3 --> PG_REPLICA2
+    
+    APP1 --> REDIS_CLUSTER
+    APP2 --> REDIS_CLUSTER
+    APP3 --> MEMCACHED
+
+    %% Database Replication
+    PG_PRIMARY --> PG_REPLICA1
+    PG_PRIMARY --> PG_REPLICA2
+
+    %% File Storage Connections
+    APP1 --> S3
+    APP2 --> S3
+    APP3 --> S3
+    S3 --> S3_CDN
+    S3 --> GLACIER
+
+    %% External Service Integrations
+    PAYMENT_PROCESSOR --> PAYMOB
+    PAYMENT_PROCESSOR --> STRIPE
+    NOTIFICATION_SERVICE --> FCM
+    NOTIFICATION_SERVICE --> TWILIO
+    NOTIFICATION_SERVICE --> SENDGRID
+    APP1 --> GOOGLE_OAUTH
+    APP2 --> FACEBOOK_AUTH
+    APP3 --> AUTH0
+
+    %% Monitoring Connections
+    APP1 --> APM
+    APP2 --> LOGS
+    APP3 --> METRICS
+    K8S --> INFRA_MONITOR
+    NGINX --> UPTIME
+    MONITOR --> ALERTS
+
+    %% Logging Flow
+    APP1 --> ELASTICSEARCH
+    APP2 --> ELASTICSEARCH
+    APP3 --> ELASTICSEARCH
+    ELASTICSEARCH --> KIBANA
+
+    %% Security Integrations
+    APP1 --> JWT_AUTH
+    APP2 --> RBAC
+    APP3 --> ENCRYPTION
+    DOCKER --> VAULT
+    K8S --> KEY_ROTATION
+
+    %% CI/CD Flow
+    GIT --> BRANCH
+    BRANCH --> BUILD
+    BUILD --> TEST
+    TEST --> SCAN
+    SCAN --> STAGING
+    STAGING --> PROD_DEPLOY
+    PROD_DEPLOY --> APP1
+    PROD_DEPLOY --> APP2
+    PROD_DEPLOY --> APP3
+
+    %% Network Security
+    APP1 -.-> VPC
+    APP2 -.-> VPC
+    APP3 -.-> VPC
+    VPC -.-> FIREWALL
+    FIREWALL -.-> VPN
+
+    %% Container Orchestration
+    DOCKER --> K8S
+    K8S --> HELM
+    HELM --> APP1
+    HELM --> APP2
+    HELM --> APP3
+
+    %% Styling
+    classDef clientTier fill:#e3f2fd,stroke:#1976d2
+    classDef cdnTier fill:#e8f5e8,stroke:#388e3c
+    classDef apiTier fill:#fff3e0,stroke:#f57c00
+    classDef appTier fill:#fce4ec,stroke:#c2185b
+    classDef dataTier fill:#f3e5f5,stroke:#7b1fa2
+    classDef storageTier fill:#e0f2f1,stroke:#00695c
+    classDef externalTier fill:#fff8e1,stroke:#f9a825
+    classDef monitoringTier fill:#e1f5fe,stroke:#0277bd
+    classDef securityTier fill:#ffebee,stroke:#c62828
+    classDef cicdTier fill:#f1f8e9,stroke:#558b2f
+
+    class IOS,ANDROID,WEB_APP,ADMIN_WEB,MANAGER_WEB,OWNER_WEB clientTier
+    class CDN,LB,WAF cdnTier
+    class NGINX,GATEWAY,THROTTLE,MONITOR apiTier
+    class DOCKER,K8S,HELM,APP1,APP2,APP3,WS_HUB,QUEUE_WORKER,NOTIFICATION_SERVICE,PAYMENT_PROCESSOR,SCHEDULER appTier
+    class PG_PRIMARY,PG_REPLICA1,PG_REPLICA2,REDIS_CLUSTER,MEMCACHED,ELASTICSEARCH,KIBANA dataTier
+    class S3,S3_CDN,GLACIER storageTier
+    class PAYMOB,STRIPE,FCM,TWILIO,SENDGRID,GOOGLE_OAUTH,FACEBOOK_AUTH,AUTH0,GOOGLE_ANALYTICS,MIXPANEL externalTier
+    class APM,LOGS,METRICS,INFRA_MONITOR,UPTIME,ALERTS monitoringTier
+    class VPC,FIREWALL,VPN,JWT_AUTH,RBAC,ENCRYPTION,VAULT,KEY_ROTATION securityTier
+    class GIT,BRANCH,BUILD,TEST,SCAN,STAGING,PROD_DEPLOY,ROLLBACK cicdTier

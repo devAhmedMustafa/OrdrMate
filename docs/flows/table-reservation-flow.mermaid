@@ -1,0 +1,190 @@
+---
+title: Table Reservation & Queue Management Flow
+config:
+  theme: default
+---
+sequenceDiagram
+    participant C as Customer
+    participant MA as Mobile App
+    participant API as OrdrMate API
+    participant TS as Table Service
+    participant TM as Table Manager
+    participant TQM as Table Queue Manager
+    participant RM as Reservation Queue
+    participant WS as WebSocket Handler
+    participant BM as Branch Manager
+    participant FCM as Firebase Messaging
+
+    Note over C, FCM: Table Availability Check
+    C->>MA: View restaurant tables
+    MA->>API: GET /api/table/restaurant/{restaurantId}
+    API->>TS: GetRestaurantTables()
+    TS->>TM: GetAvailableTablesWithStatus()
+    TM-->>TS: Table availability data
+    TS-->>API: Available tables list
+    API-->>MA: Tables with real-time status
+
+    Note over C, FCM: Immediate Table Reservation (Available Table)
+    C->>MA: Select available table
+    MA->>API: POST /api/table/reserve (ReserveTableDto)
+    API->>+TS: ReserveTable()
+    TS->>TM: CheckTableAvailability()
+    TM-->>TS: Table status confirmation
+    
+    alt Table Available
+        TS->>TM: MarkTableAsReserved()
+        TM->>TM: Update table status
+        TM->>WS: NotifyTableStatusChange()
+        WS->>BM: Real-time table update
+        
+        TS->>TS: Create reservation record
+        TS->>FCM: SendReservationConfirmation()
+        FCM->>C: Reservation confirmed notification
+        TS-->>-API: Reservation successful
+        API-->>MA: Reservation confirmation
+        
+    else Table No Longer Available
+        TS-->>API: Table unavailable error
+        API-->>MA: Please select another table
+    end
+
+    Note over C, FCM: Queue-Based Reservation (Busy Restaurant)
+    C->>MA: Request table (all occupied)
+    MA->>API: POST /api/table/join-queue (JoinQueueDto)
+    API->>+TQM: AddToReservationQueue()
+    TQM->>RM: AddCustomerToQueue()
+    RM->>RM: Calculate queue position & wait time
+    
+    TQM->>TM: EstimateWaitingTime()
+    TM->>TM: Analyze current occupancy patterns
+    TM->>TM: Calculate average dining duration
+    TM-->>TQM: Estimated waiting time
+    
+    RM-->>TQM: Queue position & estimated time
+    TQM->>FCM: SendQueueConfirmation()
+    FCM->>C: Queue position notification
+    TQM-->>-API: Queue registration successful
+    API-->>MA: Queue position details
+
+    Note over C, FCM: Queue Management & Updates
+    loop Queue Processing
+        TM->>TM: Monitor table occupancy
+        
+        alt Customer Finishes Dining
+            BM->>API: PUT /api/table/free/{tableId}
+            API->>TS: FreeTable()
+            TS->>TM: MarkTableAsAvailable()
+            TM->>WS: NotifyTableAvailable()
+            WS->>BM: Table status update
+            
+            TM->>TQM: ProcessNextInQueue()
+            TQM->>RM: GetNextCustomerInQueue()
+            RM-->>TQM: Next customer details
+            
+            alt Queue Not Empty
+                TQM->>FCM: NotifyTableReady()
+                FCM->>C: Your table is ready!
+                TQM->>TQM: Start reservation timer (15 minutes)
+                
+                Note over TQM, FCM: Customer Response Handling
+                alt Customer Accepts (within 15 min)
+                    C->>MA: Accept table notification
+                    MA->>API: PUT /api/table/confirm-reservation/{queueId}
+                    API->>TQM: ConfirmReservation()
+                    TQM->>RM: RemoveFromQueue()
+                    TQM->>TS: FinalizeReservation()
+                    TS->>TM: AssignTableToCustomer()
+                    TM->>WS: NotifyTableAssigned()
+                    WS->>BM: Customer arrived notification
+                    
+                else Customer Doesn't Respond (timeout)
+                    TQM->>TQM: Reservation timeout triggered
+                    TQM->>RM: RemoveFromQueue()
+                    TQM->>FCM: SendTimeoutNotification()
+                    FCM->>C: Reservation expired
+                    TQM->>TQM: ProcessNextInQueue()
+                    
+                else Customer Declines
+                    C->>MA: Decline table offer
+                    MA->>API: PUT /api/table/decline-reservation/{queueId}
+                    API->>TQM: DeclineReservation()
+                    TQM->>RM: RemoveFromQueue()
+                    TQM->>TQM: ProcessNextInQueue()
+                end
+            end
+        end
+        
+        Note over TQM, FCM: Queue Position Updates
+        TQM->>RM: UpdateQueuePositions()
+        RM->>RM: Recalculate waiting times
+        RM-->>TQM: Updated queue data
+        TQM->>FCM: SendQueueUpdates()
+        FCM->>C: Updated queue position
+    end
+
+    Note over C, FCM: Advanced Queue Features
+    rect rgb(240, 255, 240)
+        Note over C, FCM: Customer Queue Management
+        C->>MA: Check queue status
+        MA->>API: GET /api/table/queue-status/{customerId}
+        API->>TQM: GetCustomerQueueStatus()
+        TQM->>RM: FindCustomerInQueue()
+        RM-->>TQM: Current position & wait time
+        TQM-->>API: Queue status data
+        API-->>MA: Real-time queue position
+        
+        C->>MA: Leave queue (optional)
+        MA->>API: DELETE /api/table/leave-queue/{queueId}
+        API->>TQM: RemoveFromQueue()
+        TQM->>RM: UpdateQueueAfterRemoval()
+        RM->>FCM: NotifyQueueUpdate()
+        FCM->>C: Queue exit confirmation
+    end
+
+    Note over C, FCM: Branch Manager Queue Control
+    rect rgb(240, 240, 255)
+        BM->>API: GET /api/table/queue-overview/{branchId}
+        API->>TQM: GetBranchQueueOverview()
+        TQM->>RM: GetAllActiveQueues()
+        RM-->>TQM: Complete queue data
+        TQM-->>API: Queue management dashboard
+        API-->>BM: Real-time queue visualization
+        
+        Note over BM, FCM: Manual Queue Management
+        BM->>API: PUT /api/table/priority-queue/{customerId}
+        API->>TQM: MoveToPriority()
+        TQM->>RM: ReorderQueue()
+        RM->>FCM: NotifyQueueChanges()
+        FCM->>C: Priority queue notification
+        
+        BM->>API: PUT /api/table/extend-reservation/{tableId}
+        API->>TS: ExtendReservationTime()
+        TS->>TM: UpdateTableTimer()
+        TM->>WS: NotifyExtension()
+        WS->>BM: Extension confirmed
+    end
+
+    Note over C, FCM: Error Scenarios
+    rect rgb(255, 240, 240)
+        Note right of TQM: Queue Management Errors
+        alt Queue Full
+            TQM-->>API: Queue capacity exceeded
+            API-->>MA: Restaurant at capacity
+            MA-->>C: Try again later message
+        end
+        
+        alt Table Assignment Conflict
+            TM->>TM: Detect double booking
+            TM->>TQM: ResolveConflict()
+            TQM->>RM: ReassignTable()
+            RM->>FCM: NotifyTableChange()
+            FCM->>C: Table change notification
+        end
+        
+        alt Network Disconnection
+            MA->>MA: Detect connection loss
+            MA->>MA: Store queue actions locally
+            MA->>API: Sync when reconnected
+            API->>TQM: ProcessPendingActions()
+        end
+    end

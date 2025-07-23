@@ -1,0 +1,136 @@
+---
+title: Order Management Flow - Complete Lifecycle
+config:
+  theme: default
+---
+sequenceDiagram
+    participant C as Customer
+    participant MA as Mobile App
+    participant API as OrdrMate API
+    participant OS as Order Service
+    participant PS as Payment Service
+    participant PM as Paymob Gateway
+    participant OM as Order Manager
+    participant KS as Kitchen Service
+    participant TS as Table Service
+    participant WS as WebSocket Handler
+    participant BM as Branch Manager
+    participant FCM as Firebase Messaging
+
+    Note over C, FCM: Order Placement Phase
+    C->>MA: Browse menu & select items
+    MA->>API: GET /api/item/restaurant/{id}
+    API->>OS: GetAvailableItems()
+    OS-->>API: Available items list
+    API-->>MA: Menu items response
+    
+    C->>MA: Add items to cart & place order
+    MA->>API: POST /api/order (PlaceOrderDto)
+    API->>+OS: CreateOrderIntent()
+    
+    alt Dine-in Order
+        OS->>TS: ReserveTable()
+        TS->>OM: CalculateWaitingTime()
+        OM-->>TS: Estimated waiting time
+        TS-->>OS: Table reservation details
+    end
+    
+    OS->>OS: CreateOrderIntent entity
+    OS-->>-API: OrderIntentDto with payment URL
+    API-->>MA: Order intent response
+
+    Note over C, FCM: Payment Phase
+    MA->>PM: Redirect to payment gateway
+    C->>PM: Complete payment
+    PM->>API: POST /webhook/paymob (payment confirmation)
+    API->>+PS: ProcessPaymentWebhook()
+    PS->>OS: ProceedTransaction()
+    
+    OS->>+OM: ConfirmOrder()
+    OM->>OM: Add order to kitchen queues
+    
+    alt Dine-in Order
+        OM->>TS: FinalizeTableReservation()
+        TS->>TS: Update table status
+    else Takeaway Order
+        OM->>OM: Generate takeaway number
+    end
+    
+    OM->>WS: NotifyBranchUpdate()
+    WS->>BM: Real-time order notification
+    OM->>FCM: SendCustomerNotification()
+    FCM->>C: Order confirmation push
+    OM-->>-OS: Order confirmation
+    OS-->>PS: Transaction completed
+    
+    Note over C, FCM: Kitchen Processing Phase
+    BM->>API: GET /api/order/item_queues/{branchId}
+    API->>OM: GetItemQueues()
+    OM-->>API: Current kitchen queues
+    API-->>BM: Kitchen queue status
+    
+    loop For each kitchen unit
+        BM->>API: POST /api/order/check-prepared/{branchId}/{kitchen}/{unit}
+        API->>+OM: CheckPreparedInQueue()
+        OM->>OM: Move item to next in queue
+        OM->>WS: NotifyQueueUpdate()
+        WS->>BM: Updated queue status
+        OM-->>-API: Queue update response
+    end
+    
+    Note over C, FCM: Order Completion Phase
+    OM->>OM: Check if all items ready
+    alt All Items Ready
+        OM->>OS: UpdateOrderStatus(Ready)
+        OM->>FCM: NotifyCustomerOrderReady()
+        FCM->>C: Order ready notification
+        OM->>WS: NotifyBranchOrderReady()
+        WS->>BM: Order ready notification
+    end
+    
+    Note over C, FCM: Order Pickup/Delivery Phase
+    alt Takeaway Order
+        C->>MA: Arrive at restaurant
+        MA->>API: PUT /api/order/pick/{orderId}
+        API->>OS: PickOrder()
+        OS->>OS: Generate invoice
+        OS->>OS: UpdateOrderStatus(Delivered)
+        OS-->>API: Order invoice
+        API-->>MA: Pickup confirmation
+    else Dine-in Order
+        BM->>API: Manually mark as served
+        API->>OS: UpdateOrderStatus(Delivered)
+        TS->>TS: Mark table as available
+        TS->>WS: NotifyTableAvailable()
+        WS->>BM: Table status update
+    end
+    
+    Note over C, FCM: Post-Order Management
+    OM->>OM: Update restaurant analytics
+    OM->>OM: Update kitchen performance metrics
+    
+    alt Table Reservation Queue
+        TS->>TS: Process next reservation in queue
+        TS->>FCM: NotifyNextCustomerInQueue()
+        FCM->>C: Table ready notification
+    end
+
+    Note over C, FCM: Error Handling Scenarios
+    rect rgb(255, 240, 240)
+        Note right of PM: Payment Failed
+        PM->>API: Payment failure webhook
+        API->>PS: HandlePaymentFailure()
+        PS->>OS: CancelOrderIntent()
+        OS->>TS: ReleaseTableReservation()
+        OS->>FCM: NotifyPaymentFailure()
+        FCM->>C: Payment failed notification
+    end
+    
+    rect rgb(255, 240, 240)
+        Note right of OM: Kitchen Unavailable
+        OM->>KS: CheckKitchenAvailability()
+        KS-->>OM: Kitchen offline/maintenance
+        OM->>OS: DelayOrder()
+        OM->>FCM: NotifyOrderDelay()
+        FCM->>C: Order delay notification
+    end

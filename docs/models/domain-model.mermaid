@@ -1,0 +1,290 @@
+---
+title: OrdrMate Domain Model - Core Business Entities
+config:
+  theme: default
+---
+classDiagram
+    %% Core User Management
+    class User {
+        <<entity>>
+        +string Id
+        +string Username
+        +string Password
+        +UserRole Role
+        +authenticateUser()
+        +updatePassword()
+    }
+
+    class UserRole {
+        <<enumeration>>
+        TopManager
+        BranchManager
+        Admin
+        Customer
+    }
+
+    %% Restaurant Management
+    class Restaurant {
+        <<entity>>
+        +string Id
+        +string Name
+        +string Phone
+        +string Email
+        +string ManagerId
+        +RestaurantProfile Profile
+        +List~Category~ Categories
+        +List~Branch~ Branches
+        +List~Item~ Items
+        +List~Kitchen~ Kitchens
+        +addBranch()
+        +addKitchen()
+        +updateProfile()
+    }
+
+    class RestaurantProfile {
+        <<entity>>
+        +string RestaurantId
+        +string Description
+        +string LogoUrl
+        +string CoverImageUrl
+        +updateProfile()
+    }
+
+    class Branch {
+        <<entity>>
+        +string Id
+        +float Latitude
+        +float Longitude
+        +string Address
+        +string Phone
+        +string RestaurantId
+        +string BranchManagerId
+        +ICollection~Table~ Tables
+        +ICollection~Order~ Orders
+        +ICollection~KitchenPower~ KitchenPowers
+        +calculateWaitingTime()
+        +getAvailableTables()
+    }
+
+    %% Menu and Kitchen Management
+    class Category {
+        <<entity>>
+        +string Name
+        +string RestaurantId
+        +ICollection~Item~ Items
+        +addItem()
+    }
+
+    class Item {
+        <<entity>>
+        +string Id
+        +string Name
+        +string Description
+        +string ImageUrl
+        +decimal Price
+        +decimal PreparationTime
+        +string CategoryName
+        +string KitchenId
+        +string RestaurantId
+        +isAvailable()
+        +updatePrice()
+    }
+
+    class Kitchen {
+        <<entity>>
+        +string Id
+        +string Name
+        +string Description
+        +string RestaurantId
+        +calculateCapacity()
+        +isOperational()
+    }
+
+    class KitchenPower {
+        <<entity>>
+        +string BranchId
+        +string KitchenId
+        +int Units
+        +KitchenStatus Status
+        +updateStatus()
+        +calculateThroughput()
+    }
+
+    class KitchenStatus {
+        <<enumeration>>
+        Operational
+        Maintenance
+        Closed
+    }
+
+    %% Table Management
+    class Table {
+        <<entity>>
+        +int TableNumber
+        +int Seats
+        +string BranchId
+        +bool IsAvailable
+        +reserveTable()
+        +releaseTable()
+    }
+
+    class TableReservation {
+        <<entity>>
+        +string ReservationId
+        +string BranchId
+        +string CustomerId
+        +string OrderId
+        +DateTime ReservationTime
+        +DateTime SeatedTime
+        +DateTime EndTime
+        +int TableNumber
+        +ReservationStatus Status
+        +updateStatus()
+        +calculateWaitingTime()
+    }
+
+    class ReservationStatus {
+        <<enumeration>>
+        Queued
+        Seated
+        Completed
+        Cancelled
+    }
+
+    %% Order Management
+    class Order {
+        <<entity>>
+        +string Id
+        +string BranchId
+        +string CustomerId
+        +TimeOnly OrderTime
+        +DateTime OrderDate
+        +OrderType OrderType
+        +OrderStatus Status
+        +decimal TotalAmount
+        +bool IsPaid
+        +ICollection~OrderItem~ OrderItems
+        +Payment Payment
+        +calculateTotal()
+        +updateStatus()
+        +processPayment()
+    }
+
+    class OrderType {
+        <<enumeration>>
+        DineIn
+        Takeaway
+    }
+
+    class OrderStatus {
+        <<enumeration>>
+        Pending
+        Queued
+        InProgress
+        Ready
+        Delivered
+        Cancelled
+    }
+
+    class OrderItem {
+        <<entity>>
+        +string OrderId
+        +string ItemId
+        +int Quantity
+        +decimal Price
+        +calculateSubtotal()
+    }
+
+    class Takeaway {
+        <<entity>>
+        +string OrderId
+        +int OrderNumber
+        +generateOrderNumber()
+    }
+
+    class Indoor {
+        <<entity>>
+        +int TableNumber
+        +string BranchId
+        +string OrderId
+        +assignTable()
+    }
+
+    %% Payment Management
+    class Payment {
+        <<entity>>
+        +string Id
+        +string OrderId
+        +decimal Amount
+        +string PaymentMethod
+        +string Provider
+        +string TransactionId
+        +DateTime PaidAt
+        +string ExternalRef
+        +processPayment()
+        +refund()
+    }
+
+    class PaymentMethods {
+        <<enumeration>>
+        Cash
+        Card
+        Digital
+    }
+
+    %% Firebase Integration
+    class FirebaseToken {
+        <<entity>>
+        +string Token
+        +string UserId
+        +sendNotification()
+    }
+
+    %% Relationships - User Management
+    User "1" --"1" UserRole : "has"
+    Restaurant "1" -- "1" User : "managed by"
+    Branch "1" -- "1" User : "managed by"
+    FirebaseToken "1" -- "1" User : "belongs to"
+
+    %% Relationships - Restaurant Structure
+    Restaurant "1" -- "1" RestaurantProfile : has
+    Restaurant "1" --o "*" Branch : contains
+    Restaurant "1" --o "*" Category : has
+    Restaurant "1" --o "*" Item : offers
+    Restaurant "1" --o "*" Kitchen : operates
+
+    %% Relationships - Branch Operations
+    Branch "1" --o "*" Table : contains
+    Branch "1" --o "*" Order : receives
+    Branch "1" --o "*" KitchenPower : has
+    Branch "1" --o "*" TableReservation : manages
+    Branch "1" --o "*" Indoor : serves
+
+    %% Relationships - Menu Structure
+    Category "1" --o "*" Item : contains
+    Kitchen "1" --o "*" Item : prepares
+    Kitchen "1" -- "1" KitchenStatus : has
+    KitchenPower "1" -- "1" Kitchen : powers
+    KitchenPower "1" -- "1" KitchenStatus : has
+
+    %% Relationships - Table Management
+    Table "1" --o "*" TableReservation : reserved
+    Table "1" --o "*" Indoor : assigned
+    TableReservation "1" -- "1" ReservationStatus : has
+    TableReservation "1" -- "1" User : "reserved by"
+    TableReservation "1" -- "1" Order : for
+
+    %% Relationships - Order Management
+    Order "1" -- "1" OrderType : has
+    Order "1" -- "1" OrderStatus : has
+    Order "1" -- "1" User : "placed by"
+    Order "1" -- "1" Payment : "paid via"
+    Order "1" --o "*" OrderItem : contains
+    Order "1" -- "1" Takeaway : "can be"
+    Order "1" -- "1" Indoor : "can be"
+
+    %% Relationships - Order Items
+    OrderItem "1" -- "1" Item : references
+
+    %% Relationships - Payment
+    Payment "1" -- "1" PaymentMethods : uses

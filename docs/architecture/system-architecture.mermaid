@@ -1,0 +1,192 @@
+---
+title: OrdrMate System Architecture
+config:
+  theme: default
+  flowchart:
+    htmlLabels: false
+---
+flowchart TB
+    subgraph "External Services"
+        PM[Paymob Payment Gateway]
+        FCM[Firebase Cloud Messaging]
+        S3[AWS S3 Storage]
+        GAuth[Google OAuth]
+    end
+
+    subgraph "Client Applications"
+        WEB[Manager Web App]
+        MOBILE[Customer Mobile App]
+    end
+
+    subgraph "API Gateway Layer"
+        CORS[CORS Middleware]
+        AUTH[JWT Authentication]
+        AUTHZ[Authorization Policies]
+    end
+
+    subgraph "OrdrMate Core API"
+        subgraph "Controllers Layer"
+            RC[Restaurant Controller]
+            BC[Branch Controller]
+            OC[Order Controller]
+            TC[Table Controller]
+            KC[Kitchen Controller]
+            MC[Manager Controller]
+            CC[Customer Controller]
+            IC[Item Controller]
+            UC[Upload Controller]
+            PC[Payment Controller]
+        end
+
+        subgraph "Business Logic Layer"
+            subgraph "Services"
+                RS[Restaurant Service]
+                BS[Branch Service]
+                OS[Order Service]
+                TS[Table Service]
+                KS[Kitchen Service]
+                MS[Manager Service]
+                CS[Customer Service]
+                IS[Item Service]
+                PS[Payment Service]
+                PayS[Paymob Service]
+                AIS[AI Service]
+                S3S[S3 Service]
+                CMS[Cloud Messaging]
+            end
+
+            subgraph "Managers"
+                OM[Order Manager]
+                TM[Table Manager]
+                QM[Queue Manager]
+            end
+        end
+
+        subgraph "Data Access Layer"
+            subgraph "Repositories"
+                RR[Restaurant Repo]
+                BR[Branch Repo]
+                OR[Order Repo]
+                TR[Table Repo]
+                KR[Kitchen Repo]
+                UR[User Repo]
+                IR[Item Repo]
+                PR[Payment Repo]
+            end
+        end
+
+        subgraph "Real-time Communication"
+            WS[WebSocket Handlers]
+            BSH[Branch Socket Handler]
+            CSH[Customer Orders Socket Handler]
+        end
+    end
+
+    subgraph "Data Layer"
+        DB[(PostgreSQL Database)]
+        EFC[Entity Framework Core]
+        DBContext[OrdrMateDbContext]
+    end
+
+    subgraph "Infrastructure"
+        FILES[File Storage]
+        LOGS[Logging System]
+        CONFIG[Configuration]
+    end
+
+    %% Client connections
+    WEB --> CORS
+    MOBILE --> CORS
+
+    %% External service connections
+    PayS -.-> PM
+    CMS -.-> FCM
+    S3S -.-> S3
+    CS -.-> GAuth
+
+    %% API Gateway flow
+    CORS --> AUTH
+    AUTH --> AUTHZ
+    AUTHZ --> RC
+    AUTHZ --> BC
+    AUTHZ --> OC
+    AUTHZ --> TC
+    AUTHZ --> KC
+    AUTHZ --> MC
+    AUTHZ --> CC
+    AUTHZ --> IC
+    AUTHZ --> UC
+    AUTHZ --> PC
+
+    %% Controller to Service connections
+    RC --> RS
+    BC --> BS
+    OC --> OS
+    TC --> TS
+    KC --> KS
+    MC --> MS
+    CC --> CS
+    IC --> IS
+    UC --> S3S
+    PC --> PS
+
+    %% Service to Repository connections
+    RS --> RR
+    BS --> BR
+    OS --> OR
+    TS --> TR
+    KS --> KR
+    MS --> UR
+    CS --> UR
+    IS --> IR
+    PS --> PR
+
+    %% Service to Manager connections
+    OS --> OM
+    TS --> TM
+    BS --> OM
+
+    %% Service to External Service connections
+    PS --> PayS
+    CS --> CMS
+    IS --> S3S
+
+    %% Repository to Database connections
+    RR --> EFC
+    BR --> EFC
+    OR --> EFC
+    TR --> EFC
+    KR --> EFC
+    UR --> EFC
+    IR --> EFC
+    PR --> EFC
+
+    %% Entity Framework to Database
+    EFC --> DBContext
+    DBContext --> DB
+
+    %% WebSocket connections
+    BC --> BSH
+    OC --> CSH
+    BSH --> WS
+    CSH --> WS
+
+    %% Infrastructure connections
+    S3S --> FILES
+    MC --> LOGS
+    RS --> CONFIG
+
+    %% Styling
+    classDef external fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef client fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef api fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef business fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef data fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef infra fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+
+    class PM,FCM,S3,GAuth external
+    class WEB,MOBILE client
+    class RC,BC,OC,TC,KC,MC,CC,IC,UC,PC,CORS,AUTH,AUTHZ api
+    class RS,BS,OS,TS,KS,MS,CS,IS,PS,PayS,AIS,S3S,CMS,OM,TM,QM,BSH,CSH,WS business
+    class RR,BR,OR,TR,KR,UR,IR,PR,DB,EFC,DBContext data
+    class FILES,LOGS,CONFIG infra
