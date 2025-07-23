@@ -118,7 +118,11 @@ public class RestaurantService(IRestaurantRepo r, IUserRepo m)
                 {
                     Id = restaurant.Id,
                     Name = restaurant.Name,
+                    LogoUrl = restaurant.Profile?.LogoUrl ?? string.Empty,
+                    Description = restaurant.Profile?.Description ?? string.Empty,
+                    CoverUrl = restaurant.Profile?.CoverImageUrl ?? string.Empty
                 };
+                
                 if (restaurant.Email != null) responseDto.Email = restaurant.Email;
                 if (restaurant.Phone != null) responseDto.Phone = restaurant.Phone;
                 responseDtos.Add(responseDto);
