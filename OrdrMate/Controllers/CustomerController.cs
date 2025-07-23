@@ -27,8 +27,6 @@ public class CustomerController(CustomerService service, CloudMessaging cloudMes
             if (response == null)
                 return Unauthorized(new { err = "Invalid Google ID token or user not found." });
 
-            Console.WriteLine($"User {response.UserId} logged in successfully with Google.");
-
             return Ok(response);
         }
         catch (Exception ex)

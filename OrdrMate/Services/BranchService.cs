@@ -7,7 +7,6 @@ using OrdrMate.Repositories;
 using OrdrMate.Utils;
 using OrdrMate.Events;
 using OrdrMate.Managers;
-using OrdrMate.DTOs.Item;
 
 public class BranchService(
     IBranchRepo branchRepo,
@@ -77,8 +76,13 @@ public class BranchService(
             throw new KeyNotFoundException($"Restaurant with id {branchDto.RestaurantId} not found.");
         }
 
-        var username = RandomGenerator.GenerateRandomString(9, restaurant.Name);
+        var username = RandomGenerator.GenerateRandomString(restaurant.Name.Length + 4, restaurant.Name);
         var password = RandomGenerator.GenerateRandomPassword(8);
+
+        while (await _managerService.IsUsernameTaken(username))
+        {
+            username = RandomGenerator.GenerateRandomString(restaurant.Name.Length + 4, restaurant.Name);
+        }
 
         var createdManager = await _managerService.CreateManager(new CreateManagerDTO
         {

@@ -97,4 +97,9 @@ public class ManagerService(IUserRepo r, IRestaurantRepo rr, IConfiguration c, I
             BranchId = branchId
         };
     }
+
+    public async Task<bool> IsUsernameTaken(string username)
+    {
+        return await _repo.IsUsernameTaken(username);
+    }
 }
