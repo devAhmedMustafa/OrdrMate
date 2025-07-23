@@ -36,18 +36,16 @@ public class CloudMessaging
 
         if (existingToken != null)
         {
-            existingToken.Token = token;
-            _db.FirebaseToken.Update(existingToken);
+            _db.FirebaseToken.Remove(existingToken);
         }
-        else
+
+        var newToken = new FirebaseToken
         {
-            var newToken = new FirebaseToken
-            {
-                UserId = userId,
-                Token = token
-            };
-            await _db.FirebaseToken.AddAsync(newToken);
-        }
+            UserId = userId,
+            Token = token
+        };
+        
+        await _db.FirebaseToken.AddAsync(newToken);
 
         await _db.SaveChangesAsync();
         return token;
