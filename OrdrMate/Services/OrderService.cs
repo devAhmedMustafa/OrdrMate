@@ -91,6 +91,7 @@ public class OrderService
         {
             OrderIntentId = savedIntent.Id,
             RedirectUrl = redirectUrl,
+            OrderId = intent.OrderId
         };
     }
 

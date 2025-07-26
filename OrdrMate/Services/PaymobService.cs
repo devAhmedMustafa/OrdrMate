@@ -73,7 +73,9 @@ public class PaymobService(HttpClient httpClient, IConfiguration configuration)
                 country = "EG",
                 last_name = "Doe",
                 state = "NA"
-            }
+            },
+            lock_order_when_paid = true,
+            redirectUrl = "https://example.com/redirect",
         });
 
         var result = await response.Content.ReadFromJsonAsync<PaymobPaymentKeyResponse>();
