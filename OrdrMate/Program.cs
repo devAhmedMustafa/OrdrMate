@@ -12,6 +12,8 @@ using OrdrMate.Services;
 using OrdrMate.Managers;
 using OrdrMate.Sockets;
 using Google.Apis.Auth.OAuth2;
+using Hangfire;
+using Hangfire.MemoryStorage;
 
 var builder = WebApplication.CreateBuilder(args);
 var env = builder.Environment;
@@ -70,6 +72,8 @@ builder.Services.AddScoped<CustomerService, CustomerService>();
 builder.Services.AddScoped<IOrderRepo, OrderRepo>();
 builder.Services.AddScoped<OrderService, OrderService>();
 
+builder.Services.AddScoped<IDeliverRequestRepo, DeliverRequestRepo>();
+
 builder.Services.AddScoped<IPaymentRepo, PaymentRepo>();
 builder.Services.AddScoped<PaymentService, PaymentService>();
 
@@ -87,7 +91,17 @@ builder.Services.AddScoped<TableManager>();
 builder.Services.AddHttpClient<PaymobService>();
 builder.Services.AddHttpClient<AiService>();
 builder.Services.AddScoped<S3Service>();
+// Hangfire
+builder.Services.AddHangfire(config =>
+{
+    config.UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseMemoryStorage();
+});
 
+builder.Services.AddHangfireServer();
+
+builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 
 builder.Services.AddControllers();
 
@@ -142,13 +156,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseHangfireDashboard();
 }
 
 app.UseWebSockets();
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Find the uploads folder in the current directory and serve static files from it
 
 var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
 if (!Directory.Exists(uploadsPath))

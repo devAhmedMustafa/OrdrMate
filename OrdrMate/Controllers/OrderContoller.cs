@@ -219,6 +219,32 @@ public class OrderController : ControllerBase
         }
     }
 
+    [HttpGet("takeaways/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetTakeawayOrders(string branchId)
+    {
+        try
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to view takeaway orders for this branch.");
+            }
+
+            var takeawayOrders = await _orderService.GetTakeawayOrders(branchId);
+            if (takeawayOrders == null || !takeawayOrders.Any())
+            {
+                return NotFound($"No takeaway orders found for branch {branchId}.");
+            }
+
+            return Ok(takeawayOrders);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving takeaway orders: {ex.Message}");
+        }
+    }
+
     [HttpGet("list/{branchId}")]
     [Authorize(Roles = "BranchManager")]
     public async Task<ActionResult<IEnumerable<OrderDto>>> GetOrdersByBranch(string branchId)
@@ -264,6 +290,85 @@ public class OrderController : ControllerBase
         }
     }
 
+    [HttpPost("deliver_request")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult> CreateDeliverRequest([FromBody] DeliverRequestDto deliverRequest)
+    {
+        try
+        {
+            if (deliverRequest == null || string.IsNullOrEmpty(deliverRequest.OrderId))
+            {
+                return BadRequest("Order ID is required to create a deliver request.");
+            }
+
+            var order = await _orderService.GetOrderById(deliverRequest.OrderId);
+            if (order == null)
+            {
+                return NotFound($"Order with ID {deliverRequest.OrderId} not found.");
+            }
+
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, order.BranchId, "BranchManager");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to create a deliver request for this order.");
+            }
+
+            var result = await _orderService.CreateDeliverRequest(deliverRequest.OrderId);
+            if (result == null)
+            {
+                return NotFound($"Deliver request for order {deliverRequest.OrderId} not found.");
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating deliver request for order {deliverRequest.OrderId}: {ex.Message}");
+            return StatusCode(500, $"An error occurred while creating the deliver request: {ex.Message}");
+        }
+    }
+
+    [HttpPost("confirm_deliver/{orderId}")]
+    [Authorize(Roles = "Customer")]
+    public async Task<ActionResult<DeliverRequestDto>> ConfirmDelivery(string orderId)
+    {
+        try
+        {
+            var result = await _orderService.ConfirmDeliverRequest(orderId);
+            if (!result)
+            {
+                return NotFound($"Deliver request for order {orderId} not found.");
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error confirming deliver request for order {orderId}: {ex.Message}");
+            return StatusCode(500, $"An error occurred while confirming the deliver request: {ex.Message}");
+        }
+    }
+
+    [HttpDelete("cancel_deliver/{orderId}")]
+    [Authorize(Roles = "Customer")]
+    public async Task<ActionResult> CancelDelivery(string orderId)
+    {
+        try
+        {
+            var result = await _orderService.CancelDeliverRequest(orderId);
+            if (!result)
+            {
+                return NotFound($"Deliver request for order {orderId} not found.");
+            }
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while canceling the deliver request: {ex.Message}");
+        }
+    }
+
     [HttpPut("pick/{orderId}")]
     [Authorize(Roles = "Customer")]
     public async Task<ActionResult<OrderInvoiceDto>> PickOrder(string orderId)
@@ -276,7 +381,7 @@ public class OrderController : ControllerBase
                 return Forbid("User ID not found in claims.");
 
             var order = await _orderService.PickOrder(orderId);
-            
+
             if (order == null)
             {
                 return NotFound($"Order with ID {orderId} not found or cannot be picked.");
@@ -290,4 +395,36 @@ public class OrderController : ControllerBase
         }
     }
 
+    [HttpPut("mark_paid/{orderId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult> MarkOrderAsPaid(string orderId)
+    {
+        try
+        {
+            var order = await _orderService.GetOrderById(orderId);
+
+            if (order == null)
+            {
+                return NotFound($"Order with ID {orderId} not found.");
+            }
+
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, order.BranchId, "BranchManager");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to mark this order as paid.");
+            }
+
+            var result = await _orderService.MarkOrderAsPaid(orderId);
+            if (!result)
+            {
+                return NotFound($"Order with ID {orderId} not found.");
+            }
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while marking the order as paid: {ex.Message}");
+        }
+    }
 }

@@ -142,6 +142,7 @@ public class BranchService(
             BranchId = branch.Id,
             BranchAddress = branch.Address,
             BranchPhoneNumber = branch.Phone,
+            RestaurantId = branch.RestaurantId,
             RestaurantName = branch.Restaurant?.Name ?? "Unknown",
             FreeTables = freeTables,
             TotalTables = tableCount,

@@ -24,6 +24,7 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<OrderItem> OrderItem => Set<OrderItem>();
     public DbSet<Payment> Payment => Set<Payment>();
     public DbSet<OrderIntent> OrderIntent => Set<OrderIntent>();
+    public DbSet<DeliverRequest> DeliverRequest => Set<DeliverRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -249,6 +250,15 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .HasOne(t => t.Order)
             .WithMany()
             .HasForeignKey(t => t.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // DeliverRequest
+
+        modelBuilder.Entity<DeliverRequest>().HasKey(dr => dr.OrderId);
+        modelBuilder.Entity<DeliverRequest>()
+            .HasOne(dr => dr.Order)
+            .WithOne()
+            .HasForeignKey<DeliverRequest>(dr => dr.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
     }

@@ -4,6 +4,7 @@ using OrdrMate.Models;
 using OrdrMate.Utils;
 using OrdrMate.Repositories;
 using OrdrMate.Events;
+using Hangfire;
 
 namespace OrdrMate.Services;
 
@@ -11,15 +12,31 @@ public class OrderService
 {
     private readonly PaymentService _paymentService;
     private readonly IOrderRepo _orderRepo;
+    private readonly IDeliverRequestRepo _deliverRequestRepo;
     private readonly PaymobService _paymobService;
     private readonly TableService _tableService;
+    private readonly CloudMessaging _cloudMessaging;
+    private readonly IBackgroundJobClient _backgroundJobs;
 
-    public OrderService(PaymentService paymentService, IOrderRepo orderRepo, PaymobService paymobService, TableService tableService)
+    private static readonly Dictionary<string, string> _jobIds = new Dictionary<string, string>();
+
+    public OrderService(
+        PaymentService paymentService,
+        IOrderRepo orderRepo,
+        IDeliverRequestRepo deliverRequestRepo,
+        PaymobService paymobService,
+        TableService tableService,
+        CloudMessaging cloudMessaging,
+        IBackgroundJobClient backgroundJobs
+    )
     {
         _paymentService = paymentService;
         _orderRepo = orderRepo;
+        _deliverRequestRepo = deliverRequestRepo;
         _paymobService = paymobService;
         _tableService = tableService;
+        _cloudMessaging = cloudMessaging;
+        _backgroundJobs = backgroundJobs;
     }
 
     public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto)
@@ -519,7 +536,124 @@ public class OrderService
             CustomerId = o.CustomerId,
         });
     }
-    
+
+    public async Task<DeliverRequestDto> CreateDeliverRequest(string orderId)
+    {
+        var order = await _orderRepo.GetDetailedOrderById(orderId) ?? throw new KeyNotFoundException($"Order with id {orderId} not found.");
+        if (order.Status != OrderStatus.Ready)
+        {
+            throw new InvalidOperationException($"Order with id {orderId} is not in a valid state for delivery.");
+        }
+
+        var deliverRequest = new DeliverRequest
+        {
+            OrderId = orderId,
+            Status = DeliverStatus.Pending,
+        };
+
+        var createdRequest = await _deliverRequestRepo.AddDeliverRequest(deliverRequest);
+
+        var jobId = _backgroundJobs.Schedule(() => ConfirmDeliverRequest(createdRequest.OrderId), TimeSpan.FromMinutes(15));
+
+        if (string.IsNullOrEmpty(jobId))
+        {
+            throw new InvalidOperationException("Failed to schedule background job for delivery confirmation.");
+        }
+
+        _jobIds.Add(createdRequest.OrderId, jobId);
+
+        var token = await _cloudMessaging.GetTokenByUserId(order.CustomerId);
+        await _cloudMessaging.SendNotificationAsync(token, "Did you receive your order?", $"Your order from {order.Branch?.Restaurant?.Name ?? "Unknown Restaurant"}. Will considered as a yes after 15 minutes.", new Dictionary<string, string>
+        {
+            { "type", "DELIVER_CONFIRMATION" },
+            { "orderId", createdRequest.OrderId },
+        });
+
+        return new DeliverRequestDto
+        {
+            OrderId = createdRequest.OrderId,
+            Status = createdRequest.Status
+        };
+    }
+
+    public async Task<bool> ConfirmDeliverRequest(string orderId)
+    {
+        var deliverRequest = await _deliverRequestRepo.GetDeliverRequestById(orderId)
+        ?? throw new KeyNotFoundException($"Deliver request with order id {orderId} not found.");
+
+        if (deliverRequest.Status != DeliverStatus.Pending)
+        {
+            throw new InvalidOperationException($"Deliver request with order id {orderId} is not in a valid state for confirmation.");
+        }
+
+        deliverRequest.Status = DeliverStatus.Confirmed;
+        await _deliverRequestRepo.UpdateDeliverRequest(deliverRequest);
+        await _orderRepo.SetOrderStatus(orderId, OrderStatus.Delivered);
+        if (_jobIds.TryGetValue(orderId, out var jobId))
+        {
+            BackgroundJob.Delete(jobId);
+            _jobIds.Remove(orderId);
+        }
+
+        return true;
+    }
+
+    public async Task<bool> CancelDeliverRequest(string orderId)
+    {
+        var deliverRequest = await _deliverRequestRepo.GetDeliverRequestById(orderId)
+        ?? throw new KeyNotFoundException($"Deliver request with order id {orderId} not found.");
+
+        if (deliverRequest.Status != DeliverStatus.Pending)
+        {
+            throw new InvalidOperationException($"Deliver request with order id {orderId} is not in a valid state for decline.");
+        }
+
+        deliverRequest.Status = DeliverStatus.Cancelled;
+        await _deliverRequestRepo.UpdateDeliverRequest(deliverRequest);
+        await _orderRepo.SetOrderStatus(orderId, OrderStatus.Cancelled);
+
+        if (_jobIds.TryGetValue(orderId, out var jobId))
+        {
+            BackgroundJob.Delete(jobId);
+            _jobIds.Remove(orderId);
+        }
+
+        return true;
+    }
+
+    public async Task<IEnumerable<OrderDto>> GetTakeawayOrders(string branchId)
+    {
+        var orders = await _orderRepo.GetAllTakeawaysByBranchId(branchId);
+        return orders.Select(o => new OrderDto
+        {
+            OrderId = o.OrderId,
+            Customer = o.Order.Customer?.Username!,
+            CustomerId = o.Order.Customer?.Id ?? string.Empty,
+            TotalAmount = o.Order.TotalAmount,
+            OrderDate = o.Order.OrderDate,
+            OrderStatus = o.Order.Status.ToString(),
+            BranchId = o.Order.BranchId,
+            IsPaid = o.Order.IsPaid,
+            OrderType = o.Order.OrderType.ToString(),
+            PaymentMethod = o.Order.Payment?.PaymentMethod ?? "Unknown",
+            RestaurantName = o.Order.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            OrderNumber = o.OrderNumber
+        });
+    }
+
+    public async Task<bool> MarkOrderAsPaid(string orderId)
+    {
+        var order = await _orderRepo.GetOrderById(orderId) ?? throw new KeyNotFoundException($"Order with id {orderId} not found.");
+
+        if (order.Status == OrderStatus.Delivered)
+        {
+            throw new InvalidOperationException($"Order with id {orderId} is not in a valid state for payment.");
+        }
+
+        await _orderRepo.SetOrderPaidStatus(orderId, true);
+
+        return true;
+    }
 }
 
 public class IntentResponse
