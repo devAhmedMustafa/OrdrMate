@@ -55,6 +55,9 @@ public class BranchService(
             BranchAddress = b.Address,
             RestaurantId = b.RestaurantId,
             RestaurantName = b.Restaurant?.Name ?? "Unknown",
+            IsOpen = TimeService.CheckWithinTimeInterval(b.StartWorkingHour, b.EndWorkingHour, b.WorkingDays),
+            BranchPhoneNumber = b.Phone,
+            LogoUrl = b.Restaurant?.Profile?.LogoUrl,
         });
     }
 

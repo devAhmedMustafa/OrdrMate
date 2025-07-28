@@ -159,7 +159,7 @@ public class BranchController : ControllerBase
     }
 
     [HttpGet("all")]
-    public async Task<IActionResult> GetAllBranches()
+    public async Task<ActionResult<IEnumerable<BranchDto>>> GetAllBranches()
     {
         try
         {
