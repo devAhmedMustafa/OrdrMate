@@ -36,6 +36,11 @@ public class BranchService(
             Longitude = branch.Longitude,
             BranchAddress = branch.Address,
             RestaurantId = branch.RestaurantId,
+            RestaurantName = branch.Restaurant?.Name ?? "Unknown",
+            StartWorkingHour = branch.StartWorkingHour,
+            EndWorkingHour = branch.EndWorkingHour,
+            BranchPhoneNumber = branch.Phone,
+            WorkingDays = branch.WorkingDays
         };
     }
 
@@ -137,6 +142,8 @@ public class BranchService(
         var freeTables = await _branchRepo.GetAvailableTables(branchId);
         var waitingTimes = await _orderManager.GetEstimatedTimes(branchId);
 
+        var isOpen = TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays);
+
         return new BranchInfoDto
         {
             BranchId = branch.Id,
@@ -149,7 +156,11 @@ public class BranchService(
             OrdersInQueue = ordersInQueue,
             MinWaitingTime = waitingTimes.MinWaitingTime,
             MaxWaitingTime = waitingTimes.MaxWaitingTime,
-            AverageWaitingTime = waitingTimes.AverageWaitingTime
+            AverageWaitingTime = waitingTimes.AverageWaitingTime,
+            StartWorkingHour = branch.StartWorkingHour,
+            EndWorkingHour = branch.EndWorkingHour,
+            IsOpen = isOpen,
+            WorkingDays = branch.WorkingDays
         };
     }
 
@@ -168,6 +179,31 @@ public class BranchService(
             TodayEarnings = todayEarnings,
         };
     }
-    
+
+    public async Task<BranchDto> UpdateWorkingHours(string branchId, BranchWorkingHoursDto workingHoursDto)
+    {
+        var branch = await _branchRepo.GetBranchById(branchId);
+        if (branch == null)
+        {
+            throw new KeyNotFoundException($"Branch with id {branchId} not found.");
+        }
+        branch.StartWorkingHour = workingHoursDto.StartWorkingHour;
+        branch.EndWorkingHour = workingHoursDto.EndWorkingHour;
+        branch.WorkingDays = workingHoursDto.WorkingDays ?? new bool[7];
+        await _branchRepo.UpdateBranch(branch);
+
+        return new BranchDto
+        {
+            BranchId = branch.Id,
+            Latitude = branch.Lantitude,
+            Longitude = branch.Longitude,
+            BranchAddress = branch.Address,
+            BranchPhoneNumber = branch.Phone,
+            RestaurantId = branch.RestaurantId,
+            RestaurantName = branch.Restaurant?.Name ?? "Unknown",
+            StartWorkingHour = branch.StartWorkingHour,
+            EndWorkingHour = branch.EndWorkingHour
+        };
+    }
 
 }

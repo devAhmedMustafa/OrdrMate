@@ -6,6 +6,7 @@ using OrdrMate.DTOs.Order;
 using OrdrMate.Managers;
 using OrdrMate.Services;
 using OrdrMate.Sockets;
+using OrdrMate.Utils;
 
 namespace OrdrMate.Controllers;
 
@@ -15,17 +16,20 @@ public class OrderController : ControllerBase
 {
 
     private readonly OrderService _orderService;
+    private readonly BranchService _branchService;
     private readonly OrderManager _orderManager;
     private readonly IAuthorizationService _authorizationService;
     private readonly CustomerOrdersSocketHandler _customerOrderSocketHandler;
 
     public OrderController(
         OrderService orderService,
+        BranchService branchService,
         IAuthorizationService authorizationService,
         OrderManager orderManager,
         CustomerOrdersSocketHandler customerOrderSocketHandler)
     {
         _orderService = orderService;
+        _branchService = branchService;
         _authorizationService = authorizationService;
         _orderManager = orderManager;
         _customerOrderSocketHandler = customerOrderSocketHandler;
@@ -37,13 +41,20 @@ public class OrderController : ControllerBase
     {
         try
         {
+            
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
                 return Forbid("User ID not found in claims.");
 
 
             placeOrderDto.CustomerId = userId;
+            
+            var branch = await _branchService.GetBranchById(placeOrderDto.BranchId);
 
+            if (!TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays))
+            {
+                return Forbid("Branch is not open at this time.");
+            }
 
             var orderIntent = await _orderService.CreateOrderIntent(placeOrderDto);
             if (orderIntent == null)

@@ -19,4 +19,12 @@ public static class TimeService
         var currentDate = DateOnly.FromDateTime(DateTime.Now);
         return date == currentDate;
     }
+
+    public static bool CheckWithinTimeInterval(TimeSpan start, TimeSpan end, bool[] workingDays)
+    {
+        var currentTime = DateTime.Now.TimeOfDay;
+        var currentDay = (int)DateTime.Now.DayOfWeek;
+
+        return currentTime >= start && currentTime <= end && workingDays[currentDay];
+    }
 }
