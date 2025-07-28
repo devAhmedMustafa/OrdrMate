@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrdrMate.DTOs.Branch;
+using OrdrMate.Migrations;
+using OrdrMate.Models;
 using OrdrMate.Repositories;
 using OrdrMate.Services;
 using OrdrMate.Sockets;
+using OrdrMate.Utils;
 
 namespace OrdrMate.Controllers;
 
@@ -156,7 +159,7 @@ public class BranchController : ControllerBase
     }
 
     [HttpGet("all")]
-    public async Task<IActionResult> GetAllBranches()
+    public async Task<ActionResult<IEnumerable<BranchDto>>> GetAllBranches()
     {
         try
         {
@@ -237,6 +240,77 @@ public class BranchController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"An error occurred while retrieving branch balance: {ex.Message}");
+        }
+    }
+
+    [HttpGet("is-open/{branchId}")]
+    public async Task<ActionResult<bool>> IsBranchOpen(string branchId)
+    {
+        try
+        {
+            var branch = await _branchService.GetBranchById(branchId);
+            if (branch == null)
+            {
+                return NotFound($"Branch with ID {branchId} not found.");
+            }
+            var isOpen = TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays);
+            return Ok(isOpen);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound($"Branch with ID {branchId} not found: {ex.Message}");
+        }
+    }
+
+    [HttpGet("working-hours/{branchId}")]
+    public async Task<ActionResult<BranchWorkingHoursDto>> GetBranchWorkingHours(string branchId)
+    {
+        try
+        {
+            var branch = await _branchService.GetBranchById(branchId);
+            if (branch == null)
+            {
+                return NotFound($"Branch with ID {branchId} not found.");
+            }
+            return Ok(new BranchWorkingHoursDto
+            {
+                StartWorkingHour = branch.StartWorkingHour,
+                EndWorkingHour = branch.EndWorkingHour,
+                WorkingDays = branch.WorkingDays
+            });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound($"Branch with ID {branchId} not found: {ex.Message}");
+        }
+    }
+
+    [HttpPut("working-hours/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<BranchDto>> UpdateWorkingHours(string branchId, [FromBody] BranchWorkingHoursDto workingHoursDto)
+    {
+        if (workingHoursDto == null)
+        {
+            return BadRequest("Working hours data is required.");
+        }
+        try
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to update working hours for this branch.");
+            }
+            Console.WriteLine($"Updating working hours for branch {branchId} with data: {workingHoursDto.StartWorkingHour}, {workingHoursDto.EndWorkingHour}, {string.Join(", ", workingHoursDto.WorkingDays ?? new bool[7])}");
+            var updatedBranch = await _branchService.UpdateWorkingHours(branchId, workingHoursDto);
+            return Ok(updatedBranch);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound($"Branch with ID {branchId} not found: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while updating working hours: {ex.Message}");
         }
     }
 }

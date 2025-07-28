@@ -86,6 +86,11 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
         existingItem.ImageUrl = item.ImageUrl;
         existingItem.Price = item.Price;
         existingItem.PreperationTime = item.PreperationTime;
+        existingItem.CategoryName = item.CategoryName;
+        existingItem.KitchenId = item.KitchenId;
+        existingItem.RestaurantId = item.RestaurantId;
+
+        _context.Item.Update(existingItem);
 
         await _context.SaveChangesAsync();
         return existingItem;

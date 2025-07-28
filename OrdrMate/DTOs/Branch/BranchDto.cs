@@ -10,4 +10,9 @@ public class BranchDto
     public string RestaurantId { get; set; }
     public string RestaurantName { get; set; }
     public string BranchManagerId { get; set; }
+    public TimeSpan StartWorkingHour { get; set; }
+    public TimeSpan EndWorkingHour { get; set; }
+    public bool[] WorkingDays { get; set; }
+    public string? LogoUrl { get; set; }
+    public bool IsOpen { get; set; }
 }
