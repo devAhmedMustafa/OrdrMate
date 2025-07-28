@@ -25,6 +25,21 @@ public static class TimeService
         var currentTime = DateTime.Now.TimeOfDay;
         var currentDay = (int)DateTime.Now.DayOfWeek;
 
-        return currentTime >= start && currentTime <= end && workingDays[currentDay];
+        if (end < start)
+        {
+            if (currentTime < start && currentTime > end)
+            {
+                return false;
+            }
+            
+            end = end.Add(new TimeSpan(24, 0, 0));
+        }
+
+        if (currentTime < start || currentTime > end || !workingDays[currentDay])
+        {
+            return false;
+        }
+
+        return true;
     }
 }
