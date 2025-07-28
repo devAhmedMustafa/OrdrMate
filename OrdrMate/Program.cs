@@ -38,7 +38,8 @@ builder.Services.AddCors(options =>
         }
         else if (env.IsProduction())
         {
-            builder.WithOrigins("https://ordrmate-manager.vercel.app", "https://ordrmate-manager.vercel.app")
+            builder.WithOrigins(
+                "https://ordrmate-manager.vercel.app", "https://gahezz.vercel.app")
                 .AllowAnyMethod()
                 .AllowAnyHeader();
         }
