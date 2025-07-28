@@ -78,7 +78,7 @@ public class OrderQueue
     {
         if (_items.Count == 0)
         {
-            return 0.0m;
+            return decimal.MinValue;
         }
 
         decimal totalTime = 0.0m;
@@ -94,20 +94,27 @@ public class OrderQueue
             {
                 if (orderTriggered > 0)
                 {
-                    return totalTime;
+                    break;
                 }
             }
 
             totalTime += item.PreparationTime * item.Quantity;
         }
 
-        if (orderTriggered == 0) return 0.0m;
+        if (orderTriggered == 0) return decimal.MinValue;
+
+        if (_startTime == default)
+        {
+            throw new InvalidOperationException("Start time is not set. Cannot calculate remaining time.");
+        }
 
         var timeSinceStart = TimeOnly.FromDateTime(DateTime.Now).ToTimeSpan() - _startTime.ToTimeSpan();
-        if (timeSinceStart.TotalSeconds > 0)
+        if (timeSinceStart.TotalSeconds < 0)
         {
-            totalTime += (decimal)timeSinceStart.TotalMinutes;
+            throw new InvalidOperationException("Start time is in the future. Cannot calculate remaining time.");
         }
+        totalTime -= (decimal)timeSinceStart.TotalSeconds / 60;
+        totalTime = Math.Round(totalTime, 2);
 
         return totalTime;
     }

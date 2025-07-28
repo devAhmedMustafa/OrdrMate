@@ -62,7 +62,9 @@ public class BranchService(
             Latitude = b.Lantitude,
             Longitude = b.Longitude,
             BranchAddress = b.Address,
+            BranchPhoneNumber = b.Phone,
             RestaurantId = b.RestaurantId,
+            RestaurantName = b.Restaurant?.Name ?? "Unknown",
         });
     }
 
@@ -140,6 +142,7 @@ public class BranchService(
             BranchId = branch.Id,
             BranchAddress = branch.Address,
             BranchPhoneNumber = branch.Phone,
+            RestaurantId = branch.RestaurantId,
             RestaurantName = branch.Restaurant?.Name ?? "Unknown",
             FreeTables = freeTables,
             TotalTables = tableCount,

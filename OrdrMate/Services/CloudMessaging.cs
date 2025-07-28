@@ -51,7 +51,7 @@ public class CloudMessaging
         return token;
     }
 
-    public async Task SendNotificationAsync(string token, string title, string body)
+    public async Task SendNotificationAsync(string token, string title, string body, Dictionary<string, string>? metadata = null)
     {
         var message = new Message()
         {
@@ -60,7 +60,8 @@ public class CloudMessaging
             {
                 Title = title,
                 Body = body
-            }
+            },
+            Data = metadata
         };
 
         string response = await FirebaseMessaging.DefaultInstance.SendAsync(message);

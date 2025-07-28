@@ -16,6 +16,7 @@ public interface IOrderRepo
     Task<Takeaway?> GetTakeawayById(string orderId);
     Task<Indoor?> GetDineInById(string orderId);
     Task<IEnumerable<Takeaway>> GetTakeawaysByCustomerId(string customerId);
+    Task<IEnumerable<Takeaway>> GetAllTakeawaysByBranchId(string branchId);
     Task<IEnumerable<Indoor>> GetIndoorsByCustomerId(string customerId);
     Task<Order?> SetOrderPaidStatus(string orderId, bool isPaid);
     Task<Order?> SetOrderStatus(string orderId, OrderStatus status);

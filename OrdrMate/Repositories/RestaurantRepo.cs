@@ -28,7 +28,7 @@ public class RestaurantRepo(OrdrMateDbContext c) : IRestaurantRepo
 
     public async Task<Restaurant?> GetRestaurantById(string id)
     {
-        return await _db.Restaurant.FirstOrDefaultAsync(r => r.Id == id);
+        return await _db.Restaurant.Include(r => r.Profile).FirstOrDefaultAsync(r => r.Id == id);
     }
 
     public async Task<bool> HasAccessToRestaurant(string managerId, string restaurantId)
@@ -51,7 +51,7 @@ public class RestaurantRepo(OrdrMateDbContext c) : IRestaurantRepo
 
     public async Task<IEnumerable<Restaurant>> GetAllRestaurants()
     {
-        return await _db.Restaurant.ToListAsync();
+        return await _db.Restaurant.Include(r => r.Profile).ToListAsync();
     }
 
     public async Task<IEnumerable<Category>> GetRestaurantCategories(string restaurantId)

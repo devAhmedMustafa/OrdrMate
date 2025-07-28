@@ -5,6 +5,7 @@ public class BranchInfoDto
     public required string BranchId { get; set; }
     public required string BranchAddress { get; set; }
     public required string BranchPhoneNumber { get; set; }
+    public required string RestaurantId { get; set; }
     public required string RestaurantName { get; set; }
     public required decimal MinWaitingTime { get; set; }
     public required decimal MaxWaitingTime { get; set; }

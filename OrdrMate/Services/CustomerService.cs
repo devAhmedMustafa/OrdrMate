@@ -19,10 +19,20 @@ public class CustomerService
     public async Task<GoogleLoginCredentialsDto> AuthenticateCustomer(GoogleLoginRequestDto dto)
     {
 
-        var validPayload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, new GoogleJsonWebSignature.ValidationSettings
+        GoogleJsonWebSignature.Payload? validPayload = null;
+
+        try
         {
-            Audience = [_configuration["Authentication:Google:ClientId"]]
-        });
+            validPayload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = [_configuration["Authentication:Google:ClientId"]]
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error validating Google ID token: {ex.Message}");
+            throw new Exception("Error validating Google ID token", ex);
+        }
 
         if (validPayload == null) throw new Exception("Invalid Google ID token");
 

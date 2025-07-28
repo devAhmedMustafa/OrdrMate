@@ -100,6 +100,16 @@ public class OrderRepo : IOrderRepo
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Takeaway>> GetAllTakeawaysByBranchId(string branchId)
+    {
+        return await _db.Takeaway
+            .Include(t => t.Order).ThenInclude(o => o.Branch).ThenInclude(b => b!.Restaurant)
+            .Include(t => t.Order).ThenInclude(o => o.Customer)
+            .Include(t => t.Order).ThenInclude(o => o.Payment)
+            .Where(t => t.Order.BranchId == branchId)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<Indoor>> GetIndoorsByCustomerId(string customerId)
     {
         return await _db.Indoor
@@ -118,11 +128,16 @@ public class OrderRepo : IOrderRepo
 
     public async Task<Order?> SetOrderPaidStatus(string orderId, bool isPaid)
     {
-        return await _db.Order
-            .Where(o => o.Id == orderId)
-            .ExecuteUpdateAsync(o => o.SetProperty(p => p.IsPaid, isPaid))
-            .ContinueWith(_ => _db.Order.FirstOrDefaultAsync(o => o.Id == orderId))
-            .Unwrap();
+        var order = await _db.Order
+            .FirstOrDefaultAsync(o => o.Id == orderId);
+        if (order == null)
+        {
+            throw new KeyNotFoundException($"Order with id {orderId} not found.");
+        }
+        order.IsPaid = isPaid;
+        _db.Order.Update(order);
+        await _db.SaveChangesAsync();
+        return order;
     }
 
     public async Task<Order?> SetOrderStatus(string orderId, OrderStatus status)

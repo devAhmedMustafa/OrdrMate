@@ -281,7 +281,7 @@ public class RestaurantQueueManager
 
     public decimal GetEstimatedTimeForOrder(string orderId)
     {
-        var maxTime = 0.0m;
+        var maxTime = decimal.MinValue;
 
         foreach (var kitchen in _restaurantQueues.Values)
         {
@@ -294,6 +294,13 @@ public class RestaurantQueueManager
                 }
             }
         }
+
+        if (maxTime == decimal.MinValue)
+        {
+            return 0.0m;
+        }
+
+        Console.WriteLine($"Max estimated time for order {orderId}: {maxTime} minutes");
 
         return maxTime;
     }
