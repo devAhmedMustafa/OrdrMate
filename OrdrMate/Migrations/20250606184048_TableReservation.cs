@@ -20,7 +20,7 @@ namespace OrdrMate.Migrations
                     CustomerId = table.Column<string>(type: "text", nullable: false),
                     OrderId = table.Column<string>(type: "text", nullable: false),
                     ReservationTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    TableNumber = table.Column<string>(type: "text", nullable: false),
+                    TableNumber = table.Column<int>(type: "integer", nullable: false),
                     ReservationStatus = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>

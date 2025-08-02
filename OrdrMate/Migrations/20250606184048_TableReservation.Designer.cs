@@ -487,7 +487,7 @@ namespace OrdrMate.Migrations
 
                     b.Property<string>("TableNumber")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("integer");
 
                     b.HasKey("ReservationId");
 
