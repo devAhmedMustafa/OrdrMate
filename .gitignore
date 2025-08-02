@@ -1,5 +1,3 @@
-/OrdrMate.sln
-
 .idea
 .vscode
 bin/
@@ -26,3 +24,4 @@ appsettings.development.json
 
 # SECRET
 Keys
+encrypt-secrets.bat
