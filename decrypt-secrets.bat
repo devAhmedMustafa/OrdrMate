@@ -13,6 +13,8 @@ if %ERRORLEVEL% NEQ 0 (
 echo.
 echo Decrypting keys...
 
+if not exist OrdrMate\Keys mkdir OrdrMate\Keys
+
 for %%f in (secure\*.gpg) do (
   set "filename=%%~nxf"
 
