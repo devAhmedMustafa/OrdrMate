@@ -25,9 +25,9 @@ public class GeoMaps(string apiKey)
 
         if (json["rows"] is not JArray rows || rows.Count == 0)
             throw new Exception("No rows returned from API");
-    
+
         var elements = rows[0]["elements"] as JArray;
-        
+
         if (elements == null || elements.Count == 0)
             throw new Exception("No elements returned from API");
 
@@ -39,8 +39,4 @@ public class GeoMaps(string apiKey)
         return distanceValue.Value / 1000.0;
     }
 
-    internal async Task<double> CalculateDistance(object customerLatitude, object customerLongitude, float latitude, float longitude)
-    {
-        throw new NotImplementedException();
-    }
 }

@@ -72,9 +72,7 @@ builder.Services.AddScoped<CustomerService, CustomerService>();
 
 builder.Services.AddScoped<IOrderRepo, OrderRepo>();
 builder.Services.AddScoped<OrderService, OrderService>();
-
 builder.Services.AddScoped<IDeliverRequestRepo, DeliverRequestRepo>();
-
 builder.Services.AddScoped<IPaymentRepo, PaymentRepo>();
 builder.Services.AddScoped<PaymentService, PaymentService>();
 
