@@ -14,6 +14,8 @@ using OrdrMate.Sockets;
 using Google.Apis.Auth.OAuth2;
 using Hangfire;
 using Hangfire.MemoryStorage;
+using OrdrMate.Configs;
+using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 var env = builder.Environment;
@@ -21,8 +23,22 @@ var env = builder.Environment;
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// PostgreSQL Database Context
 builder.Services.AddDbContext<OrdrMateDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// MongoDB Configuration
+builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDb"));
+builder.Services.AddSingleton<IMongoClient, MongoClient>(sp =>
+{
+    var settings = builder.Configuration.GetSection("MongoDb").Get<MongoDbSettings>();
+    return new MongoClient(settings?.ConnectionString);
+});
+
+// MongoDB Context
+builder.Services.AddScoped<OrdrMateMongoContext>();
+
+
 
 // CORS
 builder.Services.AddCors(options =>
@@ -77,6 +93,9 @@ builder.Services.AddScoped<IDeliverRequestRepo, DeliverRequestRepo>();
 
 builder.Services.AddScoped<IPaymentRepo, PaymentRepo>();
 builder.Services.AddScoped<PaymentService, PaymentService>();
+
+builder.Services.AddScoped<ICustomizationRepo, CustomizationRepo>();
+builder.Services.AddScoped<CustomizationService, CustomizationService>();
 
 builder.Services.AddScoped<CloudMessaging>();
 

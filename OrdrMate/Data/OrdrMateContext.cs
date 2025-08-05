@@ -261,6 +261,13 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .HasForeignKey<DeliverRequest>(dr => dr.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<ItemCustomization>().HasKey(ic => new { ic.ItemId, ic.CategoryId });
+        modelBuilder.Entity<ItemCustomization>()
+            .HasOne(ic => ic.Item)
+            .WithMany(i => i.Customizations)
+            .HasForeignKey(ic => ic.ItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+
     }
 
 
