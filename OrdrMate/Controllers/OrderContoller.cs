@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OpenTelemetry.Trace;
 using OrdrMate.DTOs.Order;
 using OrdrMate.Managers;
 using OrdrMate.Services;
@@ -19,7 +18,6 @@ public class OrderController : ControllerBase
     private readonly BranchService _branchService;
     private readonly OrderManager _orderManager;
     private readonly IAuthorizationService _authorizationService;
-    private readonly CustomerOrdersSocketHandler _customerOrderSocketHandler;
     private readonly GeoMaps _geoMaps;
 
     public OrderController(
@@ -27,7 +25,6 @@ public class OrderController : ControllerBase
         BranchService branchService,
         IAuthorizationService authorizationService,
         OrderManager orderManager,
-        CustomerOrdersSocketHandler customerOrderSocketHandler,
         GeoMaps geoMaps
         )
     {
@@ -35,7 +32,6 @@ public class OrderController : ControllerBase
         _branchService = branchService;
         _authorizationService = authorizationService;
         _orderManager = orderManager;
-        _customerOrderSocketHandler = customerOrderSocketHandler;
         _geoMaps = geoMaps;
     }
 
@@ -60,23 +56,23 @@ public class OrderController : ControllerBase
                 return Forbid("Branch is not open at this time.");
             }
 
-             double distance = await _geoMaps.CalculateDistance(
-            placeOrderDto.Latitude,
-            placeOrderDto.Longitude,
-            branch.Latitude,  
-            branch.Longitude  
-        );
+            double distance = await _geoMaps.CalculateDistance(
+                placeOrderDto.Latitude,
+                placeOrderDto.Longitude,
+                branch.Latitude,
+                branch.Longitude
+            );
 
-        if (distance > 50)
-        {
-            return Forbid($"Order cannot be placed. Distance is {distance:F2} km, which exceeds the 50 km limit.");
-        }
+            if (distance > 50)
+            {
+                return Forbid($"Order cannot be placed. Distance is {distance:F2} km, which exceeds the 50 km limit.");
+            }
 
-        var orderIntent = await _orderService.CreateOrderIntent(placeOrderDto);
-        if (orderIntent == null)
-        {
-            Console.WriteLine("Order placement failed. Order is null.");
-            return BadRequest("Failed to place order. Please check your order details and try again.");
+            var orderIntent = await _orderService.CreateOrderIntent(placeOrderDto);
+            if (orderIntent == null)
+            {
+                Console.WriteLine("Order placement failed. Order is null.");
+                return BadRequest("Failed to place order. Please check your order details and try again.");
             }
 
             return CreatedAtAction(nameof(PlaceOrder), new { id = orderIntent.OrderIntentId }, orderIntent);
