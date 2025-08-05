@@ -85,6 +85,51 @@ public class OrderController : ControllerBase
 
     }
 
+    [HttpGet("check-order-placement-validation/{branchId}")]
+    public async Task<ActionResult> CheckOrderPlacementValidation(string branchId)
+    {
+        try
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Forbid("User ID not found in claims.");
+
+            var query = HttpContext.Request.Query;
+            if (!query.TryGetValue("lat", out var latitude) || !query.TryGetValue("lng", out var longitude))
+            {
+                return BadRequest("Latitude and longitude are required for order placement validation.");
+            }
+
+            var branch = await _branchService.GetBranchById(branchId);
+
+            if (!TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays))
+            {
+                return Forbid("Branch is not open at this time.");
+            }
+
+            var latitudeValue = double.TryParse(latitude, out var lat) ? lat : 0;
+            var longitudeValue = double.TryParse(longitude, out var lon) ? lon : 0;
+
+            double distance = await _geoMaps.CalculateDistance(
+                latitudeValue,
+                longitudeValue,
+                branch.Latitude,
+                branch.Longitude
+            );
+
+            if (distance > 50)
+            {
+                return Forbid($"Order cannot be placed. Distance is {distance:F2} km, which exceeds the 50 km limit.");
+            }
+
+            return Ok("Order placement validation successful.");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while processing your request: {ex.Message}");
+        }
+    }
+
     [HttpPost("check-prepared/{branchId}/{kitchenName}/{kitchenUnitId}")]
     public async Task<ActionResult> CheckPreparedInQueue(string branchId, string kitchenName, int kitchenUnitId)
     {
