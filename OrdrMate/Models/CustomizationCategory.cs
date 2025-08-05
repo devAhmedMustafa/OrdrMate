@@ -12,6 +12,9 @@ public class CustomizationCategory
     [BsonElement("name")]
     public required string Name { get; set; }
 
+    [BsonElement("restaurantId")]
+    public required string RestaurantId { get; set; }
+
     [BsonElement("description")]
     public string? Description { get; set; }
 

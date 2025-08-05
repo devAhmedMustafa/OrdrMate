@@ -2,8 +2,8 @@ namespace OrdrMate.Enums;
 
 public enum CustomizationInputType
 {
-    SingleChoice = 0,
-    MultipleChoice,
+    SingleSelect = 0,
+    MultipleSelect,
     Boolean,
     Number
 }

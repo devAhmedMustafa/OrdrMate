@@ -1,6 +1,6 @@
 namespace OrdrMate.Schemas.CustomizationMetadata;
 
-public class SingleChoiceMetadata : ICustomizationMetadata
+public class SingleSelectMetadata : ICustomizationMetadata
 {
     public required List<SingleSelectOption> Choices { get; set; }
 }

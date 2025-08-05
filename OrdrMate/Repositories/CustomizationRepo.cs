@@ -42,14 +42,30 @@ public class CustomizationRepo : ICustomizationRepo
 
         var _ = await GetCategoryById(categoryId)
         ?? throw new Exception("Customization category not found");
-        
+
         var itemCustomization = new ItemCustomization
         {
             ItemId = itemId,
             CategoryId = categoryId
         };
-                     
+
         await _context.ItemCustomizations.InsertOneAsync(itemCustomization);
         return itemCustomization;
+    }
+
+    public async Task<IEnumerable<CustomizationCategory>> GetCategoriesByRestaurantId(string restaurantId)
+    {
+        ArgumentNullException.ThrowIfNull(restaurantId, nameof(restaurantId));
+        return await _context.CustomizationCategories
+            .Find(c => c.RestaurantId == restaurantId)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<ItemCustomization>> GetItemCustomizations(string itemId)
+    {
+        ArgumentNullException.ThrowIfNull(itemId, nameof(itemId));
+        return await _context.ItemCustomizations
+            .Find(ic => ic.ItemId == itemId)
+            .ToListAsync();
     }
 }
