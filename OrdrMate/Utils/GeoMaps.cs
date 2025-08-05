@@ -39,4 +39,8 @@ public class GeoMaps(string apiKey)
         return distanceValue.Value / 1000.0;
     }
 
+    internal async Task<double> CalculateDistance(object customerLatitude, object customerLongitude, float latitude, float longitude)
+    {
+        throw new NotImplementedException();
+    }
 }
