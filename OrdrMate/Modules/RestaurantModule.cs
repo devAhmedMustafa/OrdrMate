@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using OrdrMate.Core;
+using OrdrMate.Middlewares;
 using OrdrMate.Repositories;
 using OrdrMate.Services;
 
@@ -13,5 +15,14 @@ public class RestaurantModule : IModule
     {
         services.AddScoped<IRestaurantRepo, RestaurantRepo>();
         services.AddScoped<RestaurantService, RestaurantService>();
+
+        services.Configure<AuthorizationOptions>(options =>
+        {
+            options.AddPolicy("CanManageRestaurant", policy =>
+                policy.Requirements.Add(new ManageRestaurantRequirement()));
+        });
+
+        services.AddScoped<IAuthorizationHandler, ManageRestaurantHandler>();
+
     }
 }

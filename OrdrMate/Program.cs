@@ -35,19 +35,19 @@ foreach (var module in modules)
 }
 
 // PostgreSQL Database Context
-builder.Services.AddDbContext<OrdrMateDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+// builder.Services.AddDbContext<OrdrMateDbContext>(options =>
+//     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // MongoDB Configuration
-builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDb"));
-builder.Services.AddSingleton<IMongoClient, MongoClient>(sp =>
-{
-    var settings = builder.Configuration.GetSection("MongoDb").Get<MongoDbSettings>();
-    return new MongoClient(settings?.ConnectionString);
-});
+// builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDb"));
+// builder.Services.AddSingleton<IMongoClient, MongoClient>(sp =>
+// {
+//     var settings = builder.Configuration.GetSection("MongoDb").Get<MongoDbSettings>();
+//     return new MongoClient(settings?.ConnectionString);
+// });
 
 // MongoDB Context
-builder.Services.AddScoped<OrdrMateMongoContext>();
+// builder.Services.AddScoped<OrdrMateMongoContext>();
 
 
 
@@ -110,73 +110,63 @@ builder.Services.AddCors(options =>
 // builder.Services.AddScoped<CloudMessaging>();
 
 // Sockets
-builder.Services.AddScoped<BranchSocketHandler>();
-builder.Services.AddScoped<CustomerOrdersSocketHandler>();
+// builder.Services.AddScoped<BranchSocketHandler>();
 
 // Managers
 // builder.Services.AddScoped<OrderManager>();
-builder.Services.AddScoped<TableManager>();
+// builder.Services.AddScoped<TableManager>();
 
 // Third-party services
-builder.Services.AddHttpClient<PaymobService>();
-builder.Services.AddHttpClient<AiService>();
-builder.Services.AddScoped<S3Service>();
+// builder.Services.AddHttpClient<PaymobService>();
+
+// builder.Services.AddHttpClient<AiService>();
+
+// builder.Services.AddScoped<S3Service>();
+
 // Hangfire
-builder.Services.AddHangfire(config =>
-{
-    config.UseSimpleAssemblyNameTypeSerializer()
-    .UseRecommendedSerializerSettings()
-    .UseMemoryStorage();
-});
+// builder.Services.AddHangfire(config =>
+// {
+//     config.UseSimpleAssemblyNameTypeSerializer()
+//     .UseRecommendedSerializerSettings()
+//     .UseMemoryStorage();
+// });
 
-builder.Services.AddHangfireServer();
+// builder.Services.AddHangfireServer();
 
-builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
+// builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 
 builder.Services.AddControllers();
 
 // JWT Authentication
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
-            ),
-            RoleClaimType = ClaimTypes.Role,
-        };
-    });
+// builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//     .AddJwtBearer(options =>
+//     {
+//         options.TokenValidationParameters = new TokenValidationParameters
+//         {
+//             ValidateIssuer = true,
+//             ValidateAudience = true,
+//             ValidateLifetime = true,
+//             ValidateIssuerSigningKey = true,
+//             ValidIssuer = builder.Configuration["Jwt:Issuer"],
+//             ValidAudience = builder.Configuration["Jwt:Audience"],
+//             IssuerSigningKey = new SymmetricSecurityKey(
+//                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
+//             ),
+//             RoleClaimType = ClaimTypes.Role,
+//         };
+//     });
 
 // Authorization
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("CanManageRestaurant", policy =>
-        policy.Requirements.Add(new ManageRestaurantRequirement()));
+builder.Services.AddAuthorization();
 
+builder.Services.Configure<AuthorizationOptions>(options =>
+{
     options.AddPolicy("Admin", policy =>
         policy.Requirements.Add(new AdminRequirement()));
-
-    options.AddPolicy("BranchManager", policy =>
-        policy.Requirements.Add(new BranchManagerRequirement()));
 });
 
-// Authorization Handlers
-builder.Services.AddScoped<IAuthorizationHandler, ManageRestaurantHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, AdminHandler>();
-builder.Services.AddScoped<IAuthorizationHandler, BranchManagerHandler>();
-
-FirebaseAdmin.FirebaseApp.Create(new FirebaseAdmin.AppOptions()
-{
-    Credential = GoogleCredential.FromFile("Keys/firebase-adminsdk.json"),
-});
 
 var app = builder.Build();
 app.UseCors("AllowSpecificOrigin");

@@ -1,3 +1,4 @@
+using Google.Apis.Auth.OAuth2;
 using OrdrMate.Core;
 using OrdrMate.Services;
 
@@ -10,6 +11,11 @@ public class CloudMessagingModule : IModule
         IConfiguration configuration,
         IHostEnvironment env)
     {
+        FirebaseAdmin.FirebaseApp.Create(new FirebaseAdmin.AppOptions()
+        {
+            Credential = GoogleCredential.FromFile("Keys/firebase-adminsdk.json"),
+        });
+        
         services.AddScoped<CloudMessaging>();
     }
 }
