@@ -33,7 +33,8 @@ public class ManagerService(IUserRepo r, IRestaurantRepo rr, IConfiguration c, I
             var manager = new User
             {
                 Username = dto.Username,
-                Password = BCrypt.Net.BCrypt.HashPassword(dto.Password)
+                Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                Role = Enum.TryParse<UserRole>(dto.Role, true, out var role) ? role : UserRole.BranchManager
             };
 
             var createdManager = await _repo.CreateUser(manager);
