@@ -107,7 +107,7 @@ builder.Services.AddCors(options =>
 
 // builder.Services.AddScoped<GeoMaps>();
 
-builder.Services.AddScoped<CloudMessaging>();
+// builder.Services.AddScoped<CloudMessaging>();
 
 // Sockets
 builder.Services.AddScoped<BranchSocketHandler>();
