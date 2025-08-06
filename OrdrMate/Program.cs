@@ -85,10 +85,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<IItemRepo, ItemRepo>();
 builder.Services.AddScoped<ItemService, ItemService>();
 
-builder.Services.AddScoped<IBranchRepo, BranchRepo>();
-builder.Services.AddScoped<BranchService, BranchService>();
-
-builder.Services.AddScoped<IBranchRequestRepo, BranchRequestRepo>();
+// builder.Services.AddScoped<IBranchRepo, BranchRepo>();
+// builder.Services.AddScoped<BranchService, BranchService>();
+// builder.Services.AddScoped<IBranchRequestRepo, BranchRequestRepo>();
 
 builder.Services.AddScoped<ITableRepo, TableRepo>();
 builder.Services.AddScoped<TableService, TableService>();
