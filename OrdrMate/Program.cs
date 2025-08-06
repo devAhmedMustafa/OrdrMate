@@ -2,7 +2,6 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using OrdrMate.Data;
@@ -16,12 +15,24 @@ using Hangfire;
 using Hangfire.MemoryStorage;
 using OrdrMate.Configs;
 using MongoDB.Driver;
+using OrdrMate.Core;
+using Microsoft.EntityFrameworkCore;
+using OrdrMate.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 var env = builder.Environment;
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var modules = typeof(Program).Assembly.GetTypes()
+    .Where(t => typeof(IModule).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
+    .Select(Activator.CreateInstance).Cast<IModule>();
+
+foreach (var module in modules)
+{
+    module.Register(builder.Services, builder.Configuration, env);
+}
 
 // PostgreSQL Database Context
 builder.Services.AddDbContext<OrdrMateDbContext>(options =>
@@ -64,8 +75,9 @@ builder.Services.AddCors(options =>
 
 // Repositories and Services
 
-builder.Services.AddScoped<IUserRepo, ManagerRepo>();
-builder.Services.AddScoped<ManagerService, ManagerService>();
+// builder.Services.AddScoped<IUserRepo, UserRepo>();
+// builder.Services.AddScoped<ManagerService, ManagerService>();
+// builder.Services.AddScoped<CustomerService, CustomerService>();
 
 builder.Services.AddScoped<IRestaurantRepo, RestaurantRepo>();
 builder.Services.AddScoped<RestaurantService, RestaurantService>();
@@ -84,16 +96,17 @@ builder.Services.AddScoped<TableService, TableService>();
 builder.Services.AddScoped<IKitchenRepo, KitchenRepo>();
 builder.Services.AddScoped<KitchenService, KitchenService>();
 
-builder.Services.AddScoped<CustomerService, CustomerService>();
 
-builder.Services.AddScoped<IOrderRepo, OrderRepo>();
-builder.Services.AddScoped<OrderService, OrderService>();
-builder.Services.AddScoped<IDeliverRequestRepo, DeliverRequestRepo>();
-builder.Services.AddScoped<IPaymentRepo, PaymentRepo>();
-builder.Services.AddScoped<PaymentService, PaymentService>();
+// builder.Services.AddScoped<IOrderRepo, OrderRepo>();
+// builder.Services.AddScoped<OrderService, OrderService>();
+// builder.Services.AddScoped<IDeliverRequestRepo, DeliverRequestRepo>();
+// builder.Services.AddScoped<IPaymentRepo, PaymentRepo>();
+// builder.Services.AddScoped<PaymentService, PaymentService>();
 
 builder.Services.AddScoped<ICustomizationRepo, CustomizationRepo>();
 builder.Services.AddScoped<CustomizationService, CustomizationService>();
+
+// builder.Services.AddScoped<GeoMaps>();
 
 builder.Services.AddScoped<CloudMessaging>();
 
@@ -102,7 +115,7 @@ builder.Services.AddScoped<BranchSocketHandler>();
 builder.Services.AddScoped<CustomerOrdersSocketHandler>();
 
 // Managers
-builder.Services.AddScoped<OrderManager>();
+// builder.Services.AddScoped<OrderManager>();
 builder.Services.AddScoped<TableManager>();
 
 // Third-party services

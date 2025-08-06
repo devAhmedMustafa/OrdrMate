@@ -1,14 +1,13 @@
-using System.Net.Http;
-using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace OrdrMate.Utils;
 
-public class GeoMaps(string apiKey)
+public class GeoMaps(IConfiguration configuration)
 {
 
     private static readonly HttpClient httpClient = new();
-    private readonly string _apiKey = apiKey;
+    private readonly string _apiKey = configuration["GoogleMaps:ApiKey"]
+    ?? throw new ArgumentNullException("GoogleMaps:ApiKey is not configured");
 
     public async Task<double> CalculateDistance(double lat1, double lon1, double lat2, double lon2)
     {

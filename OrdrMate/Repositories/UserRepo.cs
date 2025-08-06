@@ -4,7 +4,7 @@ using OrdrMate.Models;
 
 namespace OrdrMate.Repositories;
 
-public class ManagerRepo(OrdrMateDbContext c) : IUserRepo
+public class UserRepo(OrdrMateDbContext c) : IUserRepo
 {
     private readonly OrdrMateDbContext _db = c;
 
