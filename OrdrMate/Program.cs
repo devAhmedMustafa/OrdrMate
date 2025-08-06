@@ -102,8 +102,8 @@ builder.Services.AddCors(options =>
 // builder.Services.AddScoped<IPaymentRepo, PaymentRepo>();
 // builder.Services.AddScoped<PaymentService, PaymentService>();
 
-builder.Services.AddScoped<ICustomizationRepo, CustomizationRepo>();
-builder.Services.AddScoped<CustomizationService, CustomizationService>();
+// builder.Services.AddScoped<ICustomizationRepo, CustomizationRepo>();
+// builder.Services.AddScoped<CustomizationService, CustomizationService>();
 
 // builder.Services.AddScoped<GeoMaps>();
 
