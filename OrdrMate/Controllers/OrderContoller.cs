@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using OrdrMate.DTOs.Order;
 using OrdrMate.Managers;
 using OrdrMate.Services;
-using OrdrMate.Sockets;
 using OrdrMate.Utils;
 
 namespace OrdrMate.Controllers;
