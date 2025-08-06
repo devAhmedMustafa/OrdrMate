@@ -1,4 +1,5 @@
 .idea
+.vs
 .vscode
 bin/
 obj/
@@ -7,7 +8,7 @@ obj/
 *.userprefs
 *.sln.ide
 *.sln.docstates
-
+.vs
 # static files
 uploads
 *.png
