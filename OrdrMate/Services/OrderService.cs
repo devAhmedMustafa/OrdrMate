@@ -17,6 +17,7 @@ public class OrderService
     private readonly TableService _tableService;
     private readonly CloudMessaging _cloudMessaging;
     private readonly IBackgroundJobClient _backgroundJobs;
+    private readonly OrderRepo _orderRepository;
 
     private static readonly Dictionary<string, string> _jobIds = new Dictionary<string, string>();
 
@@ -27,7 +28,8 @@ public class OrderService
         PaymobService paymobService,
         TableService tableService,
         CloudMessaging cloudMessaging,
-        IBackgroundJobClient backgroundJobs
+        IBackgroundJobClient backgroundJobs,
+        OrderRepo orderRepository
     )
     {
         _paymentService = paymentService;
@@ -654,6 +656,10 @@ public class OrderService
         await _orderRepo.SetOrderPaidStatus(orderId, true);
 
         return true;
+    }
+      public async Task<bool> CancelOrder(string orderId)
+    {
+        return await _orderRepository.CancelOrderAsync(orderId);
     }
 }
 
