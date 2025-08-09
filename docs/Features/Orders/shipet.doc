@@ -1,0 +1,9 @@
+ok i implemented the cancel function by 
+1 implemented the function in OrderRepo.cs by using the order statue enum :cancel after implementing the function i made sure to use savechange to be present in teh database
+2 used it in OrderService.cs  by calling it in public class OrderService
+although there was a minimal error appeared when i try to make it as orderrepo _orderRepo as it was already declared in IOrderRepo _orderRepo
+so i made it OrderRepo _orderRepository and that solved the error(more like aconflict)
+then i called the function at line 660 in the end of the class 
+      public async Task<bool> CancelOrder(string orderId)
+
+note there is neither api for this endpoint nor route(as far as i know)
