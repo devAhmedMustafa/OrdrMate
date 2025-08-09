@@ -1,5 +1,6 @@
 using MongoDB.Driver;
 using OrdrMate.Configs;
+using OrdrMate.Features.Customization;
 using OrdrMate.Models;
 
 namespace OrdrMate.Data;
@@ -25,6 +26,9 @@ public class OrdrMateMongoContext
 
     public IMongoCollection<ItemCustomization> ItemCustomizations =>
     _database.GetCollection<ItemCustomization>("ItemCustomizations");
+
+    public IMongoCollection<UserCustomization> UserCustomizations =>
+    _database.GetCollection<UserCustomization>("UserCustomizations");
 
     public void EnsureIndexes()
     {
