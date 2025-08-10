@@ -304,7 +304,7 @@ public class RestaurantQueueManager
 
         return maxTime;
     }
- 
+
     public List<QueueItem> GetItemQueues()
     {
         var allItems = new List<QueueItem>();
@@ -317,6 +317,18 @@ public class RestaurantQueueManager
         }
 
         return allItems;
+    }
+    
+    public void RemoveOrder(string orderId)
+    {
+        _orderIds.Remove(orderId);
+        foreach (var kitchen in _restaurantQueues.Values)
+        {
+            foreach (var queue in kitchen)
+            {
+                queue.RemoveOrder(orderId);
+            }
+        }
     }
 
 }
