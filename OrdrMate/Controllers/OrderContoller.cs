@@ -495,13 +495,14 @@ public class OrderController : ControllerBase
         }
     }
     [HttpPut("cancel/{orderId}")]
-public async Task<IActionResult> CancelOrder(string orderId)
-{
-    var result = await _orderService.CancelOrderAsync(orderId);
-    if (!result)
-        return NotFound(new { message = "Order not found or already cancelled." });
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> CancelOrder(string orderId)
+    {
+        var result = await _orderService.CancelOrderAsync(orderId);
+        if (!result)
+            return NotFound(new { message = "Order not found or already cancelled." });
 
-    return Ok(new { message = "Order cancelled successfully." });
-}
+        return Ok(new { message = "Order cancelled successfully." });
+    }
 
 }
