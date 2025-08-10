@@ -203,6 +203,10 @@ public async Task<bool> CancelOrderAsync(string orderId)
     {
         return false; 
     }
+        if (order.Status != OrderStatus.Queued)
+    {
+        return false; 
+    }
 
     await SetOrderStatus(orderId, OrderStatus.Cancelled);
     return true;
