@@ -40,14 +40,14 @@ public class OrderController : ControllerBase
     {
         try
         {
-            
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
                 return Forbid("User ID not found in claims.");
 
 
             placeOrderDto.CustomerId = userId;
-            
+
             var branch = await _branchService.GetBranchById(placeOrderDto.BranchId);
 
             if (!TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays))
@@ -494,4 +494,15 @@ public class OrderController : ControllerBase
             return StatusCode(500, $"An error occurred while marking the order as paid: {ex.Message}");
         }
     }
+    [HttpPut("cancel/{orderId}")]
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> CancelOrder(string orderId)
+    {
+        var result = await _orderService.CancelOrderAsync(orderId);
+        if (!result)
+            return NotFound(new { message = "Order not found or already cancelled." });
+
+        return Ok(new { message = "Order cancelled successfully." });
+    }
+
 }

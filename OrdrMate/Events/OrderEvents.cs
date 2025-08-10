@@ -30,4 +30,9 @@ public static class OrderEvents
     {
         OrderInProgress?.Invoke(orderId);
     }
+
+    public static void OnOrderCancelled(string branchId, string orderId)
+    {
+        OrderCancelled?.Invoke(branchId, orderId);
+    }
 }
