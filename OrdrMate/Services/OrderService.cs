@@ -655,6 +655,13 @@ public class OrderService
 
         return true;
     }
+    public async Task<bool> CancelOrderAsync(string orderId)
+{
+    var order = await _orderRepo.SetOrderStatus(orderId, OrderStatus.Cancelled);
+    
+    return order != null;
+}
+
 }
 
 public class IntentResponse
