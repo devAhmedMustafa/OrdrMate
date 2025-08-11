@@ -9,10 +9,10 @@ public class CustomizationCategory
     [BsonId]
     public ObjectId Id { get; set; }
 
-    [BsonElement("name")]
+    [BsonElement("name"), BsonRequired]
     public required string Name { get; set; }
 
-    [BsonElement("restaurantId")]
+    [BsonElement("restaurantId"), BsonRequired]
     public required string RestaurantId { get; set; }
 
     [BsonElement("description")]
