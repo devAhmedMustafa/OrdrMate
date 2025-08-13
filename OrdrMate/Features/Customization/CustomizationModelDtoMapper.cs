@@ -31,6 +31,7 @@ public class CustomizationModelDtoMapper
         {
             CustomizationInputType.SingleSelect => new CustomizationDto
             {
+                Id = category.Id.ToString(),
                 Name = category.Name,
                 Description = category.Description ?? string.Empty,
                 RestaurantId = category.RestaurantId,

@@ -5,6 +5,8 @@ using OrdrMate.Utils;
 using OrdrMate.Repositories;
 using OrdrMate.Events;
 using Hangfire;
+using OrdrMate.Features.Customization;
+using MongoDB.Bson;
 
 namespace OrdrMate.Services;
 
@@ -17,6 +19,7 @@ public class OrderService
     private readonly TableService _tableService;
     private readonly CloudMessaging _cloudMessaging;
     private readonly IBackgroundJobClient _backgroundJobs;
+    private readonly UserCustomizationService _userCustomizationService;
 
     private static readonly Dictionary<string, string> _jobIds = new Dictionary<string, string>();
 
@@ -27,7 +30,8 @@ public class OrderService
         PaymobService paymobService,
         TableService tableService,
         CloudMessaging cloudMessaging,
-        IBackgroundJobClient backgroundJobs
+        IBackgroundJobClient backgroundJobs,
+        UserCustomizationService userCustomizationService
     )
     {
         _paymentService = paymentService;
@@ -37,6 +41,7 @@ public class OrderService
         _tableService = tableService;
         _cloudMessaging = cloudMessaging;
         _backgroundJobs = backgroundJobs;
+        _userCustomizationService = userCustomizationService;
     }
 
     public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto)
@@ -53,12 +58,7 @@ public class OrderService
             PaymentMethod = placeOrderDto.PaymentMethod,
             OrderType = placeOrderDto.OrderType,
             PaymentProvider = placeOrderDto.PaymentMethod == "cash" ? "cash" : "paymob",
-            OrderItems = [.. placeOrderDto.Items.Select(oi => new OrderItemDto
-            {
-                ItemId = oi.ItemId,
-                Quantity = oi.Quantity,
-                Price = oi.Price,
-            })],
+            OrderItems = [..placeOrderDto.Items],
             TableNumber = placeOrderDto.TableNumber,
         };
 
@@ -166,6 +166,35 @@ public class OrderService
 
                 var savedOrderItem = await _orderRepo.CreateOrderItem(orderItem);
                 orderItems.Add(savedOrderItem);
+
+                try
+                {
+                    // Validate user customization input
+                    if (!await _userCustomizationService.ValidateUserCustomization(item))
+                    {
+                        throw new ArgumentException($"Invalid customizations for item {item.ItemId}");
+                    }
+
+                    Console.WriteLine($"Valid customizations for item {item.ItemId}");
+
+                    var userCustomization = new UserCustomization
+                    {
+                        OrderId = order.Id,
+                        ItemId = item.ItemId,
+                        CustomizationValues = item.Customizations.ToBsonDocument()
+                    };
+
+                    Console.WriteLine($"Creating user customization for item {item.ItemId} with values: {userCustomization.CustomizationValues}");
+
+                    await _userCustomizationService.CreateUserCustomization(userCustomization);
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error processing customizations for item {item.ItemId}: {ex.Message}");
+                    throw new InvalidOperationException($"Failed to process customizations for item {item.ItemId}.", ex);
+                }
+
             }
 
             order.OrderItems = orderItems;

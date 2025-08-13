@@ -9,5 +9,5 @@ public class OrderItemDto
     public int Quantity { get; set; } = 1;
     [Required] public decimal Price { get; set; }
     public ItemDto? Item { get; set; } = null;
-    public Dictionary<string, object>? Customizations { get; set; } = null;
+    public Dictionary<string, string>? Customizations { get; set; } = null;
 }
