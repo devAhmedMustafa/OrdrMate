@@ -25,6 +25,7 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<Payment> Payment => Set<Payment>();
     public DbSet<OrderIntent> OrderIntent => Set<OrderIntent>();
     public DbSet<DeliverRequest> DeliverRequest => Set<DeliverRequest>();
+public DbSet<PickupReport> PickupReports { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
