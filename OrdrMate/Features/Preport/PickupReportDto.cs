@@ -1,3 +1,5 @@
+namespace OrdrMate.Features.Preport;
+
 public class PickupReportDto
 {
     public string OrderId { get; set; }
