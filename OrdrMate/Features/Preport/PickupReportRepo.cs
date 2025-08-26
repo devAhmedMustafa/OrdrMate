@@ -17,9 +17,7 @@ public class PickupReportRepo : IPickupReportRepo
 
     public async Task AddReportAsync(PickupReport report)
     {
-        report.Id = Guid.NewGuid().ToString();
         report.ReportedTime = DateTime.UtcNow;
-
         _context.PickupReports.Add(report);
         await _context.SaveChangesAsync();
     }
