@@ -1,8 +1,7 @@
-using OrdrMate.Models;
 using OrdrMate.Repositories;
-using OrdrMate.DTOs;
 using OrdrMate.Enums;
-namespace OrdrMate.Services
+
+namespace OrdrMate.Features.Preport
 {
     public class PickupReportService
     {

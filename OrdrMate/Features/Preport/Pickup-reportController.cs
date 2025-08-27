@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using OrdrMate.DTOs;
-using OrdrMate.Services;
-namespace OrdrMate.Controllers
+
+namespace OrdrMate.Features.Preport
 {
     [Route("api/[controller]")]
     [ApiController]

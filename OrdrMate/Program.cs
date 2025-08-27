@@ -3,15 +3,13 @@ using Microsoft.Extensions.FileProviders;
 using OrdrMate.Middlewares;
 using Hangfire;
 using OrdrMate.Core;
-using OrdrMate.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 var env = builder.Environment;
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddScoped<IPickupReportRepo, PickupReportRepo>();
-builder.Services.AddAutoMapper(typeof(PickupReportProfile));
+
 var modules = typeof(Program).Assembly.GetTypes()
     .Where(t => typeof(IModule).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
     .Select(Activator.CreateInstance).Cast<IModule>();

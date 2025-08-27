@@ -1,9 +1,8 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using OrdrMate.Data;
-using OrdrMate.DTOs;
-using OrdrMate.Models;
-using OrdrMate.Repositories;
+namespace OrdrMate.Features.Preport;
+
 public class PickupReportRepo : IPickupReportRepo
 {
     private readonly OrdrMateDbContext _context;
@@ -17,7 +16,7 @@ public class PickupReportRepo : IPickupReportRepo
 
     public async Task AddReportAsync(PickupReport report)
     {
-        report.ReportedTime = DateTime.UtcNow;
+       report.ReportedTime = DateTime.UtcNow;
         _context.PickupReports.Add(report);
         await _context.SaveChangesAsync();
     }
@@ -38,16 +37,16 @@ public class PickupReportRepo : IPickupReportRepo
         _context.PickupReports.Update(existing);
         await _context.SaveChangesAsync();
     }
-public async Task<bool> ApprovePickupAsync(string reportId)
-        {
-            var report = await _context.PickupReports.FirstOrDefaultAsync(r => r.Id == reportId);
-            if (report == null) return false;
+    public async Task<bool> ApprovePickupAsync(string reportId)
+    {
+        var report = await _context.PickupReports.FirstOrDefaultAsync(r => r.Id == reportId);
+        if (report == null) return false;
 
-            report.Status = "Approved";
-            await _context.SaveChangesAsync();
+        report.Status = "Approved";
+        await _context.SaveChangesAsync();
 
-            return true;
-        }
+        return true;
+    }
     public async Task<bool> ReportPickupAsync(PickupReportDto reportDto)
     {
         var report = _mapper.Map<PickupReport>(reportDto);
