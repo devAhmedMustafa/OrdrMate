@@ -1,7 +1,6 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using OrdrMate.Data;
-
 namespace OrdrMate.Features.Preport;
 
 public class PickupReportRepo : IPickupReportRepo
@@ -17,9 +16,7 @@ public class PickupReportRepo : IPickupReportRepo
 
     public async Task AddReportAsync(PickupReport report)
     {
-        report.Id = Guid.NewGuid().ToString();
-        report.ReportedTime = DateTime.UtcNow;
-
+       report.ReportedTime = DateTime.UtcNow;
         _context.PickupReports.Add(report);
         await _context.SaveChangesAsync();
     }

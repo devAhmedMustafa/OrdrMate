@@ -1,7 +1,7 @@
 namespace OrdrMate.Features.Preport;
 public class PickupReport
 {
-    public string Id { get; set; }
+ public string Id { get; set; } = Guid.NewGuid().ToString();      
     public string OrderId { get; set; }
     public string Status { get; set; }
     public DateTime ReportedTime { get; set; }
