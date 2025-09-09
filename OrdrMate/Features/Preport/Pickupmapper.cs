@@ -1,6 +1,6 @@
 using AutoMapper;
-using OrdrMate.Models;
-using OrdrMate.DTOs;
+
+namespace OrdrMate.Features.Preport;
 
 public class PickupReportProfile : Profile
 {
