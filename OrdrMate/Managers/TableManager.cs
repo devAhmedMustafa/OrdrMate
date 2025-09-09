@@ -135,8 +135,16 @@ public class TableManager
             var tableRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ITableRepo>();
 
             await tableRepo.UpdateTableReservationStatus(reservation.ReservationId, "Left");
+            var peekReservation = queueManager.PeekReservation(tableNumber);
 
-            await BindNextReservation(branchId, tableNumber);
+            if (peekReservation == null)
+            {
+                Console.WriteLine($"No more reservations in queue for table {tableNumber} in branch {branchId}.");
+                return;
+            }
+
+            await tableRepo.UpdateTableReservationStatus(peekReservation.ReservationId, "Waiting");
+            // await BindNextReservation(branchId, tableNumber);
         }
         else
         {
@@ -171,6 +179,19 @@ public class TableManager
         await tableRepo.UpdateTableReservationStatus(peekReservation.ReservationId, "Seated");
         Console.WriteLine($"Reservation {peekReservation.ReservationId} for table {tableNumber} in branch {branchId} is now seated.");
         OrderEvents.OnOrderPlaced(peekReservation.BranchId, [.. order.OrderItems]);
+    }
+
+    public TableReservation? GetCurrentReservation(string branchId, int tableNumber)
+    {
+        if (_branchQueues.TryGetValue(branchId, out var queueManager))
+        {
+            return queueManager.PeekReservation(tableNumber);
+        }
+        else
+        {
+            Debug.WriteLine($"No reservation queue found for branch {branchId}.");
+            return null;
+        }
     }
 
     public async Task<int> GetOrderPosition(string reservationId)

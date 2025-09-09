@@ -20,7 +20,21 @@ public class CustomerOrdersSocketHandler : BaseSocketHandler
         });
 
         await SendTo(customerId, orderReadyMessage);
+    }
 
+    public async Task AskForLocation(string orderId, string customerId)
+    {
+        var order = await _orderRepo.GetDetailedOrderById(orderId);
+        if (order == null) return;
+
+        var askForLocationMessage = JsonSerializer.Serialize(new
+        {
+            eventType = "askForLocation",
+            orderId,
+            branchId = order.BranchId,
+        });
+
+        await SendTo(customerId, askForLocationMessage);
     }
 
 }

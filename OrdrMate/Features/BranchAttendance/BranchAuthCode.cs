@@ -2,7 +2,7 @@ using Hangfire;
 using OrdrMate.Repositories;
 using OrdrMate.Utils;
 
-namespace OrdrMate.Managers;
+namespace OrdrMate.Features.BranchAttendance;
 
 public class BranchAuthCode
 {
