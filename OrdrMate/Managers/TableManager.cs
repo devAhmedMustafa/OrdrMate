@@ -111,7 +111,7 @@ public class TableManager
                 }
             };
 
-            await branchSocket.SendToBranch(reservation.BranchId, JsonSerializer.Serialize(json));
+            await branchSocket.SendTo(reservation.BranchId, JsonSerializer.Serialize(json));
 
             return tableNumber;
         }

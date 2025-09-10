@@ -25,7 +25,7 @@ public class BranchAuthCode
             if (!_branchCodes.ContainsKey(branch.Id))
             {
                 _branchCodes[branch.Id] = RandomGenerator.GenerateNumericCode(6);
-                RecurringJob.AddOrUpdate(branch.Id, () => RegenerateCode(branch.Id), "*/2 * * * *");
+                RecurringJob.AddOrUpdate(branch.Id, () => RegenerateCode(branch.Id), "*/1 * * * *");
             }
         }
     }
@@ -48,6 +48,8 @@ public class BranchAuthCode
     {
         var newCode = RandomGenerator.GenerateNumericCode(6);
         _branchCodes[branchId] = newCode;
+        Console.WriteLine($"[BranchAuthCode] Regenerated code for branch {branchId}: {newCode}");
+        AttendanceCodeEvent.OnCodeRegenerated(branchId, newCode);
     }
 
 }

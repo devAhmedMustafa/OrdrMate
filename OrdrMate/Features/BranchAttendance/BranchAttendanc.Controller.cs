@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace OrdrMate.Features.BranchAttendance;
 
 [ApiController]
-[Route("api/branch-attendance")]
+[Route("api/[controller]")]
 public class BranchAttendanceController : ControllerBase
 {
     private readonly BranchAttendanceService _branchAttendanceService;
@@ -48,7 +48,7 @@ public class BranchAttendanceController : ControllerBase
             }
 
             var attendance = _branchAttendanceService.GetBranchAttendanceCode(branchId);
-            return Ok(attendance);
+            return Ok(new { code = attendance });
         }
         catch (Exception ex)
         {
