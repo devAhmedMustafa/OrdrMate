@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OrdrMate.DTOs.Order;
 
 namespace OrdrMate.Features.BranchAttendance;
 
@@ -21,15 +22,16 @@ public class BranchAttendanceController : ControllerBase
 
     [HttpPut("confirm-table")]
     [Authorize(Roles = "Customer")]
-    public async Task<IActionResult> ConfirmTableReservation([FromBody] ConfirmTableRequest request)
+    public async Task<ActionResult<OrderDto>> ConfirmTableReservation([FromBody] ConfirmTableRequest request)
     {
         try
         {
-            await _branchAttendanceService.ConfirmTableReservation(request);
-            return Ok();
+            var order = await _branchAttendanceService.ConfirmTableReservation(request);
+            return Ok(order);
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[BranchAttendanceController] Error confirming table reservation: {ex.Message}");
             return BadRequest(new { message = ex.Message });
         }
     }

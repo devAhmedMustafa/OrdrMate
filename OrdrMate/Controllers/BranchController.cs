@@ -313,4 +313,22 @@ public class BranchController : ControllerBase
             return StatusCode(500, $"An error occurred while updating working hours: {ex.Message}");
         }
     }
+
+    [HttpGet("get-by-id/{branchId}")]
+    public async Task<ActionResult<BranchDto>> GetBranchById(string branchId)
+    {
+        try
+        {
+            var branch = await _branchService.GetBranchById(branchId);
+            if (branch == null)
+            {
+                return NotFound($"Branch with ID {branchId} not found.");
+            }
+            return Ok(branch);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound($"Branch with ID {branchId} not found: {ex.Message}");
+        }
+    }
 }
