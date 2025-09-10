@@ -8,10 +8,15 @@ namespace OrdrMate.Features.BranchAttendance;
 public class BranchAttendanceController : ControllerBase
 {
     private readonly BranchAttendanceService _branchAttendanceService;
+    private readonly IAuthorizationService _authorizationService;
 
-    public BranchAttendanceController(BranchAttendanceService branchAttendanceService)
+    public BranchAttendanceController(
+        BranchAttendanceService branchAttendanceService,
+        IAuthorizationService authorizationService
+        )
     {
         _branchAttendanceService = branchAttendanceService;
+        _authorizationService = authorizationService;
     }
 
     [HttpPut("confirm-table")]
@@ -22,6 +27,28 @@ public class BranchAttendanceController : ControllerBase
         {
             await _branchAttendanceService.ConfirmTableReservation(request);
             return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<IActionResult> GetBranchAttendance([FromQuery] string branchId)
+    {
+        try
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to access this branch balance.");
+            }
+
+            var attendance = _branchAttendanceService.GetBranchAttendanceCode(branchId);
+            return Ok(attendance);
         }
         catch (Exception ex)
         {

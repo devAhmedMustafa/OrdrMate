@@ -19,9 +19,14 @@ public class BranchAttendanceService
 
         if (expectedCode != request.AuthCode) throw new Exception("Invalid authentication code.");
 
-        if (_tableManager.GetCurrentReservation(request.BranchId, request.TableNumber)?.OrderId != request.OrderId) 
+        if (_tableManager.GetCurrentReservation(request.BranchId, request.TableNumber)?.OrderId != request.OrderId)
             throw new Exception("No active reservation found for this order.");
 
         await _tableManager.BindNextReservation(request.BranchId, request.TableNumber);
+    }
+    
+    public string GetBranchAttendanceCode(string branchId)
+    {
+        return _branchAuthCode.GetCode(branchId);
     }
 }
