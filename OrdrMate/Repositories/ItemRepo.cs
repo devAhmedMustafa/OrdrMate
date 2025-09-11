@@ -58,7 +58,11 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
 
     public async Task<Item?> GetItem(string id)
     {
-        return await _context.Item.FindAsync(id);
+        var item = await _context.Item
+            .Include(i => i.Kitchen)
+            .FirstOrDefaultAsync(i => i.Id == id);
+
+        return item;
     }
 
     public async Task<IEnumerable<Item>> GetItems()

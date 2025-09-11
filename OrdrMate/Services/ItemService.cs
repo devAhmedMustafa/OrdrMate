@@ -68,7 +68,8 @@ public class ItemService(IItemRepo itemRepo)
             Price = item.Price,
             Category = item.CategoryName,
             PreparationTime = item.PreperationTime,
-            KitchenName = item.Kitchen?.Name ?? string.Empty
+            KitchenName = item.Kitchen?.Name ?? string.Empty,
+            KitchenId = item.Kitchen?.Id
         };
     }
 
@@ -123,7 +124,7 @@ public class ItemService(IItemRepo itemRepo)
             Price = updated.Price,
             Category = updated.CategoryName,
             PreparationTime = updated.PreperationTime,
-            KitchenName = updated.Kitchen?.Name ?? string.Empty
+            KitchenName = updated.Kitchen?.Name ?? string.Empty,
         };
 
     }
