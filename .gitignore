@@ -1,6 +1,5 @@
-/OrdrMate.sln
-
 .idea
+.vs
 .vscode
 bin/
 obj/
@@ -9,7 +8,7 @@ obj/
 *.userprefs
 *.sln.ide
 *.sln.docstates
-
+.vs
 # static files
 uploads
 *.png
@@ -23,6 +22,8 @@ publish
 
 appsettings.json
 appsettings.development.json
+appsettings.Development.json
 
 # SECRET
 Keys
+encrypt-secrets.bat

@@ -37,6 +37,7 @@ public class OrderManager
         OrderEvents.OrderReady += OnOrderReady;
         BranchEvents.KitchenUpdate += OnKitchenUpdate;
         OrderEvents.OrderInProgress += OnOrderInProgress;
+        OrderEvents.OrderCancelled += OnOrderCancelled;
 
         _initialized = true;
     }
@@ -127,6 +128,17 @@ public class OrderManager
 
     }
 
+    private void OnOrderCancelled(string branchId, string orderId)
+    {
+        var branch = restaurantManagers.GetValueOrDefault(branchId);
+        if (branch == null)
+        {
+            Console.WriteLine($"No branch found with ID {branchId}. Cannot cancel order {orderId}.");
+            return;
+        }
+
+        branch.RemoveOrder(orderId);
+    }
     public NextInQueueDto CheckPreparedInQueue(string branchId, string kitchenName, int kitchenUnitId)
     {
         try

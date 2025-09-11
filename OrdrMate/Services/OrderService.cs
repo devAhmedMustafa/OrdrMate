@@ -655,6 +655,21 @@ public class OrderService
 
         return true;
     }
+    
+    public async Task<bool> CancelOrderAsync(string orderId)
+    {
+        var order = await _orderRepo.SetOrderStatus(orderId, OrderStatus.Cancelled);
+
+        if (order == null)
+        {
+            throw new KeyNotFoundException($"Order with id {orderId} not found.");
+        }
+
+        OrderEvents.OnOrderCancelled(order.BranchId, orderId);
+
+        return order != null;
+    }
+
 }
 
 public class IntentResponse

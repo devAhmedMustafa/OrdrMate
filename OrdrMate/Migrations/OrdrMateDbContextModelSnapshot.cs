@@ -224,6 +224,19 @@ namespace OrdrMate.Migrations
                     b.ToTable("Item");
                 });
 
+            modelBuilder.Entity("OrdrMate.Models.ItemCustomization", b =>
+                {
+                    b.Property<string>("ItemId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CategoryId")
+                        .HasColumnType("text");
+
+                    b.HasKey("ItemId", "CategoryId");
+
+                    b.ToTable("ItemCustomization");
+                });
+
             modelBuilder.Entity("OrdrMate.Models.Kitchen", b =>
                 {
                     b.Property<string>("Id")
@@ -430,6 +443,35 @@ namespace OrdrMate.Migrations
                         .IsUnique();
 
                     b.ToTable("Payment");
+                });
+
+            modelBuilder.Entity("OrdrMate.Models.PickupReport", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ManagerId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OrderId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ReportedTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PickupReports");
                 });
 
             modelBuilder.Entity("OrdrMate.Models.Restaurant", b =>
@@ -702,6 +744,17 @@ namespace OrdrMate.Migrations
                     b.Navigation("Restaurant");
                 });
 
+            modelBuilder.Entity("OrdrMate.Models.ItemCustomization", b =>
+                {
+                    b.HasOne("OrdrMate.Models.Item", "Item")
+                        .WithMany("Customizations")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+                });
+
             modelBuilder.Entity("OrdrMate.Models.Kitchen", b =>
                 {
                     b.HasOne("OrdrMate.Models.Restaurant", "Restaurant")
@@ -883,6 +936,11 @@ namespace OrdrMate.Migrations
             modelBuilder.Entity("OrdrMate.Models.Category", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("OrdrMate.Models.Item", b =>
+                {
+                    b.Navigation("Customizations");
                 });
 
             modelBuilder.Entity("OrdrMate.Models.Order", b =>

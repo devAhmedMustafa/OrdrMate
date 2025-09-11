@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  backend:
+    build: .
+    ports:
+      - "5126:5126"
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=appdb;Username=postgres;Password=postgres
+    volumes:
+      - ./OrdrMate:/app/OrdrMate
+      - ./logs:/app/logs
+    networks:
+      - app-net
+
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-net
+
+  nosql:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app-net
+
+volumes:
+  postgres_data:
+  mongo_data:
+
+networks:
+  app-net:

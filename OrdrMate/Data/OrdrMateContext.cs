@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OrdrMate.Features.Preport;
 using OrdrMate.Models;
 
 namespace OrdrMate.Data;
@@ -25,6 +26,7 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<Payment> Payment => Set<Payment>();
     public DbSet<OrderIntent> OrderIntent => Set<OrderIntent>();
     public DbSet<DeliverRequest> DeliverRequest => Set<DeliverRequest>();
+    public DbSet<PickupReport> PickupReports { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -259,6 +261,13 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .HasOne(dr => dr.Order)
             .WithOne()
             .HasForeignKey<DeliverRequest>(dr => dr.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ItemCustomization>().HasKey(ic => new { ic.ItemId, ic.CategoryId });
+        modelBuilder.Entity<ItemCustomization>()
+            .HasOne(ic => ic.Item)
+            .WithMany(i => i.Customizations)
+            .HasForeignKey(ic => ic.ItemId)
             .OnDelete(DeleteBehavior.Cascade);
 
     }

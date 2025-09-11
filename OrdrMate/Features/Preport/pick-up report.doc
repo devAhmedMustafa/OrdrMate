@@ -1,0 +1,25 @@
+I-ok now i made PickupReportService.cs (Service Layer)(in features preport folder)
+which Handles business logic related to the Pickup Report feature.
+it contains 1-ReportPickupAsync
+Reports a pickup failure if the order is marked as Ready and the report is made within 30 minutes of the ready time.
+2-CancelReportAsync:
+Cancels the report if it was made within 20 minutes.
+3- ApprovePickupAsync:
+Approves a pickup report if it's within 30 minutes of the report time.(and follow the issue rules)
+II-i also made PickupReportRepo.cs(in features preport folder)
+which Manages the interaction with the database for the Pickup Report data
+more ove it has some functions for adding, updating, and retrieving reports
+III-PickupReportDto.cs(in DTOs folder in pickup-preport folder)
+Includes properties like OrderId, ManagerId, Notes
+IV-PickupReportController.cs(in features preport folder)
+it expoces teh endpoints of the new feature 
+POST /api/pickup-report/report: Reports a pickup failure.
+POST /api/pickup-report/cancel/{reportId}: Cancels a previously reported pickup failure.
+POST /api/pickup-report/approve/{reportId}: Approves the pickup report
+
+V-IPickupReportRepo.cs(in features preport folder)
+nterface of the repository layer
+VI-Pickupmapper.cs(in features preport folder-in mapper folder)
+it the newest consept for me as it Uses AutoMapper
+to map between PickupReportDto and PickupReport objects.
+so please review it carefully to make better enhancement in the future 

@@ -189,4 +189,26 @@ public class OrderRepo : IOrderRepo
             .Where(o => o.BranchId == branchId && o.IsPaid == true)
             .ToListAsync();
     }
+public async Task<bool> CancelOrderAsync(string orderId)
+{
+    var order = await _db.Order
+        .FirstOrDefaultAsync(o => o.Id == orderId);
+
+    if (order == null)
+    {
+        return false; 
+    }
+
+    if (order.Status == OrderStatus.Cancelled)
+    {
+        return false; 
+    }
+        if (order.Status != OrderStatus.Queued)
+    {
+        return false; 
+    }
+
+    await SetOrderStatus(orderId, OrderStatus.Cancelled);
+    return true;
+}
 }

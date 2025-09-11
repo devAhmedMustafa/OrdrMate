@@ -1,0 +1,4 @@
+ok i implemented the cancel function by 
+Added CancelOrderAsync(orderId) to try calling SetOrderStatus with Cancelation in the service layer(line 685)
+and rpositories (in line 192 )
+then tried my first api in controler (line 497 hope to take notes on it) to make sure the front end can react with the end point

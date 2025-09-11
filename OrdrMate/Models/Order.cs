@@ -16,5 +16,6 @@ public class Order
     public Branch? Branch { get; set; }
     public User? Customer { get; set; }
     public Payment? Payment { get; set; }
+    public DateTime ReadyTime { get; set; }
     public ICollection<OrderItem>? OrderItems { get; set; }
 }

@@ -3,6 +3,7 @@ namespace OrdrMate.Managers;
 public class OrderQueue
 {
     private readonly Queue<QueueItem> _items = new();
+    private readonly List<string> _removedOrderIds = [];
 
     private TimeOnly _startTime;
 
@@ -17,11 +18,37 @@ public class OrderQueue
         }
     }
 
+    public void RemoveOrder(string orderId)
+    {
+        if (_items.Count == 0)
+        {
+            Console.WriteLine($"Queue is empty, cannot remove order {orderId}.");
+            return;
+        }
+
+        var itemToRemove = _items.FirstOrDefault(item => item.OrderId == orderId);
+        if (itemToRemove != null)
+        {
+            _removedOrderIds.Add(orderId);
+            Console.WriteLine($"Removed order {orderId} from the queue.");
+        }
+        else
+        {
+            Console.WriteLine($"Order {orderId} not found in the queue.");
+        }
+    }
+
     public QueueItem Deque()
     {
         if (_items.Count > 0)
         {
-            if (_items.Count > 0) ResetStartTime();
+            while (_items.Count > 0 && _removedOrderIds.Contains(_items.Peek().OrderId))
+            {
+                var removedItem = _items.Dequeue();
+                Console.WriteLine($"Removed item from queue: {removedItem.ItemName} for order {removedItem.OrderId}");
+            }
+            
+            ResetStartTime();
             return _items.Dequeue();
         }
 
