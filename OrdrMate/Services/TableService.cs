@@ -113,6 +113,7 @@ public class TableService
         var reservations = await _tableRepo.GetTableReservationsInQueue(branchId, tableNumber);
         return reservations.Select(r => new TableReservationResponseDto
         {
+            ReservationId = r.ReservationId,
             TableNumber = r.TableNumber,
             CustomerName = r.Customer?.Username ?? "Unknown",
             ReservationDate = r.ReservationTime,

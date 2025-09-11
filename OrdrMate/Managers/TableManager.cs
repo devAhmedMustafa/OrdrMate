@@ -102,6 +102,7 @@ public class TableManager
                 Type = "TableReserved",
                 Reservation = new TableReservationResponseDto
                 {
+                    ReservationId = createdReservation.ReservationId,
                     TableNumber = createdReservation.TableNumber,
                     CustomerName = createdReservation.Customer?.Username ?? "Unknown",
                     ReservationDate = createdReservation.ReservationTime,
