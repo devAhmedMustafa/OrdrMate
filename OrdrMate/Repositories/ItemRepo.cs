@@ -78,19 +78,16 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
         var existingItem = await _context.Item.FindAsync(id);
         if (existingItem == null)
         {
-            return null;
+            throw new Exception("Item not found");
         }
 
         existingItem.Name = item.Name;
         existingItem.Description = item.Description;
         existingItem.ImageUrl = item.ImageUrl;
         existingItem.Price = item.Price;
-        existingItem.PreperationTime = item.PreperationTime;
         existingItem.CategoryName = item.CategoryName;
+        existingItem.PreperationTime = item.PreperationTime;
         existingItem.KitchenId = item.KitchenId;
-        existingItem.RestaurantId = item.RestaurantId;
-
-        _context.Item.Update(existingItem);
 
         await _context.SaveChangesAsync();
         return existingItem;

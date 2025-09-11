@@ -131,7 +131,7 @@ public class TableRepo : ITableRepo
         var reservation = await _context.TableReservation
             .Include(r => r.Customer)
             .Include(r => r.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i=> i.Kitchen)
+            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i=> i!.Kitchen)
             .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
 
         if (reservation == null)
