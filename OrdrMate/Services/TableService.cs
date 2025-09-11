@@ -1,5 +1,6 @@
 namespace OrdrMate.Services;
 
+using OrdrMate.DTOs.Item;
 using OrdrMate.DTOs.Order;
 using OrdrMate.DTOs.Table;
 using OrdrMate.Managers;
@@ -119,5 +120,41 @@ public class TableService
             OrderId = r.OrderId,
             OrderStatus = r.Order?.Status.ToString() ?? "Unknown"
         });
+    }
+
+    public async Task<OrderDto?> GetOrderByTableReservationId(string reservationId)
+    {
+        var order = await _tableRepo.GetTableOrderByReservationId(reservationId);
+
+        if (order == null) throw new Exception("Order not found");
+
+        return new OrderDto
+        {
+            OrderId = order.Id,
+            BranchId = order.BranchId,
+            CustomerId = order.CustomerId,
+            OrderStatus = order.Status.ToString(),
+            OrderType = order.OrderType.ToString(),
+            OrderDate = order.OrderDate,
+            TotalAmount = order.TotalAmount,
+            OrderItems = [.. order.OrderItems!.Select(oi => new OrderItemDto
+            {
+                ItemId = oi.ItemId,
+                Quantity = oi.Quantity,
+                Price = oi.Price,
+                Item = new ItemDto
+                {
+                    Name = oi.Item?.Name ?? "Unknown",
+                    Description = oi.Item?.Description ?? "Unknown",
+                    Price = oi.Item?.Price ?? 0,
+                    PreparationTime = oi.Item?.PreperationTime ?? 0,
+                    KitchenName = oi.Item?.Kitchen?.Name ?? "Unknown",
+                    Category = oi.Item?.CategoryName ?? "Unknown"
+                }
+            })],
+            RestaurantName = order.Branch?.Restaurant?.Name ?? "Unknown",
+            Customer = order.Customer?.Username ?? "Unknown",
+            PaymentMethod = order.Payment?.PaymentMethod ?? "Unknown",
+        };
     }
 }

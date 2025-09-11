@@ -18,13 +18,15 @@ public class OrderController : ControllerBase
     private readonly OrderManager _orderManager;
     private readonly IAuthorizationService _authorizationService;
     private readonly GeoMaps _geoMaps;
+    private readonly IWebHostEnvironment _env;
 
     public OrderController(
         OrderService orderService,
         BranchService branchService,
         IAuthorizationService authorizationService,
         OrderManager orderManager,
-        GeoMaps geoMaps
+        GeoMaps geoMaps,
+        IWebHostEnvironment env
         )
     {
         _orderService = orderService;
@@ -32,6 +34,7 @@ public class OrderController : ControllerBase
         _authorizationService = authorizationService;
         _orderManager = orderManager;
         _geoMaps = geoMaps;
+        _env = env;
     }
 
     [HttpPost]
@@ -62,7 +65,7 @@ public class OrderController : ControllerBase
                 branch.Longitude
             );
 
-            if (distance > 50)
+            if (distance > 50 && !_env.IsDevelopment())
             {
                 Console.WriteLine($"[BranchController]: Coordinates: ({placeOrderDto.Latitude}, {placeOrderDto.Longitude}), Branch: ({branch.Latitude}, {branch.Longitude}), Distance: {distance} km");
                 return Forbid($"Order cannot be placed. Distance is {distance:F2} km, which exceeds the 50 km limit.");

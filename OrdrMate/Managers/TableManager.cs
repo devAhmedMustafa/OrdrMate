@@ -154,34 +154,45 @@ public class TableManager
 
     public async Task<Order?> BindNextReservation(string branchId, int tableNumber)
     {
-
-        if (!_branchQueues.TryGetValue(branchId, out var queueManager))
+        try
         {
-            Console.WriteLine($"No reservation queue found for branch {branchId}.");
-            return null;
+
+
+            if (!_branchQueues.TryGetValue(branchId, out var queueManager))
+            {
+                Console.WriteLine($"No reservation queue found for branch {branchId}.");
+                return null;
+            }
+
+            var tableRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ITableRepo>();
+
+            var peekReservation = queueManager.PeekReservation(tableNumber);
+
+            if (peekReservation == null)
+            {
+                Console.WriteLine($"No reservations found in queue for table {tableNumber} in branch {branchId}.");
+                return null;
+            }
+
+            var order = await tableRepo.GetTableOrderByReservationId(peekReservation.ReservationId);
+            if (order == null || order.OrderItems == null)
+            {
+                throw new Exception($"No order found for reservation {peekReservation.ReservationId} in branch {peekReservation.BranchId}.");
+            }
+
+            Console.WriteLine($"[Table Manager]: Order items: {order.OrderItems.Count}");
+
+            await tableRepo.UpdateTableReservationStatus(peekReservation.ReservationId, "Seated");
+            Console.WriteLine($"Reservation {peekReservation.ReservationId} for table {tableNumber} in branch {branchId} is now seated.");
+            OrderEvents.OnOrderPlaced(peekReservation.BranchId, [.. order.OrderItems]);
+
+            return order;
         }
-
-        var tableRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ITableRepo>();
-
-        var peekReservation = queueManager.PeekReservation(tableNumber);
-
-        if (peekReservation == null)
+        catch (Exception ex)
         {
-            Console.WriteLine($"No reservations found in queue for table {tableNumber} in branch {branchId}.");
-            return null;
+            Console.WriteLine($"Error in BindNextReservation: {ex.Message}");
+            throw;
         }
-
-        var order = await tableRepo.GetTableOrderByReservationId(peekReservation.ReservationId);
-        if (order == null || order.OrderItems == null)
-        {
-            throw new Exception($"No order found for reservation {peekReservation.ReservationId} in branch {peekReservation.BranchId}.");
-        }
-
-        await tableRepo.UpdateTableReservationStatus(peekReservation.ReservationId, "Seated");
-        Console.WriteLine($"Reservation {peekReservation.ReservationId} for table {tableNumber} in branch {branchId} is now seated.");
-        OrderEvents.OnOrderPlaced(peekReservation.BranchId, [.. order.OrderItems]);
-
-        return order;
     }
 
     public TableReservation? GetCurrentReservation(string branchId, int tableNumber)
