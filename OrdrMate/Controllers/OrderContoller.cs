@@ -64,6 +64,7 @@ public class OrderController : ControllerBase
 
             if (distance > 50)
             {
+                Console.WriteLine($"[BranchController]: Coordinates: ({placeOrderDto.Latitude}, {placeOrderDto.Longitude}), Branch: ({branch.Latitude}, {branch.Longitude}), Distance: {distance} km");
                 return Forbid($"Order cannot be placed. Distance is {distance:F2} km, which exceeds the 50 km limit.");
             }
 
