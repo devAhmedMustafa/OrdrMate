@@ -29,4 +29,17 @@ public static class RandomGenerator
         return passwordBuilder.ToString();
     }
 
+    public static string GenerateNumericCode(int length)
+    {
+        var stringBuilder = new StringBuilder();
+        const string digits = "0123456789";
+        
+        for (var i = 0; i < length; i++)
+        {
+            stringBuilder.Append(digits[_random.Next(digits.Length)]);
+        }
+
+        return stringBuilder.ToString();
+    }
+
 }

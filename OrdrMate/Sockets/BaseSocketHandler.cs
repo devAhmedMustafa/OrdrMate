@@ -3,7 +3,7 @@ using System.Net.WebSockets;
 
 namespace OrdrMate.Sockets;
 
-public class BaseSocketHandler
+public abstract class BaseSocketHandler
 {
     private static readonly ConcurrentDictionary<string, List<WebSocket>> _sockets = new();
 
