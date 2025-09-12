@@ -32,6 +32,8 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrdrMateDbContext).Assembly);
+
         // Manager
 
         modelBuilder.Entity<User>().HasKey(m => m.Id);
