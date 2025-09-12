@@ -12,5 +12,6 @@ public class ItemDto
     public required decimal PreparationTime { get; set; } = 0.0m;
     public required string Category { get; set; } = string.Empty;
     [Required] public required string KitchenName { get; set; }
-    public string? KitchenId {get; set;}
+    public string? KitchenId { get; set; }
+    public bool? IsAvailable { get; set; } = true;
 }

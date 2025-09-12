@@ -19,14 +19,24 @@ public class ItemAvailabilityRepository
         return entity.Entity;
     }
 
-    public async Task<ItemAvailability?> GetItemAvailabilityById(int id)
+    public async Task<bool> IsItemAvailabile(string itemId, string branchId)
     {
-        return await _db.ItemAvailabilities.FindAsync(id);
+        return await _db.ItemAvailabilities.AnyAsync(ia => ia.ItemId == itemId && ia.BranchId == branchId);
     }
 
-    public async Task<List<ItemAvailability>> GetAllItemAvailabilities()
+    public async Task<ItemAvailability?> GetItemAvailability(string itemId, string branchId)
     {
-        var itemAvailabilities = await _db.ItemAvailabilities.Include(i => i.Item).ToListAsync();
+        return await _db.ItemAvailabilities.FirstOrDefaultAsync(ia => ia.ItemId == itemId && ia.BranchId == branchId);
+    }
+
+    public async Task<List<ItemAvailability>> GetAllItemAvailabilities(string branchId)
+    {
+        var itemAvailabilities = await _db.ItemAvailabilities
+            .Include(i => i.Item)
+            .ThenInclude(i => i!.Kitchen)
+            .Where(ia => ia.BranchId == branchId)
+            .ToListAsync();
+            
         return itemAvailabilities;
     }
 }
