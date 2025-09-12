@@ -49,4 +49,25 @@ public class ItemAvailabilityService
             IsAvailable = ia.IsAvailable
         });
     }
+
+    public async Task<bool> ToggleItemAvailability(string itemId, string branchId)
+    {
+        var instance = await _repository.GetItemAvailability(itemId, branchId);
+        if (instance is null)
+        {
+            instance = await _repository.AddItemAvailability(new ItemAvailability
+            {
+                ItemId = itemId,
+                BranchId = branchId,
+                IsAvailable = false
+            });
+        }
+        else
+        {
+            instance.IsAvailable = !instance.IsAvailable;
+            instance = await _repository.UpdateItemAvailability(instance);
+        }
+
+        return instance.IsAvailable;
+    }
 }

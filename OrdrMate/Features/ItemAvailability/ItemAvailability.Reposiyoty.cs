@@ -36,7 +36,14 @@ public class ItemAvailabilityRepository
             .ThenInclude(i => i!.Kitchen)
             .Where(ia => ia.BranchId == branchId)
             .ToListAsync();
-            
+
         return itemAvailabilities;
+    }
+    
+    public async Task<ItemAvailability> UpdateItemAvailability(ItemAvailability itemAvailability)
+    {
+        var entity = _db.ItemAvailabilities.Update(itemAvailability);
+        await _db.SaveChangesAsync();
+        return entity.Entity;
     }
 }
