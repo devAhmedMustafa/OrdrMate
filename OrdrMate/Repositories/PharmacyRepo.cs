@@ -49,7 +49,7 @@ public class PharmacyRepo(OrdrMateDbContext c) : IPharmacyRepo
             .FirstOrDefaultAsync(r => r.ManagerId == managerId);
     }
 
-    public async Task<IEnumerable<Pharmacy>> GetAllPharmacys()
+    public async Task<IEnumerable<Pharmacy>> GetAllPharmacies()
     {
         return await _db.Pharmacy.Include(r => r.Profile).ToListAsync();
     }
@@ -59,16 +59,22 @@ public class PharmacyRepo(OrdrMateDbContext c) : IPharmacyRepo
         var Pharmacy = await _db.Pharmacy
             .Include(r => r.Categories)
             .FirstOrDefaultAsync(r => r.Id == PharmacyId);
+
         if (Pharmacy == null)
         {
             throw new InvalidOperationException($"Pharmacy with id {PharmacyId} does not exist.");
         }
 
-        return Pharmacy.Categories.Select(c => new Category
+        if (Pharmacy.Categories == null)
+        {
+            return [];
+        }
+
+        return [.. Pharmacy.Categories.Select(c => new Category
         {
             Name = c.Name,
             PharmacyId = c.PharmacyId
-        }).ToList();
+        })];
     }
 
     public async Task<PharmacyProfile?> GetPharmacyProfile(string PharmacyId)

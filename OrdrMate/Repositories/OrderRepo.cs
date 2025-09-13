@@ -63,7 +63,6 @@ public class OrderRepo : IOrderRepo
         await _db.SaveChangesAsync();
         await _db.Entry(saved.Entity).Reference(oi => oi.Item).LoadAsync();
         await _db.Entry(saved.Entity).Reference(oi => oi.Order).LoadAsync();
-        await _db.Entry(saved.Entity.Item!).Reference(i => i.Kitchen).LoadAsync();
         return saved.Entity;
     }
 
@@ -71,7 +70,7 @@ public class OrderRepo : IOrderRepo
     {
         return await _db.Order
             .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
-            .Include(o => o.Branch).ThenInclude(b => b!.Restaurant)
+            .Include(o => o.Branch).ThenInclude(b => b!.Pharmacy)
             .Include(o => o.Customer)
             .Include(o => o.Payment)
             .AsSplitQuery()
@@ -85,38 +84,23 @@ public class OrderRepo : IOrderRepo
         return await _db.Takeaway.FirstOrDefaultAsync(t => t.OrderId == orderId);
     }
 
-    public async Task<Indoor?> GetDineInById(string orderId)
-    {
-        return await _db.Indoor.FirstOrDefaultAsync(i => i.OrderId == orderId);
-    }
-
     public async Task<IEnumerable<Takeaway>> GetTakeawaysByCustomerId(string customerId)
     {
         return await _db.Takeaway
-            .Include(t => t.Order).ThenInclude(o => o.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(t => t.Order).ThenInclude(o => o.Customer)
-            .Include(t => t.Order).ThenInclude(o => o.Payment)
-            .Where(t => t.Order.CustomerId == customerId)
+            .Include(t => t.Order).ThenInclude(o => o!.Branch).ThenInclude(b => b!.Pharmacy)
+            .Include(t => t.Order).ThenInclude(o => o!.Customer)
+            .Include(t => t.Order).ThenInclude(o => o!.Payment)
+            .Where(t => t.Order!.CustomerId == customerId)
             .ToListAsync();
     }
 
     public async Task<IEnumerable<Takeaway>> GetAllTakeawaysByBranchId(string branchId)
     {
         return await _db.Takeaway
-            .Include(t => t.Order).ThenInclude(o => o.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(t => t.Order).ThenInclude(o => o.Customer)
-            .Include(t => t.Order).ThenInclude(o => o.Payment)
-            .Where(t => t.Order.BranchId == branchId)
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<Indoor>> GetIndoorsByCustomerId(string customerId)
-    {
-        return await _db.Indoor
-            .Include(i => i.Order).ThenInclude(o => o.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(i => i.Order).ThenInclude(o => o.Customer)
-            .Include(i => i.Order).ThenInclude(o => o.Payment)
-            .Where(i => i.Order.CustomerId == customerId)
+            .Include(t => t.Order).ThenInclude(o => o!.Branch).ThenInclude(b => b!.Pharmacy)
+            .Include(t => t.Order).ThenInclude(o => o!.Customer)
+            .Include(t => t.Order).ThenInclude(o => o!.Payment)
+            .Where(t => t.Order!.BranchId == branchId)
             .ToListAsync();
     }
 
