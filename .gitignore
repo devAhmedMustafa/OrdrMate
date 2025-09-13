@@ -21,8 +21,7 @@ publish
 .env
 
 appsettings.json
-appsettings.development.json
-appsettings.Development.json
+appsettings.*.json
 
 # SECRET
 Keys
