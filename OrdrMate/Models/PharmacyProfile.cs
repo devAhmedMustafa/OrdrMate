@@ -1,11 +1,11 @@
 namespace OrdrMate.Models;
 
-public class RestaurantProfile
+public class PharmacyProfile
 {
-    public string RestaurantId { get; set; }
+    public required string PharmacyId { get; set; }
     public required string Description { get; set; }
     public required string LogoUrl { get; set; }
     public required string CoverImageUrl { get; set; }
-    
-    public Restaurant? Restaurant { get; set; }
+
+    public Pharmacy? Pharmacy { get; set; }
 }

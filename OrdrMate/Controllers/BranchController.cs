@@ -39,10 +39,10 @@ public class BranchController : ControllerBase
         var branchRequestsDto = branchRequests.Select(br => new BranchRequestDto
         {
             BranchRequestId = br.Id,
-            RestaurantName = br.Restaurant.Name,
+            RestaurantName = br.Pharmacy.Name,
             BranchAddress = br.Address,
             BranchPhoneNumber = br.Phone,
-            Lantitude = br.Lantitude,
+            Lantitude = br.Latitude,
             Longitude = br.Longitude
 
         }).ToList();
@@ -61,10 +61,10 @@ public class BranchController : ControllerBase
         var branchRequestDto = new BranchRequestDto
         {
             BranchRequestId = branchRequest.Id,
-            RestaurantName = branchRequest.Restaurant.Name,
+            RestaurantName = branchRequest.Pharmacy.Name,
             BranchAddress = branchRequest.Address,
             BranchPhoneNumber = branchRequest.Phone,
-            Lantitude = branchRequest.Lantitude,
+            Lantitude = branchRequest.Latitude,
             Longitude = branchRequest.Longitude
         };
         return Ok(branchRequestDto);
@@ -89,10 +89,10 @@ public class BranchController : ControllerBase
         var branchRequest = new Models.BranchRequest
         {
             Id = Guid.NewGuid().ToString(),
-            RestaurantId = branchRequestDto.RestaurantId,
+            PharmacyId = branchRequestDto.RestaurantId,
             Address = branchRequestDto.BranchAddress,
             Phone = branchRequestDto.BranchPhoneNumber,
-            Lantitude = branchRequestDto.Lantitude,
+            Latitude = branchRequestDto.Lantitude,
             Longitude = branchRequestDto.Longitude
         };
 
@@ -100,10 +100,10 @@ public class BranchController : ControllerBase
         return CreatedAtAction(nameof(GetBranchRequestById), new { id = createdBranchRequest.Id }, new BranchRequestDto
         {
             BranchRequestId = createdBranchRequest.Id,
-            RestaurantName = createdBranchRequest.Restaurant.Name,
+            RestaurantName = createdBranchRequest.Pharmacy.Name,
             BranchAddress = createdBranchRequest.Address,
             BranchPhoneNumber = createdBranchRequest.Phone,
-            Lantitude = createdBranchRequest.Lantitude,
+            Lantitude = createdBranchRequest.Latitude,
             Longitude = createdBranchRequest.Longitude
         });
     }
@@ -120,11 +120,11 @@ public class BranchController : ControllerBase
 
         var branchCreated = await _branchService.CreateBranch(new BranchDto
         {
-            Latitude = branchRequest.Lantitude,
+            Latitude = branchRequest.Latitude,
             Longitude = branchRequest.Longitude,
             BranchAddress = branchRequest.Address,
             BranchPhoneNumber = branchRequest.Phone,
-            RestaurantId = branchRequest.RestaurantId
+            RestaurantId = branchRequest.PharmacyId
         });
 
         if (branchCreated == null)

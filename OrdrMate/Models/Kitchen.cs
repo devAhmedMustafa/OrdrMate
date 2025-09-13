@@ -7,5 +7,5 @@ public class Kitchen
     public string Description { get; set; } = string.Empty;
     public string RestaurantId { get; set; } = string.Empty;
 
-    public Restaurant? Restaurant { get; set; }
+    public Pharmacy? Restaurant { get; set; }
 }

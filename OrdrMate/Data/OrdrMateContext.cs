@@ -10,8 +10,8 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
 {
     public DbSet<User> User => Set<User>();
     public DbSet<FirebaseToken> FirebaseToken => Set<FirebaseToken>();
-    public DbSet<Restaurant> Restaurant => Set<Restaurant>();
-    public DbSet<RestaurantProfile> RestaurantProfile => Set<RestaurantProfile>();
+    public DbSet<Pharmacy> Restaurant => Set<Pharmacy>();
+    public DbSet<PharmacyProfile> RestaurantProfile => Set<PharmacyProfile>();
     public DbSet<Item> Item => Set<Item>();
     public DbSet<ItemAvailability> ItemAvailabilities => Set<ItemAvailability>();
     public DbSet<Category> Category => Set<Category>();
@@ -49,45 +49,45 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
 
         // Restaurant
 
-        modelBuilder.Entity<Restaurant>().HasKey(r => r.Id);
-        modelBuilder.Entity<Restaurant>().HasIndex(r => r.Name).IsUnique();
-        modelBuilder.Entity<Restaurant>()
+        modelBuilder.Entity<Pharmacy>().HasKey(r => r.Id);
+        modelBuilder.Entity<Pharmacy>().HasIndex(r => r.Name).IsUnique();
+        modelBuilder.Entity<Pharmacy>()
             .HasOne(r => r.Manager)
             .WithMany()
             .HasForeignKey(r => r.ManagerId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // RestaurantProfile
-        modelBuilder.Entity<RestaurantProfile>().HasKey(rp => rp.RestaurantId);
-        modelBuilder.Entity<RestaurantProfile>()
+        modelBuilder.Entity<PharmacyProfile>().HasKey(rp => rp.PharmacyId);
+        modelBuilder.Entity<PharmacyProfile>()
             .HasOne(rp => rp.Restaurant)
             .WithOne(r => r.Profile)
-            .HasForeignKey<RestaurantProfile>(rp => rp.RestaurantId)
+            .HasForeignKey<PharmacyProfile>(rp => rp.PharmacyId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Category
 
-        modelBuilder.Entity<Category>().HasIndex(c => new { c.Name, c.RestaurantId }).IsUnique();
-        modelBuilder.Entity<Category>().HasKey(c => new { c.Name, c.RestaurantId });
+        modelBuilder.Entity<Category>().HasIndex(c => new { c.Name, c.PharmacyId }).IsUnique();
+        modelBuilder.Entity<Category>().HasKey(c => new { c.Name, c.PharmacyId });
         modelBuilder.Entity<Category>()
-            .HasOne(c => c.Restaurant)
+            .HasOne(c => c.Pharmacy)
             .WithMany(r => r.Categories)
-            .HasForeignKey(c => c.RestaurantId)
+            .HasForeignKey(c => c.PharmacyId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Item
 
         modelBuilder.Entity<Item>().HasKey(i => i.Id);
-        modelBuilder.Entity<Item>().HasIndex(i => new { i.Name, i.CategoryName, i.RestaurantId }).IsUnique();
+        modelBuilder.Entity<Item>().HasIndex(i => new { i.Name, i.CategoryName, i.PharmacyId }).IsUnique();
         modelBuilder.Entity<Item>()
             .HasOne(i => i.Category)
             .WithMany(c => c.Items)
-            .HasForeignKey(i => new { i.CategoryName, i.RestaurantId });
+            .HasForeignKey(i => new { i.CategoryName, i.PharmacyId });
 
         modelBuilder.Entity<Item>()
-            .HasOne(i => i.Restaurant)
+            .HasOne(i => i.Pharmacy)
             .WithMany(r => r.Items)
-            .HasForeignKey(i => i.RestaurantId)
+            .HasForeignKey(i => i.PharmacyId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Item>()
@@ -101,7 +101,7 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
 
         modelBuilder.Entity<Branch>().HasKey(b => b.Id);
         modelBuilder.Entity<Branch>().HasIndex(b => b.Phone).IsUnique();
-        modelBuilder.Entity<Branch>().HasIndex(b => new { b.Lantitude, b.Longitude, b.RestaurantId }).IsUnique();
+        modelBuilder.Entity<Branch>().HasIndex(b => new { b.Latitude, b.Longitude, b.RestaurantId }).IsUnique();
         modelBuilder.Entity<Branch>()
             .HasOne(b => b.Restaurant)
             .WithMany(r => r.Branches)
@@ -117,11 +117,11 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
         // BranchRequest
 
         modelBuilder.Entity<BranchRequest>().HasKey(br => br.Id);
-        modelBuilder.Entity<BranchRequest>().HasIndex(br => new { br.Lantitude, br.Longitude, br.RestaurantId }).IsUnique();
+        modelBuilder.Entity<BranchRequest>().HasIndex(br => new { br.Latitude, br.Longitude, br.PharmacyId }).IsUnique();
         modelBuilder.Entity<BranchRequest>()
-            .HasOne(br => br.Restaurant)
+            .HasOne(br => br.Pharmacy)
             .WithMany(r => r.BranchRequests)
-            .HasForeignKey(br => br.RestaurantId)
+            .HasForeignKey(br => br.PharmacyId)
             .OnDelete(DeleteBehavior.Cascade);
 
 

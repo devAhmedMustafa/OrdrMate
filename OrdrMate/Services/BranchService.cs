@@ -32,7 +32,7 @@ public class BranchService(
         return new BranchDto
         {
             BranchId = branch.Id,
-            Latitude = branch.Lantitude,
+            Latitude = branch.Latitude,
             Longitude = branch.Longitude,
             BranchAddress = branch.Address,
             RestaurantId = branch.RestaurantId,
@@ -50,7 +50,7 @@ public class BranchService(
         return branches.Select(b => new BranchDto
         {
             BranchId = b.Id,
-            Latitude = b.Lantitude,
+            Latitude = b.Latitude,
             Longitude = b.Longitude,
             BranchAddress = b.Address,
             RestaurantId = b.RestaurantId,
@@ -67,7 +67,7 @@ public class BranchService(
         return branches.Select(b => new BranchDto
         {
             BranchId = b.Id,
-            Latitude = b.Lantitude,
+            Latitude = b.Latitude,
             Longitude = b.Longitude,
             BranchAddress = b.Address,
             BranchPhoneNumber = b.Phone,
@@ -108,7 +108,7 @@ public class BranchService(
         var branch = new Branch
         {
             Id = Guid.NewGuid().ToString(),
-            Lantitude = branchDto.Latitude,
+            Latitude = branchDto.Latitude,
             Longitude = branchDto.Longitude,
             Address = branchDto.BranchAddress,
             Phone = branchDto.BranchPhoneNumber,
@@ -198,7 +198,7 @@ public class BranchService(
         return new BranchDto
         {
             BranchId = branch.Id,
-            Latitude = branch.Lantitude,
+            Latitude = branch.Latitude,
             Longitude = branch.Longitude,
             BranchAddress = branch.Address,
             BranchPhoneNumber = branch.Phone,

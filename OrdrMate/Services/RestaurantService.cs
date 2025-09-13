@@ -21,7 +21,7 @@ public class RestaurantService(IRestaurantRepo r, IUserRepo m)
                 throw new Exception("No manager with " + dto.ManagerUsername + " username");
             }
 
-            var restaurant = new Restaurant
+            var restaurant = new Pharmacy
             {
                 Name = dto.Name,
                 Email = dto.Email,
@@ -163,7 +163,7 @@ public class RestaurantService(IRestaurantRepo r, IUserRepo m)
 
             return new RestaurantProfileDto
             {
-                RestaurantId = profile.RestaurantId,
+                RestaurantId = profile.PharmacyId,
                 Description = profile.Description,
                 LogoUrl = profile.LogoUrl,
                 CoverImageUrl = profile.CoverImageUrl
@@ -179,9 +179,9 @@ public class RestaurantService(IRestaurantRepo r, IUserRepo m)
     {
         try
         {
-            var profile = new RestaurantProfile
+            var profile = new PharmacyProfile
             {
-                RestaurantId = id,
+                PharmacyId = id,
                 Description = profileDto.Description,
                 LogoUrl = profileDto.LogoUrl,
                 CoverImageUrl = profileDto.CoverImageUrl
@@ -196,7 +196,7 @@ public class RestaurantService(IRestaurantRepo r, IUserRepo m)
 
             return new RestaurantProfileDto
             {
-                RestaurantId = updatedProfile.RestaurantId,
+                RestaurantId = updatedProfile.PharmacyId,
                 Description = updatedProfile.Description,
                 LogoUrl = updatedProfile.LogoUrl,
                 CoverImageUrl = updatedProfile.CoverImageUrl
