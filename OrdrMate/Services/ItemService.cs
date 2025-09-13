@@ -99,27 +99,32 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             Price = item.Price,
             Category = item.CategoryName,
             PreparationTime = item.PreperationTime,
+            KitchenId = item.Kitchen?.Id,
+            Priority = item.Priority,
+            Tags = item.Tags,
             KitchenName = item.Kitchen?.Name ?? string.Empty
         });
     }
 
     public async Task<ItemDto?> UpdateItem(string id, UpdateItemDto updatedItem)
     {
-        Item item = new()
+        var existingItem = await _itemRepo.GetItem(id);
+        if (existingItem == null)
         {
-            Id = id,
-            Name = updatedItem.Name,
-            Description = updatedItem.Description,
-            ImageUrl = updatedItem.ImageUrl,
-            Price = updatedItem.Price,
-            CategoryName = updatedItem.Category,
-            KitchenId = updatedItem.KitchenId,
-            PreperationTime = updatedItem.PreparationTime,
-            Priority = updatedItem.Priority,
-            Tags = updatedItem.Tags
-        };
+            throw new Exception("Item not found");
+        }
 
-        var updated = await _itemRepo.UpdateItem(item);
+        existingItem.Name = updatedItem.Name;
+        existingItem.Description = updatedItem.Description;
+        existingItem.ImageUrl = updatedItem.ImageUrl;
+        existingItem.Price = updatedItem.Price;
+        existingItem.CategoryName = updatedItem.Category;
+        existingItem.KitchenId = updatedItem.KitchenId;
+        existingItem.PreperationTime = updatedItem.PreparationTime;
+        existingItem.Priority = updatedItem.Priority;
+        existingItem.Tags = updatedItem.Tags;
+
+        var updated = await _itemRepo.UpdateItem(existingItem);
 
         if (updated == null)
         {
