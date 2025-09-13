@@ -8,6 +8,8 @@ public class Item
     public string ImageUrl { get; set; } = string.Empty;
     public decimal Price { get; set; } = 0.0m;
     public decimal PreperationTime { get; set; } = 0.0m;
+    public int Priority { get; set; } = 0;
+    public string Tags { get; set; } = string.Empty;
     public Category? Category { get; set; }
     public string KitchenId { get; set; } = string.Empty;
     public Kitchen? Kitchen { get; set; }

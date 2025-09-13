@@ -46,7 +46,9 @@ public class ItemAvailabilityService
             Category = ia.Item.CategoryName,
             KitchenName = ia.Item.Kitchen!.Name,
             KitchenId = ia.Item.KitchenId,
-            IsAvailable = ia.IsAvailable
+            IsAvailable = ia.IsAvailable,
+            Priority = ia.Item.Priority,
+            Tags = ia.Item.Tags
         });
     }
 
