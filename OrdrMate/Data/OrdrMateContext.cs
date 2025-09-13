@@ -34,8 +34,6 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrdrMateDbContext).Assembly);
-
         // Manager
 
         modelBuilder.Entity<User>().HasKey(m => m.Id);
@@ -273,6 +271,9 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .WithMany(i => i.Customizations)
             .HasForeignKey(ic => ic.ItemId)
             .OnDelete(DeleteBehavior.Cascade);
+
+
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrdrMateDbContext).Assembly);
 
     }
 

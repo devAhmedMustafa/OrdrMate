@@ -75,7 +75,9 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             Category = item.CategoryName,
             PreparationTime = item.PreperationTime,
             KitchenName = item.Kitchen?.Name ?? string.Empty,
-            KitchenId = item.Kitchen?.Id
+            KitchenId = item.Kitchen?.Id,
+            Priority = item.Priority,
+            Tags = item.Tags
         };
     }
 
@@ -105,16 +107,19 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
     {
         Item item = new()
         {
+            Id = id,
             Name = updatedItem.Name,
             Description = updatedItem.Description,
             ImageUrl = updatedItem.ImageUrl,
             Price = updatedItem.Price,
             CategoryName = updatedItem.Category,
             KitchenId = updatedItem.KitchenId,
-            PreperationTime = updatedItem.PreparationTime
+            PreperationTime = updatedItem.PreparationTime,
+            Priority = updatedItem.Priority,
+            Tags = updatedItem.Tags
         };
 
-        var updated = await _itemRepo.UpdateItem(id, item);
+        var updated = await _itemRepo.UpdateItem(item);
 
         if (updated == null)
         {
@@ -131,6 +136,8 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             Category = updated.CategoryName,
             PreparationTime = updated.PreperationTime,
             KitchenName = updated.Kitchen?.Name ?? string.Empty,
+            Priority = updated.Priority,
+            Tags = updated.Tags
         };
 
     }

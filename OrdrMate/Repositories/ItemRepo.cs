@@ -92,9 +92,18 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
         existingItem.CategoryName = item.CategoryName;
         existingItem.PreperationTime = item.PreperationTime;
         existingItem.KitchenId = item.KitchenId;
+        existingItem.Priority = item.Priority;
+        existingItem.Tags = item.Tags;
 
         await _context.SaveChangesAsync();
         return existingItem;
+    }
+
+    public async Task<Item?> UpdateItem(Item item)
+    {
+        var entity = _context.Item.Update(item);
+        await _context.SaveChangesAsync();
+        return entity.Entity;
     }
 
     public async Task<bool> DeleteItem(string id)
