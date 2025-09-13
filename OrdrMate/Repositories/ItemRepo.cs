@@ -65,7 +65,7 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
         return item;
     }
 
-    public async Task<IEnumerable<Item>> GetItems()
+    public async Task<IEnumerable<Item>> GetAllItems()
     {
         return await _context.Item.ToListAsync();
     }
