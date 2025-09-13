@@ -4,9 +4,9 @@ using OrdrMate.Repositories;
 
 namespace OrdrMate.Services;
 
-public class RestaurantService(IRestaurantRepo r, IUserRepo m)
+public class RestaurantService(IPharmacyRepo r, IUserRepo m)
 {
-    private readonly IRestaurantRepo _repo = r;
+    private readonly IPharmacyRepo _repo = r;
     private readonly IUserRepo _managerRepo = m;
 
     public async Task<RestaurantDTO> CreateRestaurant(CreateRestaurantDto dto)

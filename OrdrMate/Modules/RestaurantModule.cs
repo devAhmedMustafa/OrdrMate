@@ -13,7 +13,7 @@ public class RestaurantModule : IModule
         IConfiguration configuration,
         IHostEnvironment env)
     {
-        services.AddScoped<IRestaurantRepo, RestaurantRepo>();
+        services.AddScoped<IPharmacyRepo, RestaurantRepo>();
         services.AddScoped<RestaurantService, RestaurantService>();
 
         services.Configure<AuthorizationOptions>(options =>

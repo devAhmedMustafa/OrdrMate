@@ -7,8 +7,8 @@ using OrdrMate.Enums;
 
 public class ManageRestaurantHandler : AuthorizationHandler<ManageRestaurantRequirement, string>
 {
-    private readonly IRestaurantRepo _repo;
-    public ManageRestaurantHandler(IRestaurantRepo repo)
+    private readonly IPharmacyRepo _repo;
+    public ManageRestaurantHandler(IPharmacyRepo repo)
     {
         _repo = repo;
     }

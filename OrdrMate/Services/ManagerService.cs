@@ -7,10 +7,10 @@ using OrdrMate.Enums;
 
 namespace OrdrMate.Services;
 
-public class ManagerService(IUserRepo r, IRestaurantRepo rr, IConfiguration c, IBranchRepo branchRepo)
+public class ManagerService(IUserRepo r, IPharmacyRepo rr, IConfiguration c, IBranchRepo branchRepo)
 {
     private readonly IUserRepo _repo = r;
-    private readonly IRestaurantRepo _restaurantRepo = rr;
+    private readonly IPharmacyRepo _restaurantRepo = rr;
     private readonly IBranchRepo _branchRepo = branchRepo;
     private readonly IConfiguration _config = c;
 
