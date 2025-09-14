@@ -37,6 +37,7 @@ public class OrderManager
         OrderEvents.OrderReady += OnOrderReady;
         BranchEvents.KitchenUpdate += OnKitchenUpdate;
         OrderEvents.OrderInProgress += OnOrderInProgress;
+        OrderEvents.OrderCancelled += OnOrderCancelled;
 
         _initialized = true;
     }
@@ -110,7 +111,7 @@ public class OrderManager
                 Item = item
             });
 
-            await _branchOrdersSocketHandler.SendToBranch(branchId, json);
+            await _branchOrdersSocketHandler.SendTo(branchId, json);
         }
 
         var orderRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<IOrderRepo>();
@@ -123,10 +124,21 @@ public class OrderManager
             IsBeingPrepared = restaurantManager?.IsOrderInProcess(orderItems[0].OrderId),
         });
 
-        await _branchOrdersSocketHandler.SendToBranch(branchId, jsonOrder);
+        await _branchOrdersSocketHandler.SendTo(branchId, jsonOrder);
 
     }
 
+    private void OnOrderCancelled(string branchId, string orderId)
+    {
+        var branch = restaurantManagers.GetValueOrDefault(branchId);
+        if (branch == null)
+        {
+            Console.WriteLine($"No branch found with ID {branchId}. Cannot cancel order {orderId}.");
+            return;
+        }
+
+        branch.RemoveOrder(orderId);
+    }
     public NextInQueueDto CheckPreparedInQueue(string branchId, string kitchenName, int kitchenUnitId)
     {
         try
@@ -255,7 +267,7 @@ public class OrderManager
             Console.WriteLine($"Error sending notification for order {orderId}: {ex.Message}");
         }
 
-        await _branchOrdersSocketHandler.SendToBranch(branchId, json);
+        await _branchOrdersSocketHandler.SendTo(branchId, json);
 
     }
 
@@ -309,7 +321,7 @@ public class OrderManager
             Console.WriteLine($"Error sending notification for order {orderId}: {ex.Message}");
         }
 
-        _branchOrdersSocketHandler.SendToBranch(branchId, json).Wait();
+        _branchOrdersSocketHandler.SendTo(branchId, json).Wait();
     }
 
     public List<QueueItem> GetItemQueues(string branchId)

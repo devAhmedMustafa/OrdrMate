@@ -58,10 +58,14 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
 
     public async Task<Item?> GetItem(string id)
     {
-        return await _context.Item.FindAsync(id);
+        var item = await _context.Item
+            .Include(i => i.Kitchen)
+            .FirstOrDefaultAsync(i => i.Id == id);
+
+        return item;
     }
 
-    public async Task<IEnumerable<Item>> GetItems()
+    public async Task<IEnumerable<Item>> GetAllItems()
     {
         return await _context.Item.ToListAsync();
     }
@@ -78,22 +82,28 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
         var existingItem = await _context.Item.FindAsync(id);
         if (existingItem == null)
         {
-            return null;
+            throw new Exception("Item not found");
         }
 
         existingItem.Name = item.Name;
         existingItem.Description = item.Description;
         existingItem.ImageUrl = item.ImageUrl;
         existingItem.Price = item.Price;
-        existingItem.PreperationTime = item.PreperationTime;
         existingItem.CategoryName = item.CategoryName;
+        existingItem.PreperationTime = item.PreperationTime;
         existingItem.KitchenId = item.KitchenId;
-        existingItem.RestaurantId = item.RestaurantId;
-
-        _context.Item.Update(existingItem);
+        existingItem.Priority = item.Priority;
+        existingItem.Tags = item.Tags;
 
         await _context.SaveChangesAsync();
         return existingItem;
+    }
+
+    public async Task<Item?> UpdateItem(Item item)
+    {
+        var entity = _context.Item.Update(item);
+        await _context.SaveChangesAsync();
+        return entity.Entity;
     }
 
     public async Task<bool> DeleteItem(string id)

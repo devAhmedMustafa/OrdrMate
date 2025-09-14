@@ -18,13 +18,15 @@ public class OrderController : ControllerBase
     private readonly OrderManager _orderManager;
     private readonly IAuthorizationService _authorizationService;
     private readonly GeoMaps _geoMaps;
+    private readonly IWebHostEnvironment _env;
 
     public OrderController(
         OrderService orderService,
         BranchService branchService,
         IAuthorizationService authorizationService,
         OrderManager orderManager,
-        GeoMaps geoMaps
+        GeoMaps geoMaps,
+        IWebHostEnvironment env
         )
     {
         _orderService = orderService;
@@ -32,6 +34,7 @@ public class OrderController : ControllerBase
         _authorizationService = authorizationService;
         _orderManager = orderManager;
         _geoMaps = geoMaps;
+        _env = env;
     }
 
     [HttpPost]
@@ -40,14 +43,14 @@ public class OrderController : ControllerBase
     {
         try
         {
-            
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
                 return Forbid("User ID not found in claims.");
 
 
             placeOrderDto.CustomerId = userId;
-            
+
             var branch = await _branchService.GetBranchById(placeOrderDto.BranchId);
 
             if (!TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays))
@@ -62,8 +65,9 @@ public class OrderController : ControllerBase
                 branch.Longitude
             );
 
-            if (distance > 50)
+            if (distance > 50 && !_env.IsDevelopment())
             {
+                Console.WriteLine($"[BranchController]: Coordinates: ({placeOrderDto.Latitude}, {placeOrderDto.Longitude}), Branch: ({branch.Latitude}, {branch.Longitude}), Distance: {distance} km");
                 return Forbid($"Order cannot be placed. Distance is {distance:F2} km, which exceeds the 50 km limit.");
             }
 
@@ -494,4 +498,15 @@ public class OrderController : ControllerBase
             return StatusCode(500, $"An error occurred while marking the order as paid: {ex.Message}");
         }
     }
+    [HttpPut("cancel/{orderId}")]
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> CancelOrder(string orderId)
+    {
+        var result = await _orderService.CancelOrderAsync(orderId);
+        if (!result)
+            return NotFound(new { message = "Order not found or already cancelled." });
+
+        return Ok(new { message = "Order cancelled successfully." });
+    }
+
 }

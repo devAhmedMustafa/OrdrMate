@@ -3,10 +3,13 @@ namespace OrdrMate.Services;
 using OrdrMate.Repositories;
 using OrdrMate.Models;
 using OrdrMate.DTOs.Item;
+using OrdrMate.Features.ItemAvailability;
+using OrdrMate.Events;
 
-public class ItemService(IItemRepo itemRepo)
+public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailabilityService)
 {
     private readonly IItemRepo _itemRepo = itemRepo;
+    private readonly ItemAvailabilityService _itemAvailabilityService = itemAvailabilityService;
 
     public async Task<ItemDto?> AddItem(AddItemDto item)
     {
@@ -25,6 +28,9 @@ public class ItemService(IItemRepo itemRepo)
             };
 
             var addedItem = await _itemRepo.AddItem(newItem);
+            if (addedItem is null) throw new Exception("Failed to add item");
+
+            ItemEvents.ItemAdded(addedItem);
 
             if (addedItem == null)
             {
@@ -68,13 +74,16 @@ public class ItemService(IItemRepo itemRepo)
             Price = item.Price,
             Category = item.CategoryName,
             PreparationTime = item.PreperationTime,
-            KitchenName = item.Kitchen?.Name ?? string.Empty
+            KitchenName = item.Kitchen?.Name ?? string.Empty,
+            KitchenId = item.Kitchen?.Id,
+            Priority = item.Priority,
+            Tags = item.Tags
         };
     }
 
-    public async Task<IEnumerable<Item>> GetItems()
+    public async Task<IEnumerable<Item>> GetAllItems()
     {
-        return await _itemRepo.GetItems();
+        return await _itemRepo.GetAllItems();
     }
 
     public async Task<IEnumerable<ItemDto>> GetItemsByRestaurantId(string restaurantId)
@@ -90,24 +99,32 @@ public class ItemService(IItemRepo itemRepo)
             Price = item.Price,
             Category = item.CategoryName,
             PreparationTime = item.PreperationTime,
+            KitchenId = item.Kitchen?.Id,
+            Priority = item.Priority,
+            Tags = item.Tags,
             KitchenName = item.Kitchen?.Name ?? string.Empty
         });
     }
 
     public async Task<ItemDto?> UpdateItem(string id, UpdateItemDto updatedItem)
     {
-        Item item = new()
+        var existingItem = await _itemRepo.GetItem(id);
+        if (existingItem == null)
         {
-            Name = updatedItem.Name,
-            Description = updatedItem.Description,
-            ImageUrl = updatedItem.ImageUrl,
-            Price = updatedItem.Price,
-            CategoryName = updatedItem.Category,
-            KitchenId = updatedItem.KitchenId,
-            PreperationTime = updatedItem.PreparationTime
-        };
+            throw new Exception("Item not found");
+        }
 
-        var updated = await _itemRepo.UpdateItem(id, item);
+        existingItem.Name = updatedItem.Name;
+        existingItem.Description = updatedItem.Description;
+        existingItem.ImageUrl = updatedItem.ImageUrl;
+        existingItem.Price = updatedItem.Price;
+        existingItem.CategoryName = updatedItem.Category;
+        existingItem.KitchenId = updatedItem.KitchenId;
+        existingItem.PreperationTime = updatedItem.PreparationTime;
+        existingItem.Priority = updatedItem.Priority;
+        existingItem.Tags = updatedItem.Tags;
+
+        var updated = await _itemRepo.UpdateItem(existingItem);
 
         if (updated == null)
         {
@@ -123,7 +140,9 @@ public class ItemService(IItemRepo itemRepo)
             Price = updated.Price,
             Category = updated.CategoryName,
             PreparationTime = updated.PreperationTime,
-            KitchenName = updated.Kitchen?.Name ?? string.Empty
+            KitchenName = updated.Kitchen?.Name ?? string.Empty,
+            Priority = updated.Priority,
+            Tags = updated.Tags
         };
 
     }
@@ -152,17 +171,7 @@ public class ItemService(IItemRepo itemRepo)
     
     public async Task<IEnumerable<ItemDto>> GetAvailableItems(string branchId)
     {
-        var items = await _itemRepo.GetAvailableItemsByBranchId(branchId);
-        return items.Select(i => new ItemDto
-        {
-            Id = i.Id,
-            Name = i.Name,
-            Price = i.Price,
-            Description = i.Description,
-            Category = i.CategoryName,
-            PreparationTime = i.PreperationTime,
-            KitchenName = i.Kitchen?.Name ?? "Unknown",
-            ImageUrl = i.ImageUrl,
-        });
+        var items = await _itemAvailabilityService.GetAllItemAvailabilities(branchId);
+        return items;
     }
 }

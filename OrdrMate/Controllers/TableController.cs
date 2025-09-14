@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using OrdrMate.Services;
 
 namespace OrdrMate.Controllers;
+
+using OrdrMate.DTOs.Order;
 using OrdrMate.DTOs.Table;
 using OrdrMate.Managers;
 
@@ -115,5 +117,19 @@ public class TableController : ControllerBase
             return NotFound(new { err = "No reservation queue found for this table." });
         }
         return Ok(queue);
+    }
+
+    [HttpGet("order/{reservationId}")]
+    public async Task<ActionResult<OrderDto>> GetTableOrderByReservationId(string reservationId)
+    {
+        try
+        {
+            var order = await _tableService.GetOrderByTableReservationId(reservationId);
+            return Ok(order);
+        }
+        catch (Exception ex)
+        {
+            return NotFound(new { err = ex.Message });
+        }
     }
 }

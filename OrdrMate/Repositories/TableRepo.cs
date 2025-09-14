@@ -129,7 +129,9 @@ public class TableRepo : ITableRepo
     public async Task<Order?> GetTableOrderByReservationId(string reservationId)
     {
         var reservation = await _context.TableReservation
-            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i=> i.Kitchen)
+            .Include(r => r.Customer)
+            .Include(r => r.Branch).ThenInclude(b => b!.Restaurant)
+            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i=> i!.Kitchen)
             .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
 
         if (reservation == null)
@@ -171,7 +173,7 @@ public class TableRepo : ITableRepo
     public async Task<IEnumerable<TableReservation>> GetTableReservationsInQueue(string branchId, int tableNumber)
     {
         return await _context.TableReservation.OrderBy(r => r.ReservationTime)
-            .Where(r => r.BranchId == branchId && r.TableNumber == tableNumber && (r.ReservationStatus == "Queued" || r.ReservationStatus == "Seated"))
+            .Where(r => r.BranchId == branchId && r.TableNumber == tableNumber && r.ReservationStatus != "Left")
             .Include(r => r.Customer)
             .Include(r => r.Order)
             .ToListAsync();

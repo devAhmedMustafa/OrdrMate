@@ -22,6 +22,56 @@ namespace OrdrMate.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("OrdrMate.Features.ItemAvailability.ItemAvailability", b =>
+                {
+                    b.Property<string>("ItemId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BranchId")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("ItemId", "BranchId");
+
+                    b.HasIndex("BranchId");
+
+                    b.ToTable("ItemAvailabilities");
+                });
+
+            modelBuilder.Entity("OrdrMate.Features.Preport.PickupReport", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ApprovedTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ManagerId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OrderId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ReportedTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PickupReports");
+                });
+
             modelBuilder.Entity("OrdrMate.Models.Branch", b =>
                 {
                     b.Property<string>("Id")
@@ -206,7 +256,14 @@ namespace OrdrMate.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
 
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
                     b.Property<string>("RestaurantId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Tags")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -312,6 +369,9 @@ namespace OrdrMate.Migrations
 
                     b.Property<int>("OrderType")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime>("ReadyTime")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -605,6 +665,25 @@ namespace OrdrMate.Migrations
                         .IsUnique();
 
                     b.ToTable("User");
+                });
+
+            modelBuilder.Entity("OrdrMate.Features.ItemAvailability.ItemAvailability", b =>
+                {
+                    b.HasOne("OrdrMate.Models.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OrdrMate.Models.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Item");
                 });
 
             modelBuilder.Entity("OrdrMate.Models.Branch", b =>
