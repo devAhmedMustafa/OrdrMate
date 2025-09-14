@@ -12,7 +12,7 @@ public class BranchDto
     public string? BranchManagerId { get; set; }
     public TimeSpan StartWorkingHour { get; set; }
     public TimeSpan EndWorkingHour { get; set; }
-    public bool[]? WorkingDays { get; set; }
+    public required bool[] WorkingDays { get; set; }
     public string? LogoUrl { get; set; }
     public bool IsOpen { get; set; }
 }

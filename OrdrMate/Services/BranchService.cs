@@ -58,6 +58,9 @@ public class BranchService(
             IsOpen = TimeService.CheckWithinTimeInterval(b.StartWorkingHour, b.EndWorkingHour, b.WorkingDays),
             BranchPhoneNumber = b.Phone,
             LogoUrl = b.Pharmacy?.Profile?.LogoUrl,
+            StartWorkingHour = b.StartWorkingHour,
+            EndWorkingHour = b.EndWorkingHour,
+            WorkingDays = b.WorkingDays
         });
     }
 
@@ -73,6 +76,9 @@ public class BranchService(
             BranchPhoneNumber = b.Phone,
             PharmacyId = b.PharmacyId,
             PharmacyName = b.Pharmacy?.Name ?? "Unknown",
+            StartWorkingHour = b.StartWorkingHour,
+            EndWorkingHour = b.EndWorkingHour,
+            WorkingDays = b.WorkingDays,
         });
     }
 
@@ -199,7 +205,8 @@ public class BranchService(
             PharmacyId = branch.PharmacyId,
             PharmacyName = branch.Pharmacy?.Name ?? "Unknown",
             StartWorkingHour = branch.StartWorkingHour,
-            EndWorkingHour = branch.EndWorkingHour
+            EndWorkingHour = branch.EndWorkingHour,
+            WorkingDays = branch.WorkingDays,
         };
     }
 

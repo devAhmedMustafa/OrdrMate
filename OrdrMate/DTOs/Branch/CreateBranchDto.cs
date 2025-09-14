@@ -2,7 +2,6 @@ namespace OrdrMate.DTOs.Branch;
 
 public class CreateBranchDto
 {
-    public required string BranchId { get; set; }
     public required float Latitude { get; set; }
     public required float Longitude { get; set; }
     public required string BranchAddress { get; set; }

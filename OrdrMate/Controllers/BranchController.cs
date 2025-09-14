@@ -39,7 +39,7 @@ public class BranchController : ControllerBase
         var branchRequestsDto = branchRequests.Select(br => new BranchRequestDto
         {
             BranchRequestId = br.Id,
-            PharmacyName = br.Pharmacy.Name,
+            PharmacyName = br.Pharmacy!.Name,
             BranchAddress = br.Address,
             BranchPhoneNumber = br.Phone,
             Lantitude = br.Latitude,
@@ -61,7 +61,7 @@ public class BranchController : ControllerBase
         var branchRequestDto = new BranchRequestDto
         {
             BranchRequestId = branchRequest.Id,
-            PharmacyName = branchRequest.Pharmacy.Name,
+            PharmacyName = branchRequest.Pharmacy!.Name,
             BranchAddress = branchRequest.Address,
             BranchPhoneNumber = branchRequest.Phone,
             Lantitude = branchRequest.Latitude,
@@ -74,11 +74,11 @@ public class BranchController : ControllerBase
     public async Task<IActionResult> CreateBranchRequest([FromBody] AddBranchRequestDto branchRequestDto)
     {
 
-        var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchRequestDto.PharmacyId, "CanManageRestaurant");
+        var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchRequestDto.PharmacyId, "CanManagePharmacy");
 
         if (!authorizationResult.Succeeded)
         {
-            return Forbid("You do not have permission to manage this restaurant.");
+            return Forbid("You do not have permission to manage this Pharmacy.");
         }
 
         if (branchRequestDto == null)
@@ -100,7 +100,7 @@ public class BranchController : ControllerBase
         return CreatedAtAction(nameof(GetBranchRequestById), new { id = createdBranchRequest.Id }, new BranchRequestDto
         {
             BranchRequestId = createdBranchRequest.Id,
-            PharmacyName = createdBranchRequest.Pharmacy.Name,
+            PharmacyName = createdBranchRequest.Pharmacy!.Name,
             BranchAddress = createdBranchRequest.Address,
             BranchPhoneNumber = createdBranchRequest.Phone,
             Lantitude = createdBranchRequest.Latitude,
@@ -118,13 +118,14 @@ public class BranchController : ControllerBase
             return NotFound($"Branch request with id {id} not found.");
         }
 
-        var branchCreated = await _branchService.CreateBranch(new BranchDto
+        var branchCreated = await _branchService.CreateBranch(new CreateBranchDto
         {
             Latitude = branchRequest.Latitude,
             Longitude = branchRequest.Longitude,
             BranchAddress = branchRequest.Address,
             BranchPhoneNumber = branchRequest.Phone,
-            PharmacyId = branchRequest.PharmacyId
+            PharmacyId = branchRequest.PharmacyId,
+            PharmacyName = branchRequest.Pharmacy!.Name,
         });
 
         if (branchCreated == null)
@@ -142,17 +143,17 @@ public class BranchController : ControllerBase
     }
 
     [HttpGet]
-    [Route("restaurant/{restaurantId}")]
-    public async Task<IActionResult> GetRestaurantBranches(string restaurantId)
+    [Route("Pharmacy/{PharmacyId}")]
+    public async Task<IActionResult> GetPharmacyBranches(string PharmacyId)
     {
         try
         {
-            var branches = await _branchService.GetRestaurantBranches(restaurantId);
+            var branches = await _branchService.GetPharmacyBranches(PharmacyId);
             return Ok(branches);
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound($"Restaurant with ID {restaurantId} not found: {ex.Message}");
+            return NotFound($"Pharmacy with ID {PharmacyId} not found: {ex.Message}");
         }
     }
 
@@ -251,7 +252,8 @@ public class BranchController : ControllerBase
             {
                 return NotFound($"Branch with ID {branchId} not found.");
             }
-            var isOpen = TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays);
+            
+            var isOpen = TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays!);
             return Ok(isOpen);
         }
         catch (KeyNotFoundException ex)
