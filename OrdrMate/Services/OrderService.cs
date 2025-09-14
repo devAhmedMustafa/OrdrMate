@@ -7,6 +7,7 @@ using OrdrMate.Events;
 using Hangfire;
 using OrdrMate.Features.Customization;
 using MongoDB.Bson;
+using OrdrMate.Features.ItemAvailability;
 
 namespace OrdrMate.Services;
 
@@ -19,6 +20,7 @@ public class OrderService
     private readonly TableService _tableService;
     private readonly CloudMessaging _cloudMessaging;
     private readonly IBackgroundJobClient _backgroundJobs;
+    private readonly ItemAvailabilityService _itemAvailabilityService;
     private readonly UserCustomizationService _userCustomizationService;
 
     private static readonly Dictionary<string, string> _jobIds = new Dictionary<string, string>();
@@ -31,7 +33,8 @@ public class OrderService
         TableService tableService,
         CloudMessaging cloudMessaging,
         IBackgroundJobClient backgroundJobs,
-        UserCustomizationService userCustomizationService
+        UserCustomizationService userCustomizationService,
+        ItemAvailabilityService itemAvailabilityService
     )
     {
         _paymentService = paymentService;
@@ -42,10 +45,20 @@ public class OrderService
         _cloudMessaging = cloudMessaging;
         _backgroundJobs = backgroundJobs;
         _userCustomizationService = userCustomizationService;
+        _itemAvailabilityService = itemAvailabilityService;
     }
 
     public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto)
     {
+
+        foreach (var item in placeOrderDto.Items)
+        {
+            var isAvailable = await _itemAvailabilityService.IsItemAvailable(item.ItemId, placeOrderDto.BranchId);
+            if (!isAvailable)
+            {
+                throw new InvalidOperationException($"Item with id {item.ItemId} is not available in branch {placeOrderDto.BranchId}.");
+            }
+        }
 
         var totalAmount = placeOrderDto.Items.Sum(oi => oi.Price * oi.Quantity);
 
