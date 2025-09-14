@@ -2,8 +2,8 @@ namespace OrdrMate.Controllers;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
 using OrdrMate.DTOs.Customization;
+using OrdrMate.Features.Customization.DTOs;
 using OrdrMate.Services;
 
 [ApiController]
@@ -68,16 +68,16 @@ public class CustomizationController : ControllerBase
     }
 
     [HttpPost("assign-category-to-item")]
-    public async Task<IActionResult> AssignCategoryToItem([FromQuery] string itemId, [FromQuery] string categoryId)
+    public async Task<IActionResult> AssignCategoryToItem([FromBody] AssignCustomizationCategoryDto assignDto)
     {
-        if (string.IsNullOrEmpty(itemId) || string.IsNullOrEmpty(categoryId))
+        if (assignDto == null || string.IsNullOrEmpty(assignDto.ItemId) || string.IsNullOrEmpty(assignDto.CategoryId))
         {
             return BadRequest("Item ID and Category ID are required.");
         }
 
         try
         {
-            await _customizationService.AssignCategoryToItem(itemId, categoryId);
+            await _customizationService.AssignCategoryToItem(assignDto.ItemId, assignDto.CategoryId);
             return Ok("Category assigned to item successfully.");
         }
         catch (ArgumentNullException ex)
