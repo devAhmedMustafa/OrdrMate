@@ -31,7 +31,7 @@ public class BranchAttendanceService
         return new OrderDto
         {
             OrderId = order.Id,
-            RestaurantName = order.Branch?.Restaurant?.Name ?? "Unknown",
+            PharmacyName = order.Branch?.Restaurant?.Name ?? "Unknown",
             CustomerId = order.CustomerId,
             Customer = order.Customer?.Username ?? "Unknown",
             OrderType = order.OrderType.ToString(),

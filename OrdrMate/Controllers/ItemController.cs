@@ -47,7 +47,7 @@ public class ItemController : ControllerBase
     {
         try
         {
-            var items = await _service.GetItemsByRestaurantId(restaurantId);
+            var items = await _service.GetItemsByPharmacyId(restaurantId);
             return Ok(items);
         }
         catch (Exception e)

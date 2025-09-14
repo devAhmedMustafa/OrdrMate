@@ -33,7 +33,6 @@ public class ItemAvailabilityRepository
     {
         var itemAvailabilities = await _db.ItemAvailabilities
             .Include(i => i.Item)
-            .ThenInclude(i => i!.Kitchen)
             .OrderByDescending(i => i.Item!.Priority)
             .Where(ia => ia.BranchId == branchId)
             .ToListAsync();

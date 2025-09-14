@@ -124,7 +124,7 @@ public class BranchController : ControllerBase
             Longitude = branchRequest.Longitude,
             BranchAddress = branchRequest.Address,
             BranchPhoneNumber = branchRequest.Phone,
-            RestaurantId = branchRequest.PharmacyId
+            PharmacyId = branchRequest.PharmacyId
         });
 
         if (branchCreated == null)

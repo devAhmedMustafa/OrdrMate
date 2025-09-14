@@ -10,7 +10,7 @@ namespace OrdrMate.Services;
 public class ManagerService(IUserRepo r, IPharmacyRepo rr, IConfiguration c, IBranchRepo branchRepo)
 {
     private readonly IUserRepo _repo = r;
-    private readonly IPharmacyRepo _restaurantRepo = rr;
+    private readonly IPharmacyRepo _PharmacyRepo = rr;
     private readonly IBranchRepo _branchRepo = branchRepo;
     private readonly IConfiguration _config = c;
 
@@ -67,15 +67,15 @@ public class ManagerService(IUserRepo r, IPharmacyRepo rr, IConfiguration c, IBr
 
         var jwtService = new JWTService(_config);
 
-        var restaurantId = "";
+        var PharmacyId = "";
         var branchId = "";
 
         if (manager.Role == UserRole.TopManager)
         {
-            var restaurant = await _restaurantRepo.GetRestaurantByManagerId(manager.Id);
-            if (restaurant != null)
+            var Pharmacy = await _PharmacyRepo.GetPharmacyByManagerId(manager.Id);
+            if (Pharmacy != null)
             {
-                restaurantId = restaurant.Id;
+                PharmacyId = Pharmacy.Id;
                 branchId = "HEAD";
             }
         }
@@ -85,7 +85,7 @@ public class ManagerService(IUserRepo r, IPharmacyRepo rr, IConfiguration c, IBr
             var branch = await _branchRepo.GetBranchByManagerId(manager.Id);
             if (branch != null)
             {
-                restaurantId = branch.RestaurantId;
+                PharmacyId = branch.PharmacyId;
                 branchId = branch.Id;
             }
         }
@@ -94,7 +94,7 @@ public class ManagerService(IUserRepo r, IPharmacyRepo rr, IConfiguration c, IBr
         {
             Token = jwtService.GenerateJWT(manager.Id, manager.Role),
             Role = manager.Role.ToString(),
-            RestaurantId = restaurantId,
+            PharmacyId = PharmacyId,
             BranchId = branchId
         };
     }
