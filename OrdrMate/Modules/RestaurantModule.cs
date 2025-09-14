@@ -19,10 +19,10 @@ public class RestaurantModule : IModule
         services.Configure<AuthorizationOptions>(options =>
         {
             options.AddPolicy("CanManageRestaurant", policy =>
-                policy.Requirements.Add(new ManageRestaurantRequirement()));
+                policy.Requirements.Add(new ManagePharmacyRequirement()));
         });
 
-        services.AddScoped<IAuthorizationHandler, ManageRestaurantHandler>();
+        services.AddScoped<IAuthorizationHandler, ManagePharmacyHandler>();
 
     }
 }

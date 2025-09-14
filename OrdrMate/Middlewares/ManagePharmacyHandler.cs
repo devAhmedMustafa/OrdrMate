@@ -5,18 +5,18 @@ using Microsoft.AspNetCore.Authorization;
 using OrdrMate.Repositories;
 using OrdrMate.Enums;
 
-public class ManageRestaurantHandler : AuthorizationHandler<ManageRestaurantRequirement, string>
+public class ManagePharmacyHandler : AuthorizationHandler<ManagePharmacyRequirement, string>
 {
     private readonly IPharmacyRepo _repo;
-    public ManageRestaurantHandler(IPharmacyRepo repo)
+    public ManagePharmacyHandler(IPharmacyRepo repo)
     {
         _repo = repo;
     }
 
     protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
-        ManageRestaurantRequirement requirement,
-        string restaurantId
+        ManagePharmacyRequirement requirement,
+        string pharmacyId
         )
     {
         var managerId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -28,12 +28,12 @@ public class ManageRestaurantHandler : AuthorizationHandler<ManageRestaurantRequ
             return;
         }
 
-        if (string.IsNullOrEmpty(managerId) || string.IsNullOrEmpty(restaurantId))
+        if (string.IsNullOrEmpty(managerId) || string.IsNullOrEmpty(pharmacyId))
         {
             return;
         }
 
-        bool hasAccess = await _repo.HasAccessToRestaurant(managerId, restaurantId);
+        bool hasAccess = await _repo.HasAccessToPharmacy(managerId, pharmacyId);
         if (hasAccess)
         {
             context.Succeed(requirement);
