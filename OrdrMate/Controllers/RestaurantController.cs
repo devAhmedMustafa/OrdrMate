@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OrdrMate.DTOs.Restaurant;
+using OrdrMate.DTOs.Pharmacy;
 using OrdrMate.Services;
 
 namespace OrdrMate.Controllers;
@@ -31,7 +31,7 @@ public class RestaurantController(RestaurantService r, IAuthorizationService aut
     }
 
     [HttpGet]
-    public async Task<ActionResult<RestaurantDTO>> GetRestaurantByManagerId()
+    public async Task<ActionResult<PharmacyDTO>> GetRestaurantByManagerId()
     {
         try
         {
@@ -56,7 +56,7 @@ public class RestaurantController(RestaurantService r, IAuthorizationService aut
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<RestaurantDTO>> GetRestaurantById(string id)
+    public async Task<ActionResult<PharmacyDTO>> GetRestaurantById(string id)
     {
         try
         {
@@ -75,7 +75,7 @@ public class RestaurantController(RestaurantService r, IAuthorizationService aut
     }
 
     [HttpGet("list/all")]
-    public async Task<ActionResult<List<RestaurantDTO>>> GetAllRestaurants()
+    public async Task<ActionResult<List<PharmacyDTO>>> GetAllRestaurants()
     {
         try
         {
@@ -107,7 +107,7 @@ public class RestaurantController(RestaurantService r, IAuthorizationService aut
     }
 
     [HttpGet("profile/{restaurantId}")]
-    public async Task<ActionResult<RestaurantProfileDto>> GetRestaurantProfile(string restaurantId)
+    public async Task<ActionResult<PharmacyProfileDto>> GetRestaurantProfile(string restaurantId)
     {
         try
         {
@@ -125,7 +125,7 @@ public class RestaurantController(RestaurantService r, IAuthorizationService aut
     }
 
     [HttpPut("profile/{restaurantId}")]
-    public async Task<ActionResult<RestaurantProfileDto>> UpdateRestaurantProfile(string restaurantId, [FromBody] UpdateRestaurantProfileDto profileDto)
+    public async Task<ActionResult<PharmacyProfileDto>> UpdateRestaurantProfile(string restaurantId, [FromBody] UpdatePharmacyProfileDto profileDto)
     {
         try
         {

@@ -1,11 +1,11 @@
-namespace OrdrMate.DTOs.Restaurant;
+namespace OrdrMate.DTOs.Pharmacy;
 
-public class RestaurantDTO
+public class PharmacyDTO
 {
     public required string Id { get; set; }
     public required string Name { get; set; }
-    public string Email { get; set; }
-    public string Phone { get; set; }
+    public required string Email { get; set; }
+    public required string Phone { get; set; }
     public string? LogoUrl { get; set; }
     public string? CoverUrl { get; set; }
     public string? Description { get; set; }

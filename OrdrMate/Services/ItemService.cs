@@ -22,7 +22,7 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
                 ImageUrl = item.ImageUrl,
                 Price = item.Price,
                 CategoryName = item.Category,
-                PharmacyId = item.RestaurantId,
+                PharmacyId = item.PharmacyId,
                 KitchenId = item.KitchenId,
                 PreperationTime = item.PreparationTime
             };
@@ -164,7 +164,7 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
         return new ItemAuthInfo
         {
             Id = item.Id,
-            RestaurantId = item.PharmacyId,
+            PharmacyId = item.PharmacyId,
         };
     }
 

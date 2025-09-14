@@ -1,8 +1,8 @@
-namespace OrdrMate.DTOs.Restaurant;
+namespace OrdrMate.DTOs.Pharmacy;
 
-public class RestaurantProfileDto
+public class PharmacyProfileDto
 {
-    public string RestaurantId { get; set; } = string.Empty;
+    public required string PharmacyId { get; set; }
     public required string Description { get; set; }
     public required string LogoUrl { get; set; }
     public required string CoverImageUrl { get; set; }

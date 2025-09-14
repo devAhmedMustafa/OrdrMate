@@ -39,7 +39,7 @@ public class BranchController : ControllerBase
         var branchRequestsDto = branchRequests.Select(br => new BranchRequestDto
         {
             BranchRequestId = br.Id,
-            RestaurantName = br.Pharmacy.Name,
+            PharmacyName = br.Pharmacy.Name,
             BranchAddress = br.Address,
             BranchPhoneNumber = br.Phone,
             Lantitude = br.Latitude,
@@ -61,7 +61,7 @@ public class BranchController : ControllerBase
         var branchRequestDto = new BranchRequestDto
         {
             BranchRequestId = branchRequest.Id,
-            RestaurantName = branchRequest.Pharmacy.Name,
+            PharmacyName = branchRequest.Pharmacy.Name,
             BranchAddress = branchRequest.Address,
             BranchPhoneNumber = branchRequest.Phone,
             Lantitude = branchRequest.Latitude,
@@ -74,7 +74,7 @@ public class BranchController : ControllerBase
     public async Task<IActionResult> CreateBranchRequest([FromBody] AddBranchRequestDto branchRequestDto)
     {
 
-        var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchRequestDto.RestaurantId, "CanManageRestaurant");
+        var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchRequestDto.PharmacyId, "CanManageRestaurant");
 
         if (!authorizationResult.Succeeded)
         {
@@ -89,7 +89,7 @@ public class BranchController : ControllerBase
         var branchRequest = new Models.BranchRequest
         {
             Id = Guid.NewGuid().ToString(),
-            PharmacyId = branchRequestDto.RestaurantId,
+            PharmacyId = branchRequestDto.PharmacyId,
             Address = branchRequestDto.BranchAddress,
             Phone = branchRequestDto.BranchPhoneNumber,
             Latitude = branchRequestDto.Lantitude,
@@ -100,7 +100,7 @@ public class BranchController : ControllerBase
         return CreatedAtAction(nameof(GetBranchRequestById), new { id = createdBranchRequest.Id }, new BranchRequestDto
         {
             BranchRequestId = createdBranchRequest.Id,
-            RestaurantName = createdBranchRequest.Pharmacy.Name,
+            PharmacyName = createdBranchRequest.Pharmacy.Name,
             BranchAddress = createdBranchRequest.Address,
             BranchPhoneNumber = createdBranchRequest.Phone,
             Lantitude = createdBranchRequest.Latitude,

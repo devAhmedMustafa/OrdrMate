@@ -1,4 +1,4 @@
-using OrdrMate.DTOs.Restaurant;
+using OrdrMate.DTOs.Pharmacy;
 using OrdrMate.Models;
 using OrdrMate.Repositories;
 
@@ -9,7 +9,7 @@ public class RestaurantService(IPharmacyRepo r, IUserRepo m)
     private readonly IPharmacyRepo _repo = r;
     private readonly IUserRepo _managerRepo = m;
 
-    public async Task<RestaurantDTO> CreateRestaurant(CreateRestaurantDto dto)
+    public async Task<PharmacyDTO> CreateRestaurant(CreateRestaurantDto dto)
     {
         try
         {
@@ -31,7 +31,7 @@ public class RestaurantService(IPharmacyRepo r, IUserRepo m)
 
             var createdRestaurant = await _repo.CreateRestaurant(restaurant);
 
-            var responseDto = new RestaurantDTO
+            var responseDto = new PharmacyDTO
             {
                 Id = createdRestaurant.Id,
                 Name = createdRestaurant.Name,
@@ -49,7 +49,7 @@ public class RestaurantService(IPharmacyRepo r, IUserRepo m)
         }
     }
 
-    public async Task<RestaurantDTO> GetRestaurantByManagerId(string id)
+    public async Task<PharmacyDTO> GetRestaurantByManagerId(string id)
     {
         try
         {
@@ -61,7 +61,7 @@ public class RestaurantService(IPharmacyRepo r, IUserRepo m)
                 throw new Exception("No restaurant with " + id + " id");
             }
 
-            var responseDto = new RestaurantDTO
+            var responseDto = new PharmacyDTO
             {
                 Id = restaurant.Id,
                 Name = restaurant.Name,
@@ -78,7 +78,7 @@ public class RestaurantService(IPharmacyRepo r, IUserRepo m)
         }
     }
 
-    public async Task<RestaurantDTO> GetRestaurantById(string id)
+    public async Task<PharmacyDTO> GetRestaurantById(string id)
     {
         try
         {
@@ -89,7 +89,7 @@ public class RestaurantService(IPharmacyRepo r, IUserRepo m)
                 throw new Exception("No restaurant with " + id + " id");
             }
 
-            var responseDto = new RestaurantDTO
+            var responseDto = new PharmacyDTO
             {
                 Id = restaurant.Id,
                 Name = restaurant.Name,
@@ -106,15 +106,15 @@ public class RestaurantService(IPharmacyRepo r, IUserRepo m)
         }
     }
 
-    public async Task<List<RestaurantDTO>> GetAllRestaurants()
+    public async Task<List<PharmacyDTO>> GetAllRestaurants()
     {
         try
         {
             var restaurants = await _repo.GetAllRestaurants();
-            var responseDtos = new List<RestaurantDTO>();
+            var responseDtos = new List<PharmacyDTO>();
             foreach (var restaurant in restaurants)
             {
-                var responseDto = new RestaurantDTO
+                var responseDto = new PharmacyDTO
                 {
                     Id = restaurant.Id,
                     Name = restaurant.Name,
@@ -151,7 +151,7 @@ public class RestaurantService(IPharmacyRepo r, IUserRepo m)
         }
     }
 
-    public async Task<RestaurantProfileDto> GetRestaurantProfile(string restaurantId)
+    public async Task<PharmacyProfileDto> GetRestaurantProfile(string restaurantId)
     {
         try
         {
@@ -161,9 +161,9 @@ public class RestaurantService(IPharmacyRepo r, IUserRepo m)
                 throw new Exception("No profile for restaurant with " + restaurantId + " id");
             }
 
-            return new RestaurantProfileDto
+            return new PharmacyProfileDto
             {
-                RestaurantId = profile.PharmacyId,
+                PharmacyId = profile.PharmacyId,
                 Description = profile.Description,
                 LogoUrl = profile.LogoUrl,
                 CoverImageUrl = profile.CoverImageUrl
@@ -175,7 +175,7 @@ public class RestaurantService(IPharmacyRepo r, IUserRepo m)
         }
     }
 
-    public async Task<RestaurantProfileDto> UpdateRestaurantProfile(string id, UpdateRestaurantProfileDto profileDto)
+    public async Task<PharmacyProfileDto> UpdateRestaurantProfile(string id, UpdatePharmacyProfileDto profileDto)
     {
         try
         {
@@ -194,9 +194,9 @@ public class RestaurantService(IPharmacyRepo r, IUserRepo m)
                 throw new Exception("No profile found for restaurant with " + id + " id");
             }
 
-            return new RestaurantProfileDto
+            return new PharmacyProfileDto
             {
-                RestaurantId = updatedProfile.PharmacyId,
+                PharmacyId = updatedProfile.PharmacyId,
                 Description = updatedProfile.Description,
                 LogoUrl = updatedProfile.LogoUrl,
                 CoverImageUrl = updatedProfile.CoverImageUrl

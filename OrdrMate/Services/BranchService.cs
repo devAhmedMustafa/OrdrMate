@@ -36,7 +36,7 @@ public class BranchService(
             Longitude = branch.Longitude,
             BranchAddress = branch.Address,
             RestaurantId = branch.RestaurantId,
-            RestaurantName = branch.Restaurant?.Name ?? "Unknown",
+            PharmacyName = branch.Restaurant?.Name ?? "Unknown",
             StartWorkingHour = branch.StartWorkingHour,
             EndWorkingHour = branch.EndWorkingHour,
             BranchPhoneNumber = branch.Phone,
@@ -54,7 +54,7 @@ public class BranchService(
             Longitude = b.Longitude,
             BranchAddress = b.Address,
             RestaurantId = b.RestaurantId,
-            RestaurantName = b.Restaurant?.Name ?? "Unknown",
+            PharmacyName = b.Restaurant?.Name ?? "Unknown",
             IsOpen = TimeService.CheckWithinTimeInterval(b.StartWorkingHour, b.EndWorkingHour, b.WorkingDays),
             BranchPhoneNumber = b.Phone,
             LogoUrl = b.Restaurant?.Profile?.LogoUrl,
@@ -72,7 +72,7 @@ public class BranchService(
             BranchAddress = b.Address,
             BranchPhoneNumber = b.Phone,
             RestaurantId = b.RestaurantId,
-            RestaurantName = b.Restaurant?.Name ?? "Unknown",
+            PharmacyName = b.Restaurant?.Name ?? "Unknown",
         });
     }
 
@@ -124,7 +124,7 @@ public class BranchService(
         {
             BranchId = createdBranch.Id,
             BranchAddress = createdBranch.Address,
-            RestaurantId = createdBranch.RestaurantId,
+            PharmacyId = createdBranch.RestaurantId,
             BranchPhoneNumber = createdBranch.Phone,
             BranchManagerId = createdBranch.BranchManagerId,
             BranchManagerUsername = username,
@@ -152,8 +152,8 @@ public class BranchService(
             BranchId = branch.Id,
             BranchAddress = branch.Address,
             BranchPhoneNumber = branch.Phone,
-            RestaurantId = branch.RestaurantId,
-            RestaurantName = branch.Restaurant?.Name ?? "Unknown",
+            PharmacyId = branch.RestaurantId,
+            PharmacyName = branch.Restaurant?.Name ?? "Unknown",
             FreeTables = freeTables,
             TotalTables = tableCount,
             OrdersInQueue = ordersInQueue,
@@ -203,7 +203,7 @@ public class BranchService(
             BranchAddress = branch.Address,
             BranchPhoneNumber = branch.Phone,
             RestaurantId = branch.RestaurantId,
-            RestaurantName = branch.Restaurant?.Name ?? "Unknown",
+            PharmacyName = branch.Restaurant?.Name ?? "Unknown",
             StartWorkingHour = branch.StartWorkingHour,
             EndWorkingHour = branch.EndWorkingHour
         };

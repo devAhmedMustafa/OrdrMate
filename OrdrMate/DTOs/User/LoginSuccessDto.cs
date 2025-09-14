@@ -2,8 +2,8 @@ namespace OrdrMate.DTOs.User;
 
 public class LoginSuccessDto
 {
-    public string Token { get; set; }
-    public string Role { get; set; }
-    public string RestaurantId { get; set; }
-    public string BranchId { get; set; }
+    public required string Token { get; set; }
+    public required string Role { get; set; }
+    public required string RestaurantId { get; set; }
+    public string? BranchId { get; set; }
 }
