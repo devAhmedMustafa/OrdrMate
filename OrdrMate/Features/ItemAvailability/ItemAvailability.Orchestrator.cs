@@ -53,7 +53,7 @@ public class ItemAvailabilityOrchestrator : IHostedService
             var branches = await branchService.GetRestaurantBranches(item.RestaurantId);
             foreach (var branch in branches)
             {
-                await itemAvailabilityService.IsItemAvailabile(item.Id, branch.BranchId);
+                await itemAvailabilityService.IsItemAvailable(item.Id, branch.BranchId);
             }
         }
     }
@@ -67,7 +67,7 @@ public class ItemAvailabilityOrchestrator : IHostedService
         var branches = await branchService.GetRestaurantBranches(item.RestaurantId);
         foreach (var branch in branches)
         {
-            await itemAvailabilityService.IsItemAvailabile(item.Id, branch.BranchId);
+            await itemAvailabilityService.IsItemAvailable(item.Id, branch.BranchId);
         }
     }
 
@@ -80,7 +80,7 @@ public class ItemAvailabilityOrchestrator : IHostedService
         var items = await itemService.GetItemsByRestaurantId(branch.RestaurantId);
         foreach (var item in items)
         {
-            await itemAvailabilityService.IsItemAvailabile(item.Id, branch.Id);
+            await itemAvailabilityService.IsItemAvailable(item.Id, branch.Id);
         }
     }
 
