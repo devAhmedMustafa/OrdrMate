@@ -8,7 +8,8 @@ public class ItemDto
     public string? ImageUrl { get; set; }
     public decimal? Price { get; set; }
     public required string Category { get; set; }
-    public  int Priority { get; set; } = 0;
+    public string? SubCategory { get; set; }
+    public int Priority { get; set; } = 0;
     public string Tags { get; set; } = string.Empty;
     public required string Brand { get; set; }
     public bool? IsAvailable { get; set; } = true;

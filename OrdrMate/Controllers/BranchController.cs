@@ -70,7 +70,7 @@ public class BranchController : ControllerBase
         return Ok(branchRequestDto);
     }
 
-    [HttpPost]
+    [HttpPost("request/create")]
     public async Task<IActionResult> CreateBranchRequest([FromBody] AddBranchRequestDto branchRequestDto)
     {
 
@@ -88,11 +88,10 @@ public class BranchController : ControllerBase
 
         var branchRequest = new Models.BranchRequest
         {
-            Id = Guid.NewGuid().ToString(),
             PharmacyId = branchRequestDto.PharmacyId,
             Address = branchRequestDto.BranchAddress,
             Phone = branchRequestDto.BranchPhoneNumber,
-            Latitude = branchRequestDto.Lantitude,
+            Latitude = branchRequestDto.Latitude,
             Longitude = branchRequestDto.Longitude
         };
 
@@ -108,38 +107,47 @@ public class BranchController : ControllerBase
         });
     }
 
-    [HttpPost("{id}")]
+    [HttpPost("request/approve/{id}")]
     [Authorize(Policy = "Admin")]
     public async Task<IActionResult> ApproveBranchRequest(string id)
     {
-        var branchRequest = await _branchRequestRepo.GetBranchRequestById(id);
-        if (branchRequest == null)
+        try
         {
-            return NotFound($"Branch request with id {id} not found.");
+            var branchRequest = await _branchRequestRepo.GetBranchRequestById(id);
+            if (branchRequest == null)
+            {
+                return NotFound($"Branch request with id {id} not found.");
+            }
+
+            var branchCreated = await _branchService.CreateBranch(new CreateBranchDto
+            {
+                Latitude = branchRequest.Latitude,
+                Longitude = branchRequest.Longitude,
+                BranchAddress = branchRequest.Address,
+                BranchPhoneNumber = branchRequest.Phone,
+                PharmacyId = branchRequest.PharmacyId,
+            });
+
+            Console.WriteLine($"[BranchService]: Branch created with ID {branchCreated.BranchId}");
+
+            if (branchCreated == null)
+            {
+                return BadRequest("Failed to create branch.");
+            }
+
+            var isDeleted = await _branchRequestRepo.DeleteBranchRequest(id);
+            if (!isDeleted)
+            {
+                return BadRequest("Failed to delete branch request.");
+            }
+
+            return CreatedAtAction(nameof(GetBranchRequestById), new { id = branchCreated.BranchId }, branchCreated);
+
         }
-
-        var branchCreated = await _branchService.CreateBranch(new CreateBranchDto
+        catch (Exception ex)
         {
-            Latitude = branchRequest.Latitude,
-            Longitude = branchRequest.Longitude,
-            BranchAddress = branchRequest.Address,
-            BranchPhoneNumber = branchRequest.Phone,
-            PharmacyId = branchRequest.PharmacyId,
-            PharmacyName = branchRequest.Pharmacy!.Name,
-        });
-
-        if (branchCreated == null)
-        {
-            return BadRequest("Failed to create branch.");
+            return StatusCode(500, $"An error occurred while approving the branch request: {ex.Message}");
         }
-
-        var isDeleted = await _branchRequestRepo.DeleteBranchRequest(id);
-        if (!isDeleted)
-        {
-            return BadRequest("Failed to delete branch request.");
-        }
-
-        return CreatedAtAction(nameof(GetBranchRequestById), new { id = branchCreated.BranchId }, branchCreated);
     }
 
     [HttpGet]

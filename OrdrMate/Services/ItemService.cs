@@ -22,6 +22,7 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
                 ImageUrl = item.ImageUrl,
                 Price = item.Price,
                 CategoryName = item.Category,
+                SubCategoryName = item.SubCategory,
                 PharmacyId = item.PharmacyId,
                 Brand = item.Brand,
                 Priority = item.Priority,
@@ -46,6 +47,7 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
                 ImageUrl = addedItem.ImageUrl,
                 Price = addedItem.Price,
                 Category = addedItem.CategoryName,
+                SubCategory = addedItem.SubCategoryName,
                 Brand = addedItem.Brand,
                 Priority = addedItem.Priority,
                 Tags = addedItem.Tags
@@ -98,6 +100,7 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             ImageUrl = item.ImageUrl,
             Price = item.Price,
             Category = item.CategoryName,
+            SubCategory = item.SubCategoryName,
             Priority = item.Priority,
             Tags = item.Tags,
             Brand = item.Brand

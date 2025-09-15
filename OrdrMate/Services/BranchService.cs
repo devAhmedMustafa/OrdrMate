@@ -81,56 +81,64 @@ public class BranchService(
 
     public async Task<BranchApprovalDto> CreateBranch(CreateBranchDto branchDto)
     {
-
-        var Pharmacy = await _PharmacyService.GetPharmacyById(branchDto.PharmacyId);
-
-        if (Pharmacy == null) throw new KeyNotFoundException($"Pharmacy with id {branchDto.PharmacyId} not found.");
-        
-
-        var username = RandomGenerator.GenerateRandomString(Pharmacy.Name.Length + 4, Pharmacy.Name);
-        var password = RandomGenerator.GenerateRandomPassword(8);
-
-        while (await _managerService.IsUsernameTaken(username))
+        try
         {
-            username = RandomGenerator.GenerateRandomString(Pharmacy.Name.Length + 4, Pharmacy.Name);
+            var Pharmacy = await _PharmacyService.GetPharmacyById(branchDto.PharmacyId);
+
+            if (Pharmacy == null) throw new KeyNotFoundException($"Pharmacy with id {branchDto.PharmacyId} not found.");
+
+
+            var username = RandomGenerator.GenerateRandomString(Pharmacy.Name.Length + 4, Pharmacy.Name);
+            var password = RandomGenerator.GenerateRandomPassword(8);
+
+            while (await _managerService.IsUsernameTaken(username))
+            {
+                username = RandomGenerator.GenerateRandomString(Pharmacy.Name.Length + 4, Pharmacy.Name);
+            }
+
+            var createdManager = await _managerService.CreateManager(new CreateManagerDTO
+            {
+                Username = username,
+                Password = password,
+            });
+
+            if (createdManager == null)
+            {
+                throw new Exception("Failed to create manager.");
+            }
+
+            var branch = new Branch
+            {
+                Id = Guid.NewGuid().ToString(),
+                Latitude = branchDto.Latitude,
+                Longitude = branchDto.Longitude,
+                Address = branchDto.BranchAddress,
+                Phone = branchDto.BranchPhoneNumber,
+                PharmacyId = branchDto.PharmacyId,
+                BranchManagerId = createdManager.Id,
+            };
+
+            var createdBranch = await _branchRepo.CreateBranch(branch);
+
+            BranchEvents.OnBranchCreated(createdBranch);
+
+            return new BranchApprovalDto
+            {
+                BranchId = createdBranch.Id,
+                BranchAddress = createdBranch.Address,
+                PharmacyId = createdBranch.PharmacyId,
+                BranchPhoneNumber = createdBranch.Phone,
+                BranchManagerId = createdBranch.BranchManagerId,
+                BranchManagerUsername = username,
+                BranchManagerPassword = password,
+            };
+
         }
-
-        var createdManager = await _managerService.CreateManager(new CreateManagerDTO
+        catch (Exception ex)
         {
-            Username = username,
-            Password = password,
-        });
-
-        if (createdManager == null)
-        {
-            throw new Exception("Failed to create manager.");
+            Console.WriteLine($"[BranchService]: Error in CreateBranch: {ex.Message}");
+            throw new Exception($"An error occurred while creating the branch: {ex.Message}");
         }
-
-        var branch = new Branch
-        {
-            Id = Guid.NewGuid().ToString(),
-            Latitude = branchDto.Latitude,
-            Longitude = branchDto.Longitude,
-            Address = branchDto.BranchAddress,
-            Phone = branchDto.BranchPhoneNumber,
-            PharmacyId = branchDto.PharmacyId,
-            BranchManagerId = createdManager.Id,
-        };
-
-        var createdBranch = await _branchRepo.CreateBranch(branch);
-
-        BranchEvents.OnBranchCreated(createdBranch);
-
-        return new BranchApprovalDto
-        {
-            BranchId = createdBranch.Id,
-            BranchAddress = createdBranch.Address,
-            PharmacyId = createdBranch.PharmacyId,
-            BranchPhoneNumber = createdBranch.Phone,
-            BranchManagerId = createdBranch.BranchManagerId,
-            BranchManagerUsername = username,
-            BranchManagerPassword = password,
-        };
     }
 
     public async Task<BranchInfoDto> GetBranchInfo(string branchId)

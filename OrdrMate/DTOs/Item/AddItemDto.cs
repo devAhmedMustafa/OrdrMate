@@ -10,8 +10,6 @@ public class AddItemDto
 
     [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
     public required decimal Price { get; set; }
-
-    [Range(0.0, double.MaxValue, ErrorMessage = "Preparation time must be greater than 0")]
     public required string Category { get; set; }
     public string? SubCategory { get; set; }
     public int Priority { get; set; } = 0;

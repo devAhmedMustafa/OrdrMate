@@ -51,6 +51,39 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
 
         }
 
+        if (item.SubCategoryName != null)
+        {
+            var subCategory = await _context.Category
+                .FirstOrDefaultAsync(c => c.Name == item.SubCategoryName && c.PharmacyId == item.PharmacyId);
+
+            if (subCategory == null)
+            {
+                try
+                {
+                    subCategory = new Category
+                    {
+                        Name = item.SubCategoryName,
+                        PharmacyId = item.PharmacyId,
+                        Parent = item.CategoryName
+                    };
+                    // Add the new sub-category to the database
+                    await _context.Category.AddAsync(subCategory);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error creating sub-category: {ex.Message}");
+                    throw new Exception("Failed to create sub-category");
+                }
+            }
+            else
+            {
+                Console.WriteLine("----------------------------------------");
+                Console.WriteLine($"Sub-Category {item.SubCategoryName} already exists for Pharmacy {Pharmacy.Name}");
+                Console.WriteLine("----------------------------------------");
+
+            }
+        }
+
         await _context.Item.AddAsync(item);
         await _context.SaveChangesAsync();
         return item;
