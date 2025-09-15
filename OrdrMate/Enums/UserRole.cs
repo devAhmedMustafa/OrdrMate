@@ -6,4 +6,5 @@ public enum UserRole
     BranchManager,
     Admin,
     Customer,
+    Rider
 }

@@ -13,6 +13,13 @@ public class Order
     public OrderStatus Status { get; set; } = OrderStatus.Queued;
     public required decimal TotalAmount { get; set; }
     public bool IsPaid { get; set; } = false;
+
+    public string? TakeawayId { get; set; }
+    public Takeaway? Takeaway { get; set; }
+
+    public string? DeliveryId { get; set; }
+    public Delivery? Delivery { get; set; }
+
     public Branch? Branch { get; set; }
     public User? Customer { get; set; }
     public Payment? Payment { get; set; }

@@ -1,7 +1,6 @@
 using OrdrMate.Core;
 using OrdrMate.Repositories;
 using OrdrMate.Services;
-using OrdrMate.Managers;
 
 namespace OrdrMate.Modules;
 
@@ -19,8 +18,5 @@ public class OrderModule : IModule
         services.AddScoped<IDeliverRequestRepo, DeliverRequestRepo>();
         services.AddScoped<IPaymentRepo, PaymentRepo>();
         services.AddScoped<PaymentService, PaymentService>();
-
-        services.AddScoped<OrderManager>();
-
     }
 }
