@@ -184,7 +184,8 @@ public class RestaurantService(IRestaurantRepo r, IUserRepo m)
                 RestaurantId = id,
                 Description = profileDto.Description,
                 LogoUrl = profileDto.LogoUrl,
-                CoverImageUrl = profileDto.CoverImageUrl
+                CoverImageUrl = profileDto.CoverImageUrl,
+                InstaPayLink = profileDto.InstaPayLink
             };
 
             var updatedProfile = await _repo.UpdateRestaurantProfile(id, profile);
@@ -199,7 +200,8 @@ public class RestaurantService(IRestaurantRepo r, IUserRepo m)
                 RestaurantId = updatedProfile.RestaurantId,
                 Description = updatedProfile.Description,
                 LogoUrl = updatedProfile.LogoUrl,
-                CoverImageUrl = updatedProfile.CoverImageUrl
+                CoverImageUrl = updatedProfile.CoverImageUrl,
+                InstaPayLink = updatedProfile.InstaPayLink
             };
         }
         catch (Exception e)

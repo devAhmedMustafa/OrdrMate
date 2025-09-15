@@ -133,7 +133,7 @@ public class RestaurantController(RestaurantService r, IAuthorizationService aut
             if (!authorization.Succeeded)
             {
                 return Forbid();
-            }   
+            }
 
             var updatedProfile = await _service.UpdateRestaurantProfile(restaurantId, profileDto);
             if (updatedProfile == null)
@@ -147,4 +147,5 @@ public class RestaurantController(RestaurantService r, IAuthorizationService aut
             return BadRequest(new { err = e.Message });
         }
     }
+    
 }
