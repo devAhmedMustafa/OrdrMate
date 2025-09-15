@@ -14,6 +14,7 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<PharmacyProfile> PharmacyProfile => Set<PharmacyProfile>();
     public DbSet<Item> Item => Set<Item>();
     public DbSet<ItemAvailability> ItemAvailabilities => Set<ItemAvailability>();
+    public DbSet<ItemCustomization> ItemCustomizations => Set<ItemCustomization>();
     public DbSet<Category> Category => Set<Category>();
     public DbSet<Branch> Branch => Set<Branch>();
     public DbSet<BranchRequest> BranchRequest => Set<BranchRequest>();
@@ -171,16 +172,11 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
 
         // Takeaway
 
-        modelBuilder.Entity<Takeaway>().HasKey(t => new { t.OrderId, t.OrderNumber });
+        modelBuilder.Entity<Takeaway>().HasKey(t => t.OrderId);
         modelBuilder.Entity<Takeaway>()
             .HasOne(t => t.Order)
-            .WithOne()
+            .WithOne(o => o.Takeaway)
             .HasForeignKey<Takeaway>(t => t.OrderId)
-            .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<Takeaway>()
-            .HasOne(t => t.Order)
-            .WithMany()
-            .HasForeignKey(t => t.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // DeliverRequest
@@ -192,6 +188,8 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .HasForeignKey<DeliverRequest>(dr => dr.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Item Customization
+
         modelBuilder.Entity<ItemCustomization>().HasKey(ic => new { ic.ItemId, ic.CategoryId });
         modelBuilder.Entity<ItemCustomization>()
             .HasOne(ic => ic.Item)
@@ -199,6 +197,13 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .HasForeignKey(ic => ic.ItemId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Delivery
+        modelBuilder.Entity<Delivery>().HasKey(d => d.OrderId);
+        modelBuilder.Entity<Delivery>()
+            .HasOne(d => d.Order)
+            .WithMany()
+            .HasForeignKey(d => d.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrdrMateDbContext).Assembly);
 
