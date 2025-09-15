@@ -178,6 +178,9 @@ public class OrderService
                 OrderEvents.OnOrderPlaced(order.BranchId, orderItems);
                 break;
 
+            case OrderType.Delivery:
+                
+
             default:
                 throw new NotImplementedException($"Order type {orderIntent.OrderType} is not implemented yet.");
         }
@@ -196,6 +199,18 @@ public class OrderService
         };
 
         return await _orderRepo.CreateTakeawayOrder(takeaway);
+    }
+
+    private async Task<Delivery> PlaceDeliveryOrder(Order order)
+    {
+        var orderNum = DailyNumberGenerator.GetNextNumber();
+
+        var delivery = new Delivery
+        {
+            OrderId = order.Id,
+        };
+
+        return await _orderRepo.CreateDeliveryOrder(delivery);
     }
 
     private async Task<PaymentDto> ProcessPayment(OrderIntent orderIntent, string transactionId)

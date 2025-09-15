@@ -14,6 +14,14 @@ public class OrderIntent
     public required string PaymentMethod { get; set; }
     public string PaymentProvider { get; set; } = "Cash";
     public OrderType OrderType { get; set; }
+    public string? Notes { get; set; } = string.Empty;
+    public string? DeliveryDetailsJson { get; set; } = string.Empty;
+    [NotMapped]
+    public DeliveryDetailsDto? DeliveryDetails 
+    {
+        get => string.IsNullOrEmpty(DeliveryDetailsJson) ? null : JsonSerializer.Deserialize<DeliveryDetailsDto>(DeliveryDetailsJson);
+        set => DeliveryDetailsJson = JsonSerializer.Serialize(value);
+    }
     public string OrderItemsJson { get; set; } = string.Empty;
     [NotMapped]
     public List<OrderItemDto> OrderItems

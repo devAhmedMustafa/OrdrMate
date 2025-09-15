@@ -16,10 +16,18 @@ public class PlaceOrderDto
 {
     [Required] public required string BranchId { get; set; }
     public string CustomerId { get; set; } = string.Empty;
-    public double Latitude { get; set; } 
-    public double Longitude { get; set; } 
-    [Required] public required OrderItemDto[] Items { get; set; }
-    [Required] public required OrderType OrderType { get; set; }
-    [Required] public required string PaymentMethod { get; set; }
-    public int? TableNumber { get; set; } = null;
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public required OrderItemDto[] Items { get; set; }
+    public required OrderType OrderType { get; set; }
+    public required string PaymentMethod { get; set; }
+    public DeliveryDetailsDto? DeliveryDetails { get; set; } = null;
+    public string? Notes { get; set; } = string.Empty;
+}
+
+public class DeliveryDetailsDto
+{
+    public required string Address { get; set; }
+    public required double Latitude { get; set; }
+    public required double Longitude { get; set; }
 }

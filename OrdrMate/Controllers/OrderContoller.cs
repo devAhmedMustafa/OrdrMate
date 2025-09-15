@@ -47,26 +47,6 @@ public class OrderController : ControllerBase
 
             placeOrderDto.CustomerId = userId;
 
-            var branch = await _branchService.GetBranchById(placeOrderDto.BranchId);
-
-            if (!TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays))
-            {
-                return Forbid("Branch is not open at this time.");
-            }
-
-            double distance = await _geoMaps.CalculateDistance(
-                placeOrderDto.Latitude,
-                placeOrderDto.Longitude,
-                branch.Latitude,
-                branch.Longitude
-            );
-
-            if (distance > 50 && !_env.IsDevelopment())
-            {
-                Console.WriteLine($"[BranchController]: Coordinates: ({placeOrderDto.Latitude}, {placeOrderDto.Longitude}), Branch: ({branch.Latitude}, {branch.Longitude}), Distance: {distance} km");
-                return Forbid($"Order cannot be placed. Distance is {distance:F2} km, which exceeds the 50 km limit.");
-            }
-
             var orderIntent = await _orderService.CreateOrderIntent(placeOrderDto);
             if (orderIntent == null)
             {
