@@ -50,7 +50,7 @@ public class ItemAvailabilityOrchestrator : IHostedService
         var items = await itemService.GetAllItems();
         foreach (var item in items)
         {
-            var branches = await branchService.GetRestaurantBranches(item.RestaurantId);
+            var branches = await branchService.GetPharmacyBranches(item.PharmacyId);
             foreach (var branch in branches)
             {
                 await itemAvailabilityService.IsItemAvailabile(item.Id, branch.BranchId);
@@ -64,7 +64,7 @@ public class ItemAvailabilityOrchestrator : IHostedService
         var itemAvailabilityService = scope.ServiceProvider.GetRequiredService<ItemAvailabilityService>();
         var branchService = scope.ServiceProvider.GetRequiredService<BranchService>();
 
-        var branches = await branchService.GetRestaurantBranches(item.RestaurantId);
+        var branches = await branchService.GetPharmacyBranches(item.PharmacyId);
         foreach (var branch in branches)
         {
             await itemAvailabilityService.IsItemAvailabile(item.Id, branch.BranchId);
@@ -77,7 +77,7 @@ public class ItemAvailabilityOrchestrator : IHostedService
         var itemAvailabilityService = scope.ServiceProvider.GetRequiredService<ItemAvailabilityService>();
         var itemService = scope.ServiceProvider.GetRequiredService<ItemService>();
 
-        var items = await itemService.GetItemsByRestaurantId(branch.RestaurantId);
+        var items = await itemService.GetItemsByPharmacyId(branch.PharmacyId);
         foreach (var item in items)
         {
             await itemAvailabilityService.IsItemAvailabile(item.Id, branch.Id);

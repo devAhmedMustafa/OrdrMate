@@ -4,15 +4,18 @@ namespace OrdrMate.DTOs.Item;
 
 public class AddItemDto
 {
-    [Required] public string Name { get; set; } = string.Empty;
+    public required string Name { get; set; }
     public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
+
     [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
-    public decimal Price { get; set; } = 0.0m;
+    public required decimal Price { get; set; }
 
     [Range(0.0, double.MaxValue, ErrorMessage = "Preparation time must be greater than 0")]
-    public decimal PreparationTime { get; set; } = 0.0m;
-    [Required] public required string KitchenId { get; set; }
-    [Required] public string Category { get; set; } = string.Empty;
-    [Required] public string RestaurantId { get; set; } = string.Empty;
+    public required string Category { get; set; }
+    public string? SubCategory { get; set; }
+    public int Priority { get; set; } = 0;
+    public string Tags { get; set; } = string.Empty;
+    public required string Brand { get; set; }
+    public required string PharmacyId { get; set; }
 }

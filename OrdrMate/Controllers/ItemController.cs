@@ -23,7 +23,7 @@ public class ItemController : ControllerBase
     {
         try
         {
-            var authorizationResult = await _authorizationService.AuthorizeAsync(User, dto.RestaurantId, "CanManageRestaurant");
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, dto.PharmacyId, "CanManageRestaurant");
 
             if (!authorizationResult.Succeeded)
             {
@@ -47,7 +47,7 @@ public class ItemController : ControllerBase
     {
         try
         {
-            var items = await _service.GetItemsByRestaurantId(restaurantId);
+            var items = await _service.GetItemsByPharmacyId(restaurantId);
             return Ok(items);
         }
         catch (Exception e)
@@ -87,7 +87,7 @@ public class ItemController : ControllerBase
                 return NotFound(new { err = "Item not found" });
             }
 
-            var authorizationResult = await _authorizationService.AuthorizeAsync(User, itemToUpdate.RestaurantId, "CanManageRestaurant");
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, itemToUpdate.PharmacyId, "CanManageRestaurant");
 
             if (!authorizationResult.Succeeded)
             {
@@ -119,7 +119,7 @@ public class ItemController : ControllerBase
                 return NotFound(new { err = "Item not found" });
             }
 
-            var authorizationResult = await _authorizationService.AuthorizeAsync(User, itemToDelete.RestaurantId, "CanManageRestaurant");
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, itemToDelete.PharmacyId, "CanManageRestaurant");
 
             if (!authorizationResult.Succeeded)
             {

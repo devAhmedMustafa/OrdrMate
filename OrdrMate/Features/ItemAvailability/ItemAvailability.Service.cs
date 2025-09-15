@@ -42,13 +42,11 @@ public class ItemAvailabilityService
             Description = ia.Item.Description,
             ImageUrl = ia.Item.ImageUrl,
             Price = ia.Item.Price,
-            PreparationTime = ia.Item.PreperationTime,
             Category = ia.Item.CategoryName,
-            KitchenName = ia.Item.Kitchen!.Name,
-            KitchenId = ia.Item.KitchenId,
             IsAvailable = ia.IsAvailable,
             Priority = ia.Item.Priority,
-            Tags = ia.Item.Tags
+            Tags = ia.Item.Tags,
+            Brand = ia.Item.Brand
         });
     }
 

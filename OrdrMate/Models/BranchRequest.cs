@@ -2,11 +2,11 @@ namespace OrdrMate.Models;
 
 public class BranchRequest
 {
-    public string Id { get; set; }
-    public float Lantitude { get; set; }
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public float Latitude { get; set; }
     public float Longitude { get; set; }
-    public string Address { get; set; }
-    public string Phone { get; set; }
-    public string RestaurantId { get; set; }
-    public Restaurant Restaurant { get; set; }
+    public string Address { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public required string PharmacyId { get; set; }
+    public Pharmacy? Pharmacy { get; set; }
 }

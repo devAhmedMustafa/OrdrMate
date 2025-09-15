@@ -2,8 +2,11 @@ namespace OrdrMate.Models;
 
 public class Category
 {
-    public string Name { get; set; } = string.Empty;
-    public string RestaurantId { get; set; } = string.Empty;
-    public Restaurant Restaurant { get; set; }
-    public ICollection<Item> Items { get; set; } = new List<Item>();
+    public required string Name { get; set; }
+    public required string PharmacyId { get; set; }
+    public string? Parent { get; set; }
+    public Pharmacy? Pharmacy { get; set; }
+    public Category? ParentCategory { get; set; }
+    public ICollection<Category> Subcategories { get; set; } = [];
+    public ICollection<Item> Items { get; set; } = [];
 }

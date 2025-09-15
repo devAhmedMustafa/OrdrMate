@@ -13,8 +13,5 @@ public class ItemModule : IModule
     {
         services.AddScoped<IItemRepo, ItemRepo>();
         services.AddScoped<ItemService, ItemService>();
-
-        services.AddScoped<ICustomizationRepo, CustomizationRepo>();
-        services.AddScoped<CustomizationService, CustomizationService>();
     }
 }

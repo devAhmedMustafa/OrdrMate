@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 
-namespace OrderMate.Middlewares;
+namespace OrdrMate.Middlewares;
 
 public class IsOpenRequirement : IAuthorizationRequirement {}

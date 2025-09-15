@@ -15,7 +15,7 @@ public class BranchRepo : IBranchRepo
 
     public async Task<Branch> GetBranchById(string id)
     {
-        return await _context.Branch.Include(b => b.Restaurant)
+        return await _context.Branch.Include(b => b.Pharmacy)
         .FirstOrDefaultAsync(b => b.Id == id)
         ?? throw new KeyNotFoundException($"Branch with id {id} not found.");
     }
@@ -23,9 +23,7 @@ public class BranchRepo : IBranchRepo
     public async Task<Branch> GetDetailedBranchById(string id)
     {
         return await _context.Branch
-        .Include(b => b.KitchenPowers)!.ThenInclude(kp => kp.Kitchen)
-        .Include(b => b.Orders!.OrderBy(o => o.OrderDate)).ThenInclude(o => o.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i => i.Kitchen)
-        .Include(b => b.Tables)
+        .Include(b => b.Orders!.OrderBy(o => o.OrderDate)).ThenInclude(o => o.OrderItems)!.ThenInclude(oi => oi.Item)
         .AsSplitQuery()
         .AsNoTracking()
         .FirstOrDefaultAsync(b => b.Id == id)
@@ -35,19 +33,17 @@ public class BranchRepo : IBranchRepo
     public async Task<IEnumerable<Branch>> GetAllBranches()
     {
         return await _context.Branch
-        .Include(b => b.Restaurant).ThenInclude(r => r!.Profile)
-        .Include(b => b.Tables)
-        .Include(b => b.Orders!.OrderBy(o => o.OrderDate)).ThenInclude(o => o.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i => i.Kitchen)
-        .Include(b => b.KitchenPowers)!.ThenInclude(kp => kp.Kitchen)
+        .Include(b => b.Pharmacy).ThenInclude(r => r!.Profile)
+        .Include(b => b.Orders!.OrderBy(o => o.OrderDate)).ThenInclude(o => o.OrderItems)!.ThenInclude(oi => oi.Item)
         .AsSplitQuery()
         .AsNoTracking()
         .ToListAsync();
     }
 
-    public async Task<IEnumerable<Branch>> GetRestaurantBranches(string restaurantId)
+    public async Task<IEnumerable<Branch>> GetPharmacyBranches(string PharmacyId)
     {
         return await _context.Branch
-            .Where(b => b.RestaurantId == restaurantId)
+            .Where(b => b.PharmacyId == PharmacyId)
             .ToListAsync();
     }
 
@@ -63,23 +59,8 @@ public class BranchRepo : IBranchRepo
         await _context.Branch.AddAsync(branch);
         await _context.SaveChangesAsync();
 
-        var restaurant = await _context.Restaurant
-            .Include(r => r.Kitchens)
-            .FirstOrDefaultAsync(r => r.Id == branch.RestaurantId) ?? throw new KeyNotFoundException($"Restaurant with id {branch.RestaurantId} not found.");
-
-        if (restaurant.Kitchens == null)
-        {
-            throw new InvalidOperationException($"Restaurant with id {branch.RestaurantId} has no kitchens defined.");
-        }
-
-        foreach (var kitchen in restaurant.Kitchens)
-        {
-            await _context.KitchenPower.AddAsync(new KitchenPower
-            {
-                KitchenId = kitchen.Id,
-                BranchId = branch.Id
-            });
-        }
+        var Pharmacy = await _context.Pharmacy
+            .FirstOrDefaultAsync(r => r.Id == branch.PharmacyId) ?? throw new KeyNotFoundException($"Pharmacy with id {branch.PharmacyId} not found.");
 
         return branch;
     }
@@ -122,37 +103,11 @@ public class BranchRepo : IBranchRepo
 
         if (branch.BranchManagerId == managerId) return true;
 
-        var restaurant = await _context.Restaurant
+        var Pharmacy = await _context.Pharmacy
             .Include(r => r.Branches)
-            .FirstOrDefaultAsync(r => r.Id == branch.RestaurantId);
+            .FirstOrDefaultAsync(r => r.Id == branch.PharmacyId);
 
-        return restaurant?.ManagerId == managerId;
-    }
-
-    public async Task<int> GetTableCount(string branchId)
-    {
-        return await _context.Table
-            .Where(t => t.BranchId == branchId)
-            .CountAsync();
-    }
-
-    public async Task<int> GetAvailableTables(string branchId)
-    {
-
-        var reservations = await _context.TableReservation
-            .Where(r => r.BranchId == branchId && (r.ReservationStatus == "Queued" || r.ReservationStatus == "Seated"))
-            .ToListAsync();
-
-        var reservedTables = reservations
-            .Select(r => r.TableNumber)
-            .Distinct()
-            .ToList();
-
-        var totalTables = await _context.Table
-            .Where(t => t.BranchId == branchId)
-            .CountAsync();
-            
-        return totalTables - reservedTables.Count;
+        return Pharmacy?.ManagerId == managerId;
     }
 
     public async Task<int> GetOrdersInQueue(string branchId)

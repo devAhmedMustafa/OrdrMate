@@ -20,7 +20,7 @@ public class BranchRequestRepo : IBranchRequestRepo
 
     public async Task<IEnumerable<BranchRequest>> GetAllBranchRequests()
     {
-        return await _context.BranchRequest.Include(b => b.Restaurant).ToListAsync();
+        return await _context.BranchRequest.Include(b => b.Pharmacy).ToListAsync();
     }
 
     public async Task<BranchRequest> CreateBranchRequest(BranchRequest branchRequest)

@@ -1,5 +1,6 @@
 using OrdrMate.Enums;
 using OrdrMate.DTOs.Order;
+using OrdrMate.DTOs.Item;
 using OrdrMate.Models;
 using OrdrMate.Utils;
 using OrdrMate.Repositories;
@@ -14,7 +15,6 @@ public class OrderService
     private readonly IOrderRepo _orderRepo;
     private readonly IDeliverRequestRepo _deliverRequestRepo;
     private readonly PaymobService _paymobService;
-    private readonly TableService _tableService;
     private readonly CloudMessaging _cloudMessaging;
     private readonly IBackgroundJobClient _backgroundJobs;
 
@@ -25,7 +25,6 @@ public class OrderService
         IOrderRepo orderRepo,
         IDeliverRequestRepo deliverRequestRepo,
         PaymobService paymobService,
-        TableService tableService,
         CloudMessaging cloudMessaging,
         IBackgroundJobClient backgroundJobs
     )
@@ -34,7 +33,6 @@ public class OrderService
         _orderRepo = orderRepo;
         _deliverRequestRepo = deliverRequestRepo;
         _paymobService = paymobService;
-        _tableService = tableService;
         _cloudMessaging = cloudMessaging;
         _backgroundJobs = backgroundJobs;
     }
@@ -59,7 +57,6 @@ public class OrderService
                 Quantity = oi.Quantity,
                 Price = oi.Price,
             })],
-            TableNumber = placeOrderDto.TableNumber,
         };
 
         var redirectUrl = string.Empty;
@@ -138,7 +135,7 @@ public class OrderService
         var orderDto = new OrderDto
         {
             OrderId = order.Id,
-            RestaurantName = order.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
             Customer = order.Customer?.Username ?? "Unknown Customer",
             OrderType = orderIntent.OrderType.ToString(),
             PaymentMethod = orderIntent.PaymentMethod,
@@ -181,11 +178,6 @@ public class OrderService
                 OrderEvents.OnOrderPlaced(order.BranchId, orderItems);
                 break;
 
-            case OrderType.DineIn:
-                var reservation = await _tableService.ReserveTable(orderDto, orderIntent.TableNumber ?? 1);
-                orderDto.TableNumber = reservation.TableNumber;
-                break;
-
             default:
                 throw new NotImplementedException($"Order type {orderIntent.OrderType} is not implemented yet.");
         }
@@ -214,7 +206,6 @@ public class OrderService
     public async Task<IEnumerable<OrderDto>> GetCustomerOrders(string customerId)
     {
         var takeaways = await _orderRepo.GetTakeawaysByCustomerId(customerId);
-        var indoors = await _tableService.GetCustomerTableReservation(customerId);
 
         if (takeaways == null)
         {
@@ -222,16 +213,10 @@ public class OrderService
             takeaways = [];
         }
 
-        if (indoors == null)
-        {
-            Console.WriteLine($"No dine-in orders found for customer with ID: {customerId}");
-            indoors = [];
-        }
-
         var takeawayDtos = takeaways.Select(t => new OrderDto
         {
-            OrderId = t.Order.Id,
-            RestaurantName = t.Order.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            OrderId = t.Order!.Id,
+            PharmacyName = t.Order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
             Customer = t.Order.Customer?.Username ?? "Unknown Customer",
             OrderType = OrderType.Takeaway.ToString(),
             PaymentMethod = t.Order.Payment?.PaymentMethod ?? "Cash",
@@ -244,25 +229,7 @@ public class OrderService
             CustomerId = t.Order.CustomerId
         });
 
-        var indoorDtos = indoors.Select(i => new OrderDto
-        {
-            OrderId = i.Order!.Id,
-            RestaurantName = i.Order.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
-            Customer = i.Order.Customer?.Username ?? "Unknown Customer",
-            OrderType = OrderType.DineIn.ToString(),
-            PaymentMethod = i.Order.Payment?.PaymentMethod ?? "Cash",
-            OrderDate = i.Order.OrderDate,
-            OrderStatus = i.Order.Status.ToString(),
-            TotalAmount = i.Order.TotalAmount,
-            BranchId = i.Order.BranchId,
-            TableNumber = i.TableNumber,
-            IsPaid = i.Order.IsPaid,
-            CustomerId = i.Order.CustomerId
-        });
-
-        var orders = takeawayDtos.Concat(indoorDtos);
-        orders = orders.OrderByDescending(o => o.OrderDate);
-
+        var orders = takeawayDtos.OrderByDescending(o => o.OrderDate);
         return orders;
 
     }
@@ -276,7 +243,7 @@ public class OrderService
         return new OrderDto
         {
             OrderId = order.Id,
-            RestaurantName = order.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
             Customer = order.Customer?.Username ?? "Unknown Customer",
             OrderType = "",
             PaymentMethod = order.Payment?.PaymentMethod ?? "Unknown",
@@ -297,7 +264,7 @@ public class OrderService
         var orderDto = new OrderDto
         {
             OrderId = order.Id,
-            RestaurantName = order.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
             Customer = order.Customer?.Username ?? "Unknown Customer",
             CustomerId = order.Customer?.Id ?? string.Empty,
             OrderType = order.OrderType.ToString(),
@@ -310,7 +277,7 @@ public class OrderService
             OrderItems = order.OrderItems?.Select(oi => new OrderItemDto
             {
                 ItemId = oi.ItemId,
-                Item = new DTOs.Item.ItemDto
+                Item = new ItemDto
                 {
                     Id = oi.Item?.Id ?? string.Empty,
                     Name = oi.Item?.Name ?? "Unknown Item",
@@ -318,8 +285,9 @@ public class OrderService
                     ImageUrl = oi.Item?.ImageUrl ?? string.Empty,
                     Price = oi.Item?.Price ?? 0,
                     Category = oi.Item?.CategoryName ?? "Uncategorized",
-                    PreparationTime = oi.Item?.PreperationTime ?? 0,
-                    KitchenName = oi.Item?.Kitchen?.Name ?? "Unknown Kitchen"
+                    Priority = oi.Item?.Priority ?? 0,
+                    Tags = oi.Item?.Tags ?? string.Empty,
+                    Brand = oi.Item?.Brand ?? "Unknown Brand",
                 },
                 Quantity = oi.Quantity,
                 Price = oi.Price,
@@ -332,13 +300,6 @@ public class OrderService
         if (takeaway != null)
         {
             orderDto.OrderNumber = takeaway.OrderNumber;
-            return orderDto;
-        }
-
-        var indoor = await _tableService.GetTableReservationByOrderId(orderId);
-        if (indoor != null)
-        {
-            orderDto.TableNumber = indoor.TableNumber;
             return orderDto;
         }
 
@@ -374,7 +335,7 @@ public class OrderService
         return orders.Select(o => new OrderDto
         {
             OrderId = o.Id,
-            RestaurantName = o.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            PharmacyName = o.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
             Customer = o.Customer?.Username ?? "Unknown Customer",
             OrderType = o.OrderType.ToString(),
             PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
@@ -400,7 +361,7 @@ public class OrderService
         return orders.Select(o => new OrderDto
         {
             OrderId = o.Id,
-            RestaurantName = o.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            PharmacyName = o.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
             Customer = o.Customer?.Username ?? "Unknown Customer",
             OrderType = o.OrderType.ToString(),
             PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
@@ -426,7 +387,7 @@ public class OrderService
         return orders.Select(o => new OrderDto
         {
             OrderId = o.Id,
-            RestaurantName = o.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            PharmacyName = o.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
             Customer = o.Customer?.Username ?? "Unknown Customer",
             OrderType = o.OrderType.ToString(),
             PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
@@ -469,14 +430,6 @@ public class OrderService
                 }
                 break;
 
-            case OrderType.DineIn:
-                var indoor = await _tableService.GetTableReservationByOrderId(orderId);
-                if (indoor != null)
-                {
-                    orderNumber = $"Table {indoor.TableNumber}" + $" ({indoor.ReservationTime})";
-                }
-                break;
-
             default:
                 throw new NotImplementedException($"Order type {order.OrderType} is not implemented yet.");
         }
@@ -485,7 +438,7 @@ public class OrderService
         {
             OrderId = order.Id,
             OrderNumber = orderNumber ?? "N/A",
-            RestaurantName = order.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
             CustomerName = order.Customer?.Username ?? "Unknown Customer",
             OrderType = order.OrderType.ToString(),
             PaymentMethod = order.Payment?.PaymentMethod ?? "Cash",
@@ -496,15 +449,17 @@ public class OrderService
             Items = order.OrderItems?.Select(oi => new OrderItemDto
             {
                 ItemId = oi.ItemId,
-                Item = new DTOs.Item.ItemDto
+                Item = new ItemDto
                 {
                     Id = oi.Item?.Id ?? string.Empty,
                     Name = oi.Item?.Name ?? "Unknown Item",
                     Description = oi.Item?.Description ?? "No description available",
                     Price = oi.Item?.Price ?? 0,
                     Category = oi.Item?.CategoryName ?? "Uncategorized",
-                    PreparationTime = oi.Item?.PreperationTime ?? 0,
-                    KitchenName = oi.Item?.Kitchen?.Name ?? "Unknown Kitchen"
+                    ImageUrl = oi.Item?.ImageUrl ?? string.Empty,
+                    Priority = oi.Item?.Priority ?? 0,
+                    Tags = oi.Item?.Tags ?? string.Empty,
+                    Brand = oi.Item?.Brand ?? "Unknown Brand",
                 },
                 Quantity = oi.Quantity,
                 Price = oi.Price,
@@ -525,7 +480,7 @@ public class OrderService
         return orders.Select(o => new OrderDto
         {
             OrderId = o.Id,
-            RestaurantName = o.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            PharmacyName = o.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
             Customer = o.Customer?.Username ?? "Unknown Customer",
             OrderType = o.OrderType.ToString(),
             PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
@@ -564,7 +519,7 @@ public class OrderService
         _jobIds.Add(createdRequest.OrderId, jobId);
 
         var token = await _cloudMessaging.GetTokenByUserId(order.CustomerId);
-        await _cloudMessaging.SendNotificationAsync(token, "Did you receive your order?", $"Your order from {order.Branch?.Restaurant?.Name ?? "Unknown Restaurant"}. Will considered as a yes after 15 minutes.", new Dictionary<string, string>
+        await _cloudMessaging.SendNotificationAsync(token, "Did you receive your order?", $"Your order from {order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy"}. Will considered as a yes after 15 minutes.", new Dictionary<string, string>
         {
             { "type", "DELIVER_CONFIRMATION" },
             { "orderId", createdRequest.OrderId },
@@ -628,7 +583,7 @@ public class OrderService
         return orders.Select(o => new OrderDto
         {
             OrderId = o.OrderId,
-            Customer = o.Order.Customer?.Username!,
+            Customer = o.Order!.Customer?.Username!,
             CustomerId = o.Order.Customer?.Id ?? string.Empty,
             TotalAmount = o.Order.TotalAmount,
             OrderDate = o.Order.OrderDate,
@@ -637,7 +592,7 @@ public class OrderService
             IsPaid = o.Order.IsPaid,
             OrderType = o.Order.OrderType.ToString(),
             PaymentMethod = o.Order.Payment?.PaymentMethod ?? "Unknown",
-            RestaurantName = o.Order.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            PharmacyName = o.Order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
             OrderNumber = o.OrderNumber
         });
     }
