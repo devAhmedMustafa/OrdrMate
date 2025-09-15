@@ -11,8 +11,5 @@ public class BranchInfoDto
     public required TimeSpan EndWorkingHour { get; set; }
     public required bool[] WorkingDays { get; set; }
     public required bool IsOpen { get; set; }
-    public required decimal MinWaitingTime { get; set; }
-    public required decimal MaxWaitingTime { get; set; }
-    public required decimal AverageWaitingTime { get; set; }
     public required int OrdersInQueue { get; set; }
 }

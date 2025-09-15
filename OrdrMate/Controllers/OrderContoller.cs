@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrdrMate.DTOs.Order;
-using OrdrMate.Managers;
 using OrdrMate.Services;
 using OrdrMate.Utils;
 
@@ -15,7 +14,6 @@ public class OrderController : ControllerBase
 
     private readonly OrderService _orderService;
     private readonly BranchService _branchService;
-    private readonly OrderManager _orderManager;
     private readonly IAuthorizationService _authorizationService;
     private readonly GeoMaps _geoMaps;
     private readonly IWebHostEnvironment _env;
@@ -24,7 +22,6 @@ public class OrderController : ControllerBase
         OrderService orderService,
         BranchService branchService,
         IAuthorizationService authorizationService,
-        OrderManager orderManager,
         GeoMaps geoMaps,
         IWebHostEnvironment env
         )
@@ -32,7 +29,6 @@ public class OrderController : ControllerBase
         _orderService = orderService;
         _branchService = branchService;
         _authorizationService = authorizationService;
-        _orderManager = orderManager;
         _geoMaps = geoMaps;
         _env = env;
     }
@@ -133,45 +129,6 @@ public class OrderController : ControllerBase
         }
     }
 
-    [HttpPost("check-prepared/{branchId}/{kitchenName}/{kitchenUnitId}")]
-    public async Task<ActionResult> CheckPreparedInQueue(string branchId, string kitchenName, int kitchenUnitId)
-    {
-        try
-        {
-            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
-            if (!authorizationResult.Succeeded)
-            {
-                return Forbid("You do not have permission to check prepared items in this branch.");
-            }
-
-            var response = _orderManager.CheckPreparedInQueue(branchId, kitchenName, kitchenUnitId);
-            return Ok(response);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error checking prepared items: " + ex.Message);
-            return StatusCode(500, $"An error occurred while checking prepared items: {ex.Message}");
-        }
-    }
-
-    [HttpGet("waiting_times/{branchId}")]
-    public async Task<ActionResult<OrderWaitingTimesDto>> GetEstimatedTimes(string branchId)
-    {
-        try
-        {
-            var waitingTimes = await _orderManager.GetEstimatedTimes(branchId);
-            if (waitingTimes == null)
-            {
-                return NotFound($"No estimated times found for branch {branchId}.");
-            }
-            return Ok(waitingTimes);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"An error occurred while fetching estimated times: {ex.Message}");
-        }
-    }
-
     [HttpGet("customer")]
     [Authorize(Roles = "Customer")]
     public async Task<ActionResult<IEnumerable<OrderDto>>> GetCustomerOrders()
@@ -205,21 +162,6 @@ public class OrderController : ControllerBase
         catch (KeyNotFoundException ex)
         {
             return NotFound($"Order with ID {orderId} not found: {ex.Message}");
-        }
-    }
-
-    [HttpGet("branch/{branchId}/estimated_time/{orderId}")]
-    public async Task<ActionResult<decimal>> GetEstimatedTimeForOrder(string branchId, string orderId)
-    {
-        try
-        {
-            var estimatedTime = await _orderManager.GetEstimatedTimeForOrder(branchId, orderId);
-
-            return Ok(new { EstimatedTime = estimatedTime });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"An error occurred while fetching estimated time for order {orderId}: {ex.Message}");
         }
     }
 
@@ -335,31 +277,31 @@ public class OrderController : ControllerBase
         }
     }
 
-    [HttpGet("item_queues/{branchId}")]
-    [Authorize(Roles = "BranchManager")]
-    public async Task<ActionResult> GetItemQueues(string branchId)
-    {
-        try
-        {
-            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
-            if (!authorizationResult.Succeeded)
-            {
-                return Forbid("You do not have permission to view item queues for this branch.");
-            }
+    // [HttpGet("item_queues/{branchId}")]
+    // [Authorize(Roles = "BranchManager")]
+    // public async Task<ActionResult> GetItemQueues(string branchId)
+    // {
+    //     try
+    //     {
+    //         var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+    //         if (!authorizationResult.Succeeded)
+    //         {
+    //             return Forbid("You do not have permission to view item queues for this branch.");
+    //         }
 
-            var itemQueues = _orderManager.GetItemQueues(branchId);
-            if (itemQueues == null || itemQueues.Count == 0)
-            {
-                return NotFound($"No item queues found for branch {branchId}.");
-            }
+    //         var itemQueues = _orderManager.GetItemQueues(branchId);
+    //         if (itemQueues == null || itemQueues.Count == 0)
+    //         {
+    //             return NotFound($"No item queues found for branch {branchId}.");
+    //         }
 
-            return Ok(itemQueues);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"An error occurred while retrieving item queues: {ex.Message}");
-        }
-    }
+    //         return Ok(itemQueues);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return StatusCode(500, $"An error occurred while retrieving item queues: {ex.Message}");
+    //     }
+    // }
 
     [HttpPost("deliver_request")]
     [Authorize(Roles = "BranchManager")]

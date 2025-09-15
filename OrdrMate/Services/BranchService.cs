@@ -6,19 +6,16 @@ using OrdrMate.Models;
 using OrdrMate.Repositories;
 using OrdrMate.Utils;
 using OrdrMate.Events;
-using OrdrMate.Managers;
 
 public class BranchService(
     IBranchRepo branchRepo,
     ManagerService managerService,
     PharmacyService PharmacyService,
-    OrderManager orderManager,
     OrderService orderService
     )
 {
     private readonly IBranchRepo _branchRepo = branchRepo;
     private readonly ManagerService _managerService = managerService;
-    private readonly OrderManager _orderManager = orderManager;
     private readonly PharmacyService _PharmacyService = PharmacyService;
     private readonly OrderService _orderService = orderService;
 
@@ -145,7 +142,6 @@ public class BranchService(
         }
 
         var ordersInQueue = await _branchRepo.GetOrdersInQueue(branchId);
-        var waitingTimes = await _orderManager.GetEstimatedTimes(branchId);
 
         var isOpen = TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays);
 
@@ -157,9 +153,6 @@ public class BranchService(
             PharmacyId = branch.PharmacyId,
             PharmacyName = branch.Pharmacy?.Name ?? "Unknown",
             OrdersInQueue = ordersInQueue,
-            MinWaitingTime = waitingTimes.MinWaitingTime,
-            MaxWaitingTime = waitingTimes.MaxWaitingTime,
-            AverageWaitingTime = waitingTimes.AverageWaitingTime,
             StartWorkingHour = branch.StartWorkingHour,
             EndWorkingHour = branch.EndWorkingHour,
             IsOpen = isOpen,
