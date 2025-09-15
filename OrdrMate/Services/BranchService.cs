@@ -1,5 +1,4 @@
 namespace OrdrMate.Services;
-
 using OrdrMate.DTOs.Branch;
 using OrdrMate.DTOs.User;
 using OrdrMate.Models;
@@ -208,5 +207,25 @@ public class BranchService(
             EndWorkingHour = branch.EndWorkingHour
         };
     }
+ public async Task<bool> SetDeliveryAvailability(string branchId, bool isDeliveryEnabled)
+{
+    var branch = await _branchRepo.GetBranchById(branchId);
+    if (branch == null)
+    {
+        return false;
+    }
 
+    branch.DeliveryEnabled = isDeliveryEnabled;
+    await _branchRepo.UpdateBranch(branch);
+    return branch.DeliveryEnabled;
+}
+   public async Task<bool> CheckDeliveryAvailability(string branchId)
+{
+    var branch = await _branchRepo.GetBranchById(branchId);
+    if (branch == null)
+    {
+        throw new Exception("Branch not found.");
+    }
+    return branch.DeliveryEnabled;
+}
 }

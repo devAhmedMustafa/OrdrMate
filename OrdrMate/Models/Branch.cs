@@ -17,4 +17,5 @@ public class Branch
     public ICollection<Table>? Tables { get; set; }
     public ICollection<Order>? Orders { get; set; }
     public ICollection<KitchenPower>? KitchenPowers { get; set; }
+    public bool DeliveryEnabled { get; set; }
 }

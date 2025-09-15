@@ -329,4 +329,24 @@ public class BranchController : ControllerBase
             return NotFound($"Branch with ID {branchId} not found: {ex.Message}");
         }
     }
+    
+    [HttpPut("set-delivery-availability/{branchId}")]
+        [Authorize(Roles = "BranchManager")]
+        public async Task<ActionResult> SetDeliveryAvailability(string branchId, [FromBody] bool isDeliveryEnabled)
+        {
+            try
+            {
+                var result = await _branchService.SetDeliveryAvailability(branchId, isDeliveryEnabled);
+                if (result)
+                {
+                    return Ok(new { message = $"Delivery has been {(isDeliveryEnabled ? "enabled" : "disabled")} for branch {branchId}." });
+                }
+
+                return BadRequest("Failed to update delivery availability.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred while updating delivery availability: {ex.Message}");
+            }
+        }
 }
