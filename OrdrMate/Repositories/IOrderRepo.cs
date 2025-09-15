@@ -10,6 +10,7 @@ public interface IOrderRepo
     Task<OrderIntent?> UpdateOrderIntentStatus(string orderIntentId, PaymentStatus status);
     Task<Order> CreateOrder(Order order);
     Task<Takeaway> CreateTakeawayOrder(Takeaway takeaway);
+    Task<Delivery> CreateDeliveryOrder(Delivery delivery);
     Task<OrderItem> CreateOrderItem(OrderItem orderItem);
     Task<Order?> GetOrderById(string orderId);
     Task<Order> GetDetailedOrderById(string orderId);

@@ -45,7 +45,7 @@ public class OrderService
         var intent = new OrderIntent
         {
             CustomerId = placeOrderDto.CustomerId,
-            BranchId = placeOrderDto.BranchId,
+            BranchId = placeOrderDto.PharmacyId,
             Status = PaymentStatus.INITIATED,
             Amount = totalAmount,
             PaymentMethod = placeOrderDto.PaymentMethod,
@@ -179,7 +179,9 @@ public class OrderService
                 break;
 
             case OrderType.Delivery:
-                
+                var delivery = await PlaceDeliveryOrder(order, orderIntent);
+                OrderEvents.OnOrderPlaced(order.BranchId, orderItems);
+                break;
 
             default:
                 throw new NotImplementedException($"Order type {orderIntent.OrderType} is not implemented yet.");
@@ -201,13 +203,20 @@ public class OrderService
         return await _orderRepo.CreateTakeawayOrder(takeaway);
     }
 
-    private async Task<Delivery> PlaceDeliveryOrder(Order order)
+    private async Task<Delivery> PlaceDeliveryOrder(Order order, OrderIntent orderIntent)
     {
-        var orderNum = DailyNumberGenerator.GetNextNumber();
+
+        if (orderIntent.DeliveryDetails == null)
+        {
+            throw new ArgumentNullException("Delivery details are required for delivery orders.");
+        }
 
         var delivery = new Delivery
         {
             OrderId = order.Id,
+            Address = orderIntent.DeliveryDetails.Address,
+            Latitude = orderIntent.DeliveryDetails.Latitude,
+            Longitude = orderIntent.DeliveryDetails.Longitude,
         };
 
         return await _orderRepo.CreateDeliveryOrder(delivery);

@@ -20,6 +20,7 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<BranchRequest> BranchRequest => Set<BranchRequest>();
     public DbSet<Order> Order => Set<Order>();
     public DbSet<Takeaway> Takeaway => Set<Takeaway>();
+    public DbSet<Delivery> Delivery => Set<Delivery>();
     public DbSet<OrderItem> OrderItem => Set<OrderItem>();
     public DbSet<Payment> Payment => Set<Payment>();
     public DbSet<OrderIntent> OrderIntent => Set<OrderIntent>();

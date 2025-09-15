@@ -39,11 +39,23 @@ public class ItemAvailabilityRepository
 
         return itemAvailabilities;
     }
-    
+
     public async Task<ItemAvailability> UpdateItemAvailability(ItemAvailability itemAvailability)
     {
         var entity = _db.ItemAvailabilities.Update(itemAvailability);
         await _db.SaveChangesAsync();
         return entity.Entity;
+    }
+    
+    public async Task UpdateItemQuantity(string itemId, string branchId, int quantity)
+    {
+        var itemAvailability = await GetItemAvailability(itemId, branchId);
+        if (itemAvailability is null)
+        {
+            throw new Exception("Item availability not found");
+        }
+
+        itemAvailability.AvailableQuantity = quantity;
+        await UpdateItemAvailability(itemAvailability);
     }
 }

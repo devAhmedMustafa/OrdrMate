@@ -70,4 +70,13 @@ public class ItemAvailabilityService
 
         return instance.IsAvailable;
     }
+
+    public async Task UpdateItemQuantity(UpdateItemQuantityDto data)
+    {
+
+        if (data.Quantity < 0)
+            throw new ArgumentException("Quantity cannot be negative", nameof(data.Quantity));
+
+        await _repository.UpdateItemQuantity(data.ItemId, data.BranchId, data.Quantity);
+    }
 }

@@ -57,6 +57,13 @@ public class OrderRepo : IOrderRepo
         return takeaway;
     }
 
+    public async Task<Delivery> CreateDeliveryOrder(Delivery delivery)
+    {
+        _db.Delivery.Add(delivery);
+        await _db.SaveChangesAsync();
+        return delivery;
+    }
+
     public async Task<OrderItem> CreateOrderItem(OrderItem orderItem)
     {
         var saved = _db.OrderItem.Add(orderItem);
