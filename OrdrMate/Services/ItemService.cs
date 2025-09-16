@@ -131,7 +131,7 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             existingItem.Tags = updatedItem.Tags;
         if (updatedItem.Brand is not null)
             existingItem.Brand = updatedItem.Brand;
-        
+
 
 
         var updated = await _itemRepo.UpdateItem(existingItem);
@@ -177,10 +177,28 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
         };
     }
 
-    
+
     public async Task<IEnumerable<ItemDto>> GetAvailableItems(string branchId)
     {
         var items = await _itemAvailabilityService.GetAllItemAvailabilities(branchId);
         return items;
+    }
+    
+    public async Task<IEnumerable<ItemDto>> GetItemsByCategory(string pharmacyId, string category)
+    {
+        var items = await _itemRepo.GetItemsByCategory(pharmacyId, category);
+        return items.Select(item => new ItemDto
+        {
+            Id = item.Id,
+            Name = item.Name,
+            Description = item.Description,
+            ImageUrl = item.ImageUrl,
+            Price = item.Price,
+            Category = item.CategoryName,
+            SubCategory = item.SubCategoryName,
+            Priority = item.Priority,
+            Tags = item.Tags,
+            Brand = item.Brand
+        });
     }
 }

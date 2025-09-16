@@ -12,4 +12,5 @@ public interface IItemRepo
     Task<Item?> UpdateItem(string id, Item item);
     Task<Item?> UpdateItem(Item item);
     Task<bool> DeleteItem(string id);
+    Task<IEnumerable<Item>> GetItemsByCategory(string pharmacyId, string category);
 }

@@ -83,6 +83,10 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
 
             }
         }
+        else
+        {
+            item.SubCategoryName = item.CategoryName;
+        }
 
         await _context.Item.AddAsync(item);
         await _context.SaveChangesAsync();
@@ -161,5 +165,12 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
             .ToListAsync();
 
         return items;
+    }
+
+    public async Task<IEnumerable<Item>> GetItemsByCategory(string pharmacyId, string category)
+    {
+        return await _context.Item
+            .Where(i => i.PharmacyId == pharmacyId && i.CategoryName == category)
+            .ToListAsync();
     }
 }

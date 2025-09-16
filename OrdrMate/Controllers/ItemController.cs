@@ -56,6 +56,20 @@ public class ItemController : ControllerBase
         }
     }
 
+    [HttpGet("list/{pharmacyId}/{category}")]
+    public async Task<ActionResult<IEnumerable<ItemDto>>> GetItemsByCategory(string pharmacyId, string category)
+    {
+        try
+        {
+            var items = await _service.GetItemsByCategory(pharmacyId, category);
+            return Ok(items);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new { err = e.Message });
+        }
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<ItemDto>> GetItem(string id)
     {
