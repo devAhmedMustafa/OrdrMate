@@ -1,13 +1,6 @@
 namespace OrdrMate.Utils.Exceptions;
 
-public class OException : Exception
+public class OException(string message, int statusCode = 500) : Exception(message)
 {
-    public string Message { get; }
-    public int StatusCode { get; }
-
-    public OException(string message, int statusCode = 500)
-    {
-        Message = message;
-        StatusCode = statusCode;
-    }
+    public int StatusCode { get; } = statusCode;
 }
