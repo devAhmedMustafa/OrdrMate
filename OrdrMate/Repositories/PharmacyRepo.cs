@@ -77,6 +77,28 @@ public class PharmacyRepo(OrdrMateDbContext c) : IPharmacyRepo
         })];
     }
 
+    public async Task<IEnumerable<Category>> GetPharmacyMainCategories(string PharmacyId)
+    {
+        var Pharmacy = await _db.Pharmacy
+            .Include(r => r.Categories)
+            .FirstOrDefaultAsync(r => r.Id == PharmacyId);
+
+        if (Pharmacy == null)
+        {
+            throw new InvalidOperationException($"Pharmacy with id {PharmacyId} does not exist.");
+        }
+
+        if (Pharmacy.Categories == null)
+        {
+            return [];
+        }
+
+        var mainCategories = Pharmacy.Categories
+            .Where(c => c.Parent == null);
+
+        return mainCategories;
+    }
+
     public async Task<PharmacyProfile?> GetPharmacyProfile(string PharmacyId)
     {
         var profile = await _db.PharmacyProfile

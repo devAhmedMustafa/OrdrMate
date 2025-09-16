@@ -119,7 +119,7 @@ public class PharmacyService(IPharmacyRepo r, IUserRepo m)
                     Description = pharmacy.Profile?.Description ?? string.Empty,
                     CoverUrl = pharmacy.Profile?.CoverImageUrl ?? string.Empty
                 };
-                
+
                 responseDtos.Add(responseDto);
             }
             return responseDtos;
@@ -205,4 +205,19 @@ public class PharmacyService(IPharmacyRepo r, IUserRepo m)
         }
     }
 
+    public async Task<List<CategoryDto>> GetPharmacyMainCategories(string pharmacyId)
+    {
+        try
+        {
+            var categories = await _repo.GetPharmacyMainCategories(pharmacyId);
+            return [.. categories.Select(c => new CategoryDto
+            {
+                Name = c.Name,
+            })];
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Error getting Pharmacy main categories: {e.Message}");
+        }
+    }
 }

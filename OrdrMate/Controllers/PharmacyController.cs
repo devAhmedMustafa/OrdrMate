@@ -106,6 +106,24 @@ public class PharmacyController(PharmacyService r, IAuthorizationService auth) :
         }
     }
 
+    [HttpGet("main-categories/{PharmacyId}")]
+    public async Task<ActionResult<List<CategoryDto>>> GetPharmacyMainCategories(string PharmacyId)
+    {
+        try
+        {
+            var categories = await _service.GetPharmacyMainCategories(PharmacyId);
+            if (categories == null || categories.Count == 0)
+            {
+                return NotFound(new { err = "No main categories found for this Pharmacy" });
+            }
+            return Ok(categories);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new { err = e.Message });
+        }
+    }
+
     [HttpGet("profile/{PharmacyId}")]
     public async Task<ActionResult<PharmacyProfileDto>> GetPharmacyProfile(string PharmacyId)
     {
