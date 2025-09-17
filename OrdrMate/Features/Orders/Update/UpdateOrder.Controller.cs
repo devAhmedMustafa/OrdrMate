@@ -4,7 +4,7 @@ using OrdrMate.Managers;
 namespace OrdrMate.Features.Orders.Update;
 
 [ApiController]
-[Route("api/{controller}")]
+[Route("api/[controller]")]
 public class UpdateOrderController : ControllerBase
 {
 
