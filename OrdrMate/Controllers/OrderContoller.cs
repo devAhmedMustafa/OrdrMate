@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrdrMate.DTOs.Order;
+using OrdrMate.Features.CashierOrder;
 using OrdrMate.Managers;
 using OrdrMate.Services;
 using OrdrMate.Utils;
@@ -14,6 +15,7 @@ public class OrderController : ControllerBase
 {
 
     private readonly OrderService _orderService;
+    private readonly CashierOrderService _cashierOrderService;
     private readonly BranchService _branchService;
     private readonly OrderManager _orderManager;
     private readonly IAuthorizationService _authorizationService;
@@ -22,6 +24,7 @@ public class OrderController : ControllerBase
 
     public OrderController(
         OrderService orderService,
+        CashierOrderService cashierOrderService,
         BranchService branchService,
         IAuthorizationService authorizationService,
         OrderManager orderManager,
@@ -30,6 +33,7 @@ public class OrderController : ControllerBase
         )
     {
         _orderService = orderService;
+        _cashierOrderService = cashierOrderService;
         _branchService = branchService;
         _authorizationService = authorizationService;
         _orderManager = orderManager;
@@ -521,7 +525,7 @@ public class OrderController : ControllerBase
 
             placeOrderDto.CustomerId = userId;
 
-            var orderIntent = await _orderService.CreateOrderIntent(placeOrderDto);
+            var orderIntent = await _cashierOrderService.CreateOrderForCashier(placeOrderDto);
             if (orderIntent == null)
             {
                 return BadRequest("Failed to create order. Please check your order details.");
