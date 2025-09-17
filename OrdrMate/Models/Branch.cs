@@ -18,4 +18,5 @@ public class Branch
     public ICollection<Order>? Orders { get; set; }
     public ICollection<KitchenPower>? KitchenPowers { get; set; }
     public bool DeliveryEnabled { get; set; }
+    public bool TakeAwayEnabled { get; set; }
 }

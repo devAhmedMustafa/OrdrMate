@@ -15,6 +15,8 @@ public class OrderService
 {
     private readonly PaymentService _paymentService;
     private readonly IOrderRepo _orderRepo;
+    private readonly IBranchRepo _branchRepo;
+    private readonly BranchService _branchService;
     private readonly IDeliverRequestRepo _deliverRequestRepo;
     private readonly PaymobService _paymobService;
     private readonly TableService _tableService;
@@ -22,23 +24,29 @@ public class OrderService
     private readonly IBackgroundJobClient _backgroundJobs;
     private readonly ItemAvailabilityService _itemAvailabilityService;
     private readonly UserCustomizationService _userCustomizationService;
+    private readonly GeoMaps _geoMaps;
 
     private static readonly Dictionary<string, string> _jobIds = new Dictionary<string, string>();
 
     public OrderService(
         PaymentService paymentService,
         IOrderRepo orderRepo,
+        IBranchRepo branchRepo,
+        BranchService branchService,
         IDeliverRequestRepo deliverRequestRepo,
         PaymobService paymobService,
         TableService tableService,
         CloudMessaging cloudMessaging,
         IBackgroundJobClient backgroundJobs,
         UserCustomizationService userCustomizationService,
-        ItemAvailabilityService itemAvailabilityService
+        ItemAvailabilityService itemAvailabilityService,
+        GeoMaps geoMaps
     )
     {
         _paymentService = paymentService;
         _orderRepo = orderRepo;
+        _branchRepo = branchRepo;
+        _branchService = branchService;
         _deliverRequestRepo = deliverRequestRepo;
         _paymobService = paymobService;
         _tableService = tableService;
@@ -46,10 +54,44 @@ public class OrderService
         _backgroundJobs = backgroundJobs;
         _userCustomizationService = userCustomizationService;
         _itemAvailabilityService = itemAvailabilityService;
+        _geoMaps = geoMaps;
     }
 
     public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto)
     {
+
+        var branch = await _branchRepo.GetBranchById(placeOrderDto.BranchId);
+        if (branch == null)
+        {
+            throw new KeyNotFoundException($"Branch with id {placeOrderDto.BranchId} not found.");
+        }
+
+        if (!TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays))
+        {
+            throw new InvalidOperationException("Cannot place order. Branch is currently closed.");
+        }
+
+        if (await _branchService.CheckDeliveryAvailability(branch.Id) && placeOrderDto.OrderType == OrderType.Delivery)
+        {
+            throw new InvalidOperationException("Cannot place delivery order. Branch does not support delivery.");
+        }
+        else if (!await _branchService.CheckTakeAwayAvailability(branch.Id) && placeOrderDto.OrderType == OrderType.Takeaway)
+        {
+            throw new InvalidOperationException("Cannot place takeaway order. Branch does not support takeaway.");
+        }
+
+        double distance = await _geoMaps.CalculateDistance(
+            placeOrderDto.Latitude,
+            placeOrderDto.Longitude,
+            branch.Lantitude,
+            branch.Longitude
+        );
+
+        if (distance > 50)
+        {
+            Console.WriteLine($"[OrderService]: Coordinates: ({placeOrderDto.Latitude}, {placeOrderDto.Longitude}), Branch: ({branch.Lantitude}, {branch.Longitude}), Distance: {distance} km");
+            throw new InvalidOperationException($"Order cannot be placed. Distance is {distance:F2} km, which exceeds the 50 km limit.");
+        }
 
         foreach (var item in placeOrderDto.Items)
         {
