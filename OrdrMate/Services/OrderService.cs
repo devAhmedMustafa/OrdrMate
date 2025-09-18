@@ -6,6 +6,7 @@ using OrdrMate.Utils;
 using OrdrMate.Repositories;
 using OrdrMate.Events;
 using Hangfire;
+using OrdrMate.Features.BestBranchToOrder;
 
 namespace OrdrMate.Services;
 
@@ -17,6 +18,7 @@ public class OrderService
     private readonly PaymobService _paymobService;
     private readonly CloudMessaging _cloudMessaging;
     private readonly IBackgroundJobClient _backgroundJobs;
+    private readonly BestBranchToOrderService _bestBranchService;
 
     private static readonly Dictionary<string, string> _jobIds = new Dictionary<string, string>();
 
@@ -26,7 +28,8 @@ public class OrderService
         IDeliverRequestRepo deliverRequestRepo,
         PaymobService paymobService,
         CloudMessaging cloudMessaging,
-        IBackgroundJobClient backgroundJobs
+        IBackgroundJobClient backgroundJobs,
+        BestBranchToOrderService bestBranchService
     )
     {
         _paymentService = paymentService;
@@ -35,61 +38,71 @@ public class OrderService
         _paymobService = paymobService;
         _cloudMessaging = cloudMessaging;
         _backgroundJobs = backgroundJobs;
+        _bestBranchService = bestBranchService;
     }
 
     public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto)
     {
-
-        var totalAmount = placeOrderDto.Items.Sum(oi => oi.Price * oi.Quantity);
-
-        var intent = new OrderIntent
+        try
         {
-            CustomerId = placeOrderDto.CustomerId,
-            BranchId = placeOrderDto.PharmacyId,
-            Status = PaymentStatus.INITIATED,
-            Amount = totalAmount,
-            PaymentMethod = placeOrderDto.PaymentMethod,
-            OrderType = placeOrderDto.OrderType,
-            PaymentProvider = placeOrderDto.PaymentMethod == "cash" ? "cash" : "paymob",
-            OrderItems = [.. placeOrderDto.Items.Select(oi => new OrderItemDto
+            var bestBranchId = await _bestBranchService.FindBestBranchToOrder(placeOrderDto);
+
+            var totalAmount = placeOrderDto.Items.Sum(oi => oi.Price * oi.Quantity);
+
+            var intent = new OrderIntent
             {
-                ItemId = oi.ItemId,
-                Quantity = oi.Quantity,
-                Price = oi.Price,
-            })],
-        };
+                CustomerId = placeOrderDto.CustomerId,
+                BranchId = bestBranchId,
+                Status = PaymentStatus.INITIATED,
+                Amount = totalAmount,
+                PaymentMethod = placeOrderDto.PaymentMethod,
+                OrderType = placeOrderDto.OrderType,
+                PaymentProvider = placeOrderDto.PaymentMethod == "cash" ? "cash" : "paymob",
+                OrderItems = [.. placeOrderDto.Items.Select(oi => new OrderItemDto
+                {
+                    ItemId = oi.ItemId,
+                    Quantity = oi.Quantity,
+                    Price = oi.Price,
+                })],
+            };
 
-        var redirectUrl = string.Empty;
+            var redirectUrl = string.Empty;
 
-        switch (intent.PaymentProvider.ToLower())
-        {
-            case "cash":
-                var order = await ConfirmOrder(intent);
-                intent.OrderId = order!.OrderId;
-                break;
+            switch (intent.PaymentProvider.ToLower())
+            {
+                case "cash":
+                    var order = await ConfirmOrder(intent);
+                    intent.OrderId = order!.OrderId;
+                    break;
 
-            case "paymob":
-                var intentResponse = await CreatePaymentSession(intent)
-                    ?? throw new InvalidOperationException("Failed to create payment session with Paymob.");
+                case "paymob":
+                    var intentResponse = await CreatePaymentSession(intent)
+                        ?? throw new InvalidOperationException("Failed to create payment session with Paymob.");
 
-                if (string.IsNullOrEmpty(intentResponse.RedirectUrl)) throw new InvalidOperationException("Redirect URL is empty from Paymob response.");
+                    if (string.IsNullOrEmpty(intentResponse.RedirectUrl)) throw new InvalidOperationException("Redirect URL is empty from Paymob response.");
 
-                redirectUrl = intentResponse.RedirectUrl;
-                intent.Id = intentResponse.OrderId;
-                break;
-            default:
-                throw new NotSupportedException($"Payment provider {intent.PaymentProvider} is not supported.");
+                    redirectUrl = intentResponse.RedirectUrl;
+                    intent.Id = intentResponse.OrderId;
+                    break;
+                default:
+                    throw new NotSupportedException($"Payment provider {intent.PaymentProvider} is not supported.");
+            }
+
+
+            var savedIntent = await _orderRepo.CreateOrderIntent(intent);
+
+            return new OrderIntentDto
+            {
+                OrderIntentId = savedIntent.Id,
+                RedirectUrl = redirectUrl,
+                OrderId = intent.OrderId
+            };
         }
-
-
-        var savedIntent = await _orderRepo.CreateOrderIntent(intent);
-
-        return new OrderIntentDto
+        catch (Exception ex)
         {
-            OrderIntentId = savedIntent.Id,
-            RedirectUrl = redirectUrl,
-            OrderId = intent.OrderId
-        };
+            Console.WriteLine($"Error creating order intent: {ex.Message}");
+            throw;
+        }
     }
 
     public async Task<IntentResponse> CreatePaymentSession(OrderIntent orderIntent)

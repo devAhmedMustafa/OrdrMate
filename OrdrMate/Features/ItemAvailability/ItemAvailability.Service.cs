@@ -27,7 +27,7 @@ public class ItemAvailabilityService
         }
         else
         {
-            return await _repository.IsItemAvailabile(itemId, branchId);
+            return await _repository.IsItemAvailable(itemId, branchId);
         }
 
     }

@@ -19,9 +19,9 @@ public class ItemAvailabilityRepository
         return entity.Entity;
     }
 
-    public async Task<bool> IsItemAvailabile(string itemId, string branchId)
+    public async Task<bool> IsItemAvailable(string itemId, string branchId)
     {
-        return await _db.ItemAvailabilities.AnyAsync(ia => ia.ItemId == itemId && ia.BranchId == branchId);
+        return await _db.ItemAvailabilities.AnyAsync(ia => ia.ItemId == itemId && ia.BranchId == branchId && ia.AvailableQuantity > 0);
     }
 
     public async Task<ItemAvailability?> GetItemAvailability(string itemId, string branchId)
