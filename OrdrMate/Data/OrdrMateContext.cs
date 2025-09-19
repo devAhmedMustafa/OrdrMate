@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OrdrMate.Features.ItemAvailability;
 using OrdrMate.Features.Preport;
 using OrdrMate.Models;
 
@@ -12,6 +13,8 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<Restaurant> Restaurant => Set<Restaurant>();
     public DbSet<RestaurantProfile> RestaurantProfile => Set<RestaurantProfile>();
     public DbSet<Item> Item => Set<Item>();
+    public DbSet<ItemCustomization> ItemCustomization => Set<ItemCustomization>();
+    public DbSet<ItemAvailability> ItemAvailabilities => Set<ItemAvailability>();
     public DbSet<Category> Category => Set<Category>();
     public DbSet<Branch> Branch => Set<Branch>();
     public DbSet<BranchRequest> BranchRequest => Set<BranchRequest>();
@@ -269,6 +272,9 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .WithMany(i => i.Customizations)
             .HasForeignKey(ic => ic.ItemId)
             .OnDelete(DeleteBehavior.Cascade);
+
+
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrdrMateDbContext).Assembly);
 
     }
 

@@ -27,3 +27,4 @@ appsettings.Development.json
 # SECRET
 Keys
 encrypt-secrets.bat
+.fake

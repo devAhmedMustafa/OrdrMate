@@ -24,20 +24,52 @@ public class OrdrMateMongoContext
     public IMongoCollection<CustomizationCategory> CustomizationCategories =>
     _database.GetCollection<CustomizationCategory>("CustomizationCategories");
 
-    public IMongoCollection<ItemCustomization> ItemCustomizations =>
-    _database.GetCollection<ItemCustomization>("ItemCustomizations");
-
     public IMongoCollection<UserCustomization> UserCustomizations =>
     _database.GetCollection<UserCustomization>("UserCustomizations");
 
     public void EnsureIndexes()
     {
-        var indexKeys = Builders<CustomizationCategory>.IndexKeys
-            .Ascending(c => c.RestaurantId)
-            .Ascending(c => c.Name);
+        // CustomizationCategory index
+        var existingCategoryIndexes = CustomizationCategories.Indexes.List().ToList();
+        bool categoryIndexExists = existingCategoryIndexes
+            .Any(i => i["name"] == "RestaurantId_Name");
 
-        var indexOptions = new CreateIndexOptions { Unique = true };
-        var indexModel = new CreateIndexModel<CustomizationCategory>(indexKeys, indexOptions);
-        CustomizationCategories.Indexes.CreateOne(indexModel);
+        if (!categoryIndexExists)
+        {
+            var customizationCategoryIndexKeys = Builders<CustomizationCategory>.IndexKeys
+                .Ascending(c => c.RestaurantId)
+                .Ascending(c => c.Name);
+
+            var indexOptions = new CreateIndexOptions 
+            { 
+                Unique = true, 
+                Name = "RestaurantId_Name" // Explicit name to check later
+            };
+
+            var indexModel = new CreateIndexModel<CustomizationCategory>(customizationCategoryIndexKeys, indexOptions);
+            CustomizationCategories.Indexes.CreateOne(indexModel);
+        }
+
+        // UserCustomization index
+        var existingUserCustomizationIndexes = UserCustomizations.Indexes.List().ToList();
+        bool userCustomizationIndexExists = existingUserCustomizationIndexes
+            .Any(i => i["name"] == "ItemId_OrderId");
+
+        if (!userCustomizationIndexExists)
+        {
+            var userCustomizationIndexKeys = Builders<UserCustomization>.IndexKeys
+                .Ascending(c => c.ItemId)
+                .Ascending(c => c.OrderId);
+
+            var userCustomizationIndexOptions = new CreateIndexOptions 
+            { 
+                Unique = true, 
+                Name = "ItemId_OrderId" 
+            };
+
+            var userCustomizationIndexModel = new CreateIndexModel<UserCustomization>(userCustomizationIndexKeys, userCustomizationIndexOptions);
+            UserCustomizations.Indexes.CreateOne(userCustomizationIndexModel);
+        }
     }
+
 }

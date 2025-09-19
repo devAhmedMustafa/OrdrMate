@@ -11,13 +11,13 @@ public class UserCustomizationRepo
         _context = context;
     }
 
-    public async Task<UserCustomization?> GetUserCustomization(string userId, string itemId)
+    public async Task<UserCustomization?> GetUserCustomization(string orderId, string itemId)
     {
-        ArgumentNullException.ThrowIfNull(userId, nameof(userId));
+        ArgumentNullException.ThrowIfNull(orderId, nameof(orderId));
         ArgumentNullException.ThrowIfNull(itemId, nameof(itemId));
 
         return await _context.UserCustomizations
-            .Find(uc => uc.UserId == userId && uc.ItemId == itemId)
+            .Find(uc => uc.OrderId == orderId && uc.ItemId == itemId)
             .FirstOrDefaultAsync();
     }
 
@@ -33,18 +33,18 @@ public class UserCustomizationRepo
         ArgumentNullException.ThrowIfNull(userCustomization, nameof(userCustomization));
 
         var result = await _context.UserCustomizations
-            .ReplaceOneAsync(uc => uc.UserId == userCustomization.UserId && uc.ItemId == userCustomization.ItemId, userCustomization);
+            .ReplaceOneAsync(uc => uc.OrderId == userCustomization.OrderId && uc.ItemId == userCustomization.ItemId, userCustomization);
 
         return result.IsAcknowledged && result.ModifiedCount > 0;
     }
 
-    public async Task<bool> DeleteUserCustomization(string userId, string itemId)
+    public async Task<bool> DeleteUserCustomization(string orderId, string itemId)
     {
-        ArgumentNullException.ThrowIfNull(userId, nameof(userId));
+        ArgumentNullException.ThrowIfNull(orderId, nameof(orderId));
         ArgumentNullException.ThrowIfNull(itemId, nameof(itemId));
 
         var result = await _context.UserCustomizations
-            .DeleteOneAsync(uc => uc.UserId == userId && uc.ItemId == itemId);
+            .DeleteOneAsync(uc => uc.OrderId == orderId && uc.ItemId == itemId);
 
         return result.IsAcknowledged && result.DeletedCount > 0;
     }  

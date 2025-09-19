@@ -509,4 +509,36 @@ public class OrderController : ControllerBase
         return Ok(new { message = "Order cancelled successfully." });
     }
 
+    [HttpPost("create-order")]
+[Authorize(Roles = "BranchManager")]
+public async Task<ActionResult<OrderIntentDto>> CreateOrderForBranchManager([FromBody] PlaceOrderDto placeOrderDto)
+{
+    try
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Forbid("User ID not found in claims.");
+
+        placeOrderDto.CustomerId = userId;
+
+        var branch = await _branchService.GetBranchById(placeOrderDto.BranchId);
+
+        if (!TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays))
+        {
+            return Forbid("Branch is not open at this time.");
+        }
+
+        var orderIntent = await _orderService.CreateOrderIntent(placeOrderDto);
+        if (orderIntent == null)
+        {
+            return BadRequest("Failed to create order. Please check your order details.");
+        }
+
+        return CreatedAtAction(nameof(CreateOrderForBranchManager), new { id = orderIntent.OrderIntentId }, orderIntent);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, $"An error occurred while processing your request: {ex.Message}");
+    }
+}
 }

@@ -24,7 +24,8 @@ public class TableService
         {
             TableNumber = t.TableNumber,
             Seats = t.Seats,
-            BranchId = t.BranchId
+            BranchId = t.BranchId,
+            ReservationCount = _tableManager.GetReservationCount(branchId, t.TableNumber)
         });
     }
 
@@ -107,7 +108,7 @@ public class TableService
             ReservationTime = reservation.ReservationTime
         };
     }
-    
+
     public async Task<IEnumerable<TableReservationResponseDto>> GetTableReservationsInQueue(string branchId, int tableNumber)
     {
         var reservations = await _tableRepo.GetTableReservationsInQueue(branchId, tableNumber);
@@ -158,4 +159,5 @@ public class TableService
             PaymentMethod = order.Payment?.PaymentMethod ?? "Unknown",
         };
     }
+
 }

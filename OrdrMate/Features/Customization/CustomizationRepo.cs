@@ -1,16 +1,19 @@
 using OrdrMate.Data;
 using OrdrMate.Models;
 using MongoDB.Driver;
+using Microsoft.EntityFrameworkCore;
 
 namespace OrdrMate.Repositories;
 
 public class CustomizationRepo : ICustomizationRepo
 {
     private readonly OrdrMateMongoContext _context;
+    private readonly OrdrMateDbContext _dbContext;
 
-    public CustomizationRepo(OrdrMateMongoContext context)
+    public CustomizationRepo(OrdrMateMongoContext context, OrdrMateDbContext dbContext)
     {
         _context = context;
+        _dbContext = dbContext;
     }
 
     public async Task<IEnumerable<CustomizationCategory>> GetAllCategories()
@@ -49,7 +52,8 @@ public class CustomizationRepo : ICustomizationRepo
             CategoryId = categoryId
         };
 
-        await _context.ItemCustomizations.InsertOneAsync(itemCustomization);
+        await _dbContext.ItemCustomization.AddAsync(itemCustomization);
+        await _dbContext.SaveChangesAsync();
         return itemCustomization;
     }
 
@@ -64,8 +68,8 @@ public class CustomizationRepo : ICustomizationRepo
     public async Task<IEnumerable<ItemCustomization>> GetItemCustomizations(string itemId)
     {
         ArgumentNullException.ThrowIfNull(itemId, nameof(itemId));
-        return await _context.ItemCustomizations
-            .Find(ic => ic.ItemId == itemId)
+        return await _dbContext.ItemCustomization
+            .Where(ic => ic.ItemId == itemId)
             .ToListAsync();
     }
 }

@@ -24,7 +24,7 @@ public class TableController : ControllerBase
     }
 
     [HttpGet("{branchId}")]
-    public async Task<IActionResult> GetAllTablesOfBranch(string branchId)
+    public async Task<ActionResult<IEnumerable<TableDto>>> GetAllTablesOfBranch(string branchId)
     {
         var authorization = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
         if (!authorization.Succeeded)

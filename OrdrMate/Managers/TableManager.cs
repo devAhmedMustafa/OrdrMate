@@ -229,10 +229,10 @@ public class TableManager
             return -1;
         }
     }
-    
+
     public async Task<TableWaitingDto> GetMinimumWaitingTime(string branchId, int seats)
     {
-       
+
         if (_branchQueues.TryGetValue(branchId, out var queueManager))
         {
             var tables = queueManager.GetAllTablesWithSeats(seats);
@@ -261,7 +261,7 @@ public class TableManager
                         // Prefer tables with fewer seats if the time is the same
                         continue;
                     }
-                    
+
                     minTime = totalTime;
                     bestTable = table;
                 }
@@ -285,6 +285,19 @@ public class TableManager
                 WaitingTime = minTime,
             };
 
+        }
+        else
+        {
+            Debug.WriteLine($"No reservation queue found for branch {branchId}.");
+            throw new Exception($"No reservation queue found for branch {branchId}.");
+        }
+    }
+
+    public int GetReservationCount(string branchId, int tableNumber)
+    {
+        if (_branchQueues.TryGetValue(branchId, out var queueManager))
+        {
+            return queueManager.GetTableReservationsCount(tableNumber);
         }
         else
         {
