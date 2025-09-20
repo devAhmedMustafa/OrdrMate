@@ -329,4 +329,57 @@ public class BranchController : ControllerBase
             return NotFound($"Branch with ID {branchId} not found: {ex.Message}");
         }
     }
+
+    [HttpPut("toggle-delivery-support/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult> SetDeliveryAvailability(string branchId)
+    {
+        try
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to update delivery availability for this branch.");
+            }
+
+            var result = await _branchService.ToggleDeliveryAvailability(branchId);
+            if (result)
+            {
+                return Ok(new { message = $"Delivery has been {(result ? "enabled" : "disabled")} for branch {branchId}." });
+            }
+
+            return BadRequest("Failed to update delivery availability.");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while updating delivery availability: {ex.Message}");
+        }
+    }
+
+    [HttpPut("toggle-takeaway-support/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult> SetTakeAwayAvailability(string branchId)
+    {
+        try
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to update takeaway availability for this branch.");
+            }
+
+            var result = await _branchService.ToggleTakeAwayAvailability(branchId);
+            if (result)
+            {
+                return Ok(new { message = $"Takeaway has been {(result ? "enabled" : "disabled")} for branch {branchId}." });
+            }
+
+            return BadRequest("Failed to update takeaway availability.");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while updating takeaway availability: {ex.Message}");
+        }
+    }
+    
 }

@@ -1,5 +1,4 @@
 namespace OrdrMate.Services;
-
 using OrdrMate.DTOs.Branch;
 using OrdrMate.DTOs.User;
 using OrdrMate.Models;
@@ -208,5 +207,49 @@ public class BranchService(
             EndWorkingHour = branch.EndWorkingHour
         };
     }
+    public async Task<bool> ToggleDeliveryAvailability(string branchId)
+    {
+        var branch = await _branchRepo.GetBranchById(branchId);
+        if (branch == null)
+        {
+            return false;
+        }
 
+        branch.DeliveryEnabled = !branch.DeliveryEnabled;
+        await _branchRepo.UpdateBranch(branch);
+        return branch.DeliveryEnabled;
+    }
+
+    public async Task<bool> ToggleTakeAwayAvailability(string branchId)
+    {
+        var branch = await _branchRepo.GetBranchById(branchId);
+        if (branch == null)
+        {
+            return false;
+        }
+
+        branch.TakeAwayEnabled = !branch.TakeAwayEnabled;
+        await _branchRepo.UpdateBranch(branch);
+        return branch.TakeAwayEnabled;
+    }
+
+    public async Task<bool> CheckDeliveryAvailability(string branchId)
+    {
+        var branch = await _branchRepo.GetBranchById(branchId);
+        if (branch == null)
+        {
+            throw new Exception("Branch not found.");
+        }
+        return branch.DeliveryEnabled;
+    }
+
+    public async Task<bool> CheckTakeAwayAvailability(string branchId)
+    {
+        var branch = await _branchRepo.GetBranchById(branchId);
+        if (branch == null)
+        {
+            throw new Exception("Branch not found.");
+        }
+        return branch.TakeAwayEnabled;
+    }
 }

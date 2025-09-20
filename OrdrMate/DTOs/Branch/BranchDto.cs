@@ -15,4 +15,6 @@ public class BranchDto
     public bool[] WorkingDays { get; set; }
     public string? LogoUrl { get; set; }
     public bool IsOpen { get; set; }
+    public bool DeliveryEnabled { get; set; }
+
 }
