@@ -6,6 +6,7 @@ using OrdrMate.Sockets;
 using OrdrMate.DTOs.Order;
 using OrdrMate.Services;
 using OrdrMate.DTOs.Item;
+using OrdrMate.Enums;
 
 namespace OrdrMate.Managers;
 
@@ -250,7 +251,7 @@ public class OrderManager
         {
             var cloudMessaging = scope.ServiceProvider.GetRequiredService<CloudMessaging>();
             var firebaseToken = await cloudMessaging.GetTokenByUserId(order.CustomerId);
-            
+
             if (string.IsNullOrEmpty(firebaseToken))
             {
                 Console.WriteLine($"No Firebase token found for customer with ID {order.CustomerId}.");
@@ -339,4 +340,29 @@ public class OrderManager
 
         return itemQueues;
     }
+
+    public async Task SetOrderReady(string orderId)
+    {
+        try
+        {
+            var branchId = restaurantManagers.FirstOrDefault(x => x.Value.IsOrderInProcess(orderId)).Key;
+
+            if (branchId == null)
+            {
+                throw new Exception($"No branch found for order {orderId}.");
+            }
+
+            var orderRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<IOrderRepo>();
+
+            await orderRepo.SetOrderStatus(orderId, OrderStatus.Ready);
+
+            restaurantManagers[branchId].RemoveOrder(orderId);
+            OnOrderReady(orderId);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error setting order {orderId} as ready: {ex.Message}", ex);
+        }
+    }
+
 }
