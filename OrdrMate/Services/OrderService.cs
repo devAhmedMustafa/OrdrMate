@@ -58,12 +58,7 @@ public class OrderService
                 PaymentMethod = placeOrderDto.PaymentMethod,
                 OrderType = placeOrderDto.OrderType,
                 PaymentProvider = placeOrderDto.PaymentMethod == "cash" ? "cash" : "paymob",
-                OrderItems = [.. placeOrderDto.Items.Select(oi => new OrderItemDto
-                {
-                    ItemId = oi.ItemId,
-                    Quantity = oi.Quantity,
-                    Price = oi.Price,
-                })],
+                OrderItems = [.. placeOrderDto.Items],
                 DeliveryDetails = placeOrderDto.OrderType == OrderType.Delivery ? new DeliveryDetailsDto
                 {
                     Address = placeOrderDto.DeliveryDetails?.Address ?? string.Empty,
