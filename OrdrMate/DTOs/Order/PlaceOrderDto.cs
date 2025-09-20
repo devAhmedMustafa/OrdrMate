@@ -16,6 +16,8 @@ public class PlaceOrderDto
 {
     [Required] public required string PharmacyId { get; set; }
     public string CustomerId { get; set; } = string.Empty;
+    public required string CustomerName { get; set; }
+    public required string CustomerPhone { get; set; }
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public required OrderItemDto[] Items { get; set; }

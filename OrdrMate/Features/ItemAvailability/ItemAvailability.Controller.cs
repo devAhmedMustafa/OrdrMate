@@ -19,9 +19,9 @@ public class ItemAvailabilityController : ControllerBase
         _authorizationService = authorizationService;
     }
 
-    [HttpPut("toggle")]
+    [HttpPut("update-quantity")]
     [Authorize(Roles = "BranchManager")]
-    public async Task<IActionResult> ToggleItemAvailability([FromBody] ToggleItemAvailabilityDto dto)
+    public async Task<IActionResult> UpdateItemQuantity([FromBody] UpdateItemQuantityDto dto)
     {
         try
         {
@@ -31,8 +31,8 @@ public class ItemAvailabilityController : ControllerBase
                 return Forbid();
             }
 
-            var isAvailable = await _itemAvailabilityService.ToggleItemAvailability(dto.ItemId, dto.BranchId);
-            return Ok(isAvailable);
+            await _itemAvailabilityService.UpdateItemQuantity(dto);
+            return Ok();
         }
         catch (Exception ex)
         {

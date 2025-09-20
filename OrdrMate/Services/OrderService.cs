@@ -64,6 +64,12 @@ public class OrderService
                     Quantity = oi.Quantity,
                     Price = oi.Price,
                 })],
+                DeliveryDetails = placeOrderDto.OrderType == OrderType.Delivery ? new DeliveryDetailsDto
+                {
+                    Address = placeOrderDto.DeliveryDetails?.Address ?? string.Empty,
+                    Latitude = placeOrderDto.DeliveryDetails?.Latitude ?? 0,
+                    Longitude = placeOrderDto.DeliveryDetails?.Longitude ?? 0,
+                } : null,
             };
 
             var redirectUrl = string.Empty;

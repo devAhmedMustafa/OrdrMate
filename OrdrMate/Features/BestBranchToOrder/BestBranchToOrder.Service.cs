@@ -35,55 +35,83 @@ public class BestBranchToOrderService
 
     private List<Branch> FilterBranchesByWorkingHours(IEnumerable<Branch> branches)
     {
-        var currentTime = DateTime.UtcNow.TimeOfDay;
-        var currentDayOfWeek = DateTime.UtcNow.DayOfWeek;
 
-        var openBranches = branches.Where(branch =>
+        try
         {
-            return TimeService.CheckWithinTimeInterval(
-                branch.StartWorkingHour,
-                branch.EndWorkingHour,
-                branch.WorkingDays);
-        }).ToList();
+            var currentTime = DateTime.UtcNow.TimeOfDay;
+            var currentDayOfWeek = DateTime.UtcNow.DayOfWeek;
 
-        return openBranches;
+            var openBranches = branches.Where(branch =>
+            {
+                return TimeService.CheckWithinTimeInterval(
+                    branch.StartWorkingHour,
+                    branch.EndWorkingHour,
+                    branch.WorkingDays);
+            }).ToList();
+            
+            if (openBranches.Count == 0)
+                throw new Exception("No branches are currently open");
+
+            return openBranches;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error filtering branches by working hours", ex);
+        }
     }
 
     private async Task<List<Branch>> FilterBranchesWithAllItemsAvailable(PlaceOrderDto orderDto, IEnumerable<Branch> branches)
     {
-        var availableBranches = new List<Branch>();
-
-        foreach (var branch in branches)
+        try
         {
-            bool allItemsAvailable = true;
+            var availableBranches = new List<Branch>();
 
-            foreach (var item in orderDto.Items)
+            foreach (var branch in branches)
             {
-                bool isAvailable = await _itemAvailabilityService.IsItemAvailabile(item.ItemId, branch.Id);
-                if (!isAvailable)
+                bool allItemsAvailable = true;
+
+                foreach (var item in orderDto.Items)
                 {
-                    allItemsAvailable = false;
-                    break;
+                    bool isAvailable = await _itemAvailabilityService.IsItemAvailabile(item.ItemId, branch.Id);
+                    if (!isAvailable)
+                    {
+                        allItemsAvailable = false;
+                        break;
+                    }
+                }
+
+                if (allItemsAvailable)
+                {
+                    availableBranches.Add(branch);
                 }
             }
 
-            if (allItemsAvailable)
-            {
-                availableBranches.Add(branch);
-            }
-        }
+            if (availableBranches.Count == 0)
+                throw new Exception("No branches have all items available");
 
-        return availableBranches;
+            return availableBranches;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error filtering branches by item availability", ex);
+        }
     }
 
     private Branch FindClosestBranch(double latitude, double longitude, IEnumerable<Branch> branches)
     {
-        var sortedBranches = branches.OrderBy(b => _geoMaps.CalculateDistance(latitude, longitude, b.Latitude, b.Longitude)).ToList();
+        try
+        {
+            var sortedBranches = branches.OrderBy(b => _geoMaps.CalculateDistance(latitude, longitude, b.Latitude, b.Longitude)).ToList();
 
-        if (sortedBranches.Count == 0)
-            throw new Exception("No branches available");
+            if (sortedBranches.Count == 0)
+                throw new Exception("No branches available");
 
-        return sortedBranches.FirstOrDefault() ?? throw new Exception("No branches available");
+            return sortedBranches.FirstOrDefault() ?? throw new Exception("No branches available");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error finding the closest branch", ex);
+        }
     }
 
 }
