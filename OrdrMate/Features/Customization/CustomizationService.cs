@@ -62,7 +62,7 @@ public class CustomizationService
 
         if (itemCustomizations == null)
         {
-            throw new ArgumentNullException(nameof(itemCustomizations), "Item customizations not found.");
+            return [];
         }
 
         var customizationDtos = new List<CustomizationDto>();
