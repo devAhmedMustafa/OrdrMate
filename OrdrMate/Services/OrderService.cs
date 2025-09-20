@@ -8,6 +8,7 @@ using Hangfire;
 using OrdrMate.Features.Customization;
 using MongoDB.Bson;
 using OrdrMate.Features.ItemAvailability;
+using OrdrMate.Features.Orders.Tax;
 
 namespace OrdrMate.Services;
 
@@ -22,6 +23,8 @@ public class OrderService
     private readonly IBackgroundJobClient _backgroundJobs;
     private readonly ItemAvailabilityService _itemAvailabilityService;
     private readonly UserCustomizationService _userCustomizationService;
+    private readonly OrderTaxService _orderTaxService;
+    private readonly IBranchRepo _branchRepo;
 
     private static readonly Dictionary<string, string> _jobIds = new Dictionary<string, string>();
 
@@ -34,7 +37,9 @@ public class OrderService
         CloudMessaging cloudMessaging,
         IBackgroundJobClient backgroundJobs,
         UserCustomizationService userCustomizationService,
-        ItemAvailabilityService itemAvailabilityService
+        ItemAvailabilityService itemAvailabilityService,
+        OrderTaxService orderTaxService,
+        IBranchRepo branchRepo
     )
     {
         _paymentService = paymentService;
@@ -46,6 +51,8 @@ public class OrderService
         _backgroundJobs = backgroundJobs;
         _userCustomizationService = userCustomizationService;
         _itemAvailabilityService = itemAvailabilityService;
+        _orderTaxService = orderTaxService;
+        _branchRepo = branchRepo;
     }
 
     public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto)
@@ -135,12 +142,15 @@ public class OrderService
             return null;
         }
 
+        var branch = await _branchRepo.GetBranchById(orderIntent.BranchId)
+            ?? throw new KeyNotFoundException($"Branch with id {orderIntent.BranchId} not found.");
+
         var order = new Order
         {
             BranchId = orderIntent.BranchId,
             CustomerId = orderIntent.CustomerId,
             OrderType = orderIntent.OrderType,
-            TotalAmount = orderIntent.Amount,
+            TotalAmount = orderIntent.Amount + (orderIntent.Amount * (branch?.Restaurant?.OrderTax ?? 0.0m)),
             OrderDate = DateTime.UtcNow,
             Status = OrderStatus.Pending,
             IsPaid = isPaid,

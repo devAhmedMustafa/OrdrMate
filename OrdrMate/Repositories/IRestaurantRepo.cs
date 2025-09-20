@@ -13,4 +13,5 @@ public interface IRestaurantRepo
     Task<IEnumerable<Category>> GetRestaurantCategories(string restaurantId);
     Task<RestaurantProfile?> GetRestaurantProfile(string restaurantId);
     Task<RestaurantProfile?> UpdateRestaurantProfile(string restaurantId, RestaurantProfile profile);
+    Task<Restaurant> UpdateRestaurantOrderTax(string restaurantId, decimal newTax);
 }
