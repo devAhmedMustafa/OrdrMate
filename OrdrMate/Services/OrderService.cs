@@ -182,6 +182,12 @@ public class OrderService
 
                 try
                 {
+                    if (item.Customizations == null || item.Customizations.Count == 0)
+                    {
+                        Console.WriteLine($"No customizations provided for item {item.ItemId}, skipping user customization processing.");
+                        continue;
+                    }
+                    
                     // Validate user customization input
                     if (!await _userCustomizationService.ValidateUserCustomization(item))
                     {
