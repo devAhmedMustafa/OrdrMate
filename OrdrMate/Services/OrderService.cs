@@ -700,12 +700,19 @@ public class OrderService
     
     public async Task<bool> CancelOrderAsync(string orderId)
     {
-        var order = await _orderRepo.SetOrderStatus(orderId, OrderStatus.Cancelled);
+        var order = await _orderRepo.GetOrderById(orderId);
 
         if (order == null)
         {
             throw new KeyNotFoundException($"Order with id {orderId} not found.");
         }
+
+        if (order.Status != OrderStatus.Queued && order.Status != OrderStatus.Pending)
+        {
+            throw new InvalidOperationException($"Order with id {orderId} is not in a valid state for cancellation.");
+        }
+
+        var success = await _orderRepo.SetOrderStatus(orderId, OrderStatus.Cancelled);
 
         OrderEvents.OnOrderCancelled(order.BranchId, orderId);
 
