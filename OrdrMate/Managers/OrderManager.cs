@@ -277,9 +277,10 @@ public class OrderManager
         using var scope = _scopeFactory.CreateScope();
         var orderRepo = scope.ServiceProvider.GetRequiredService<IOrderRepo>();
 
-        Console.WriteLine($"Order {orderId} is in progress.");
-        var branchId = restaurantManagers.FirstOrDefault(x => x.Value.IsOrderInProcess(orderId)).Key;
+        var branchId = orderRepo.GetOrderById(orderId).Result?.BranchId;
 
+        Console.WriteLine($"[OrderManager]: order in branch {branchId} is in progress.");
+    
         if (branchId == null)
         {
             Console.WriteLine($"No branch found for order {orderId}.");
@@ -345,14 +346,14 @@ public class OrderManager
     {
         try
         {
-            var branchId = restaurantManagers.FirstOrDefault(x => x.Value.IsOrderInProcess(orderId)).Key;
+            var orderRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<IOrderRepo>();
+
+            var branchId = orderRepo.GetOrderById(orderId).Result?.BranchId;
 
             if (branchId == null)
             {
                 throw new Exception($"No branch found for order {orderId}.");
             }
-
-            var orderRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<IOrderRepo>();
 
             await orderRepo.SetOrderStatus(orderId, OrderStatus.Ready);
 
