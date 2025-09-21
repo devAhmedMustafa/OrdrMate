@@ -1,4 +1,5 @@
 using OrdrMate.DTOs.Order;
+using OrdrMate.Features.Customization.DTOs;
 using OrdrMate.Services;
 
 namespace OrdrMate.Features.Customization;
@@ -64,5 +65,19 @@ public class UserCustomizationService
         }
 
         return true;
+    }
+
+    public async Task<OrderItemsCustomizationResponseDto?> GetOrderCustomizationsAsync(string orderId)
+    {
+
+        try
+        {
+            ArgumentNullException.ThrowIfNull(orderId, nameof(orderId));
+            return await _repo.GetOrderCustomizationsAsync(orderId);
+        }
+        catch (Exception ex)
+        {
+            return null;
+        }
     }
 }

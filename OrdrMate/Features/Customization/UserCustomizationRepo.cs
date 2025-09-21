@@ -47,5 +47,28 @@ public class UserCustomizationRepo
             .DeleteOneAsync(uc => uc.OrderId == orderId && uc.ItemId == itemId);
 
         return result.IsAcknowledged && result.DeletedCount > 0;
-    }  
+    }
+
+    public async Task<List<UserCustomization>> GetOrderCustomizationsAsync(string orderId)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(orderId, nameof(orderId));
+
+            var customizations = await _context.UserCustomizations
+                .Find(uc => uc.OrderId == orderId)
+                .ToListAsync();
+
+            if (customizations == null || !customizations.Any())
+            {
+                return [];
+            }
+
+            return customizations;
+        }
+        catch (Exception ex)
+        {
+            
+        }
+    }
 }
