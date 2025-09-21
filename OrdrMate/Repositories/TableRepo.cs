@@ -131,7 +131,7 @@ public class TableRepo : ITableRepo
         var reservation = await _context.TableReservation
             .Include(r => r.Customer)
             .Include(r => r.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i=> i!.Kitchen)
+            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i => i!.Kitchen)
             .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
 
         if (reservation == null)
@@ -169,7 +169,7 @@ public class TableRepo : ITableRepo
             .Include(r => r.Order)
             .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
     }
-    
+
     public async Task<IEnumerable<TableReservation>> GetTableReservationsInQueue(string branchId, int tableNumber)
     {
         return await _context.TableReservation.OrderBy(r => r.ReservationTime)
@@ -178,5 +178,14 @@ public class TableRepo : ITableRepo
             .Include(r => r.Order)
             .ToListAsync();
     }
+    public async Task<Table?> GetTableByNumber(string branchId, int tableNumber)
+{
+    return await _context.Table.FirstOrDefaultAsync(t => t.BranchId == branchId && t.TableNumber == tableNumber);
+}
 
+public async Task UpdateTable(Table table)
+{
+    _context.Table.Update(table);
+    await _context.SaveChangesAsync();
+}
 }

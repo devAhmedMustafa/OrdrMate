@@ -159,5 +159,22 @@ public class TableService
             PaymentMethod = order.Payment?.PaymentMethod ?? "Unknown",
         };
     }
+    public async Task<bool> FreezeTable(string branchId, int tableNumber)
+{
+    var table = await _tableRepo.GetTableByNumber(branchId, tableNumber);
+    if (table == null) return false;
+    table.IsFrozen = true;
+  await _tableRepo.UpdateTable(branchId, tableNumber, table);
+    return true;
+}
+
+public async Task<bool> UnfreezeTable(string branchId, int tableNumber)
+{
+    var table = await _tableRepo.GetTableByNumber(branchId, tableNumber);
+    if (table == null) return false;
+    table.IsFrozen = false;
+    await _tableRepo.UpdateTable(branchId, tableNumber, table);
+    return true;
+}
 
 }
