@@ -23,7 +23,7 @@ public class OrderService
     private readonly IBackgroundJobClient _backgroundJobs;
     private readonly ItemAvailabilityService _itemAvailabilityService;
     private readonly UserCustomizationService _userCustomizationService;
-    private readonly OrderTaxService _orderTaxService;
+    private readonly ITableRepo _tableRepo;
     private readonly IBranchRepo _branchRepo;
 
     private static readonly Dictionary<string, string> _jobIds = new Dictionary<string, string>();
@@ -39,7 +39,8 @@ public class OrderService
         UserCustomizationService userCustomizationService,
         ItemAvailabilityService itemAvailabilityService,
         OrderTaxService orderTaxService,
-        IBranchRepo branchRepo
+        IBranchRepo branchRepo,
+        ITableRepo tableRepo
     )
     {
         _paymentService = paymentService;
@@ -51,8 +52,8 @@ public class OrderService
         _backgroundJobs = backgroundJobs;
         _userCustomizationService = userCustomizationService;
         _itemAvailabilityService = itemAvailabilityService;
-        _orderTaxService = orderTaxService;
         _branchRepo = branchRepo;
+        _tableRepo = tableRepo;
     }
 
     public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto)
@@ -272,7 +273,7 @@ public class OrderService
     public async Task<IEnumerable<OrderDto>> GetCustomerOrders(string customerId)
     {
         var takeaways = await _orderRepo.GetTakeawaysByCustomerId(customerId);
-        var indoors = await _tableService.GetCustomerTableReservation(customerId);
+        var indoors = await _tableRepo.GetTableReservationsByCustomerId(customerId);
 
         if (takeaways == null)
         {
