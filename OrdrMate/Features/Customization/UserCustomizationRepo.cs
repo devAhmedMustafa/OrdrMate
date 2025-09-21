@@ -1,5 +1,6 @@
 using MongoDB.Driver;
 using OrdrMate.Data;
+using OrdrMate.Utils.Exceptions;
 
 namespace OrdrMate.Features.Customization;
 
@@ -59,7 +60,7 @@ public class UserCustomizationRepo
                 .Find(uc => uc.OrderId == orderId)
                 .ToListAsync();
 
-            if (customizations == null || !customizations.Any())
+            if (customizations == null || customizations.Count == 0)
             {
                 return [];
             }
@@ -68,7 +69,7 @@ public class UserCustomizationRepo
         }
         catch (Exception ex)
         {
-            
+            throw new InternalServerException($"An error occurred while retrieving order customizations: {ex.Message}");
         }
     }
 }
