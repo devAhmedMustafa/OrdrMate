@@ -57,4 +57,24 @@ public class BranchAttendanceController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpPut("confirm-attendance-via-manager/{branchId}/{table}")]
+    public async Task<IActionResult> ConfirmBranchAttendance(string branchId, int table)
+    {
+        try
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to confirm attendance for this branch.");
+            }
+            
+            var isValid = await _branchAttendanceService.DirectTableSeating(branchId, table);
+            return Ok(new { isValid });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

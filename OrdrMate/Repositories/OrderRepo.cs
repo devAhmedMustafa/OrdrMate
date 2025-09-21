@@ -199,11 +199,9 @@ public async Task<bool> CancelOrderAsync(string orderId)
         return false; 
     }
 
-    if (order.Status == OrderStatus.Cancelled)
-    {
-        return false; 
-    }
-        if (order.Status != OrderStatus.Queued)
+    if (order.Status == OrderStatus.Cancelled
+    || order.Status == OrderStatus.InProgress
+    || order.Status == OrderStatus.Ready)
     {
         return false; 
     }

@@ -7,6 +7,8 @@ using OrdrMate.Events;
 using Hangfire;
 using OrdrMate.Features.Customization;
 using MongoDB.Bson;
+using OrdrMate.Features.ItemAvailability;
+using OrdrMate.Features.Orders.Tax;
 
 namespace OrdrMate.Services;
 
@@ -19,7 +21,10 @@ public class OrderService
     private readonly TableService _tableService;
     private readonly CloudMessaging _cloudMessaging;
     private readonly IBackgroundJobClient _backgroundJobs;
+    private readonly ItemAvailabilityService _itemAvailabilityService;
     private readonly UserCustomizationService _userCustomizationService;
+    private readonly ITableRepo _tableRepo;
+    private readonly IBranchRepo _branchRepo;
 
     private static readonly Dictionary<string, string> _jobIds = new Dictionary<string, string>();
 
@@ -31,7 +36,11 @@ public class OrderService
         TableService tableService,
         CloudMessaging cloudMessaging,
         IBackgroundJobClient backgroundJobs,
-        UserCustomizationService userCustomizationService
+        UserCustomizationService userCustomizationService,
+        ItemAvailabilityService itemAvailabilityService,
+        OrderTaxService orderTaxService,
+        IBranchRepo branchRepo,
+        ITableRepo tableRepo
     )
     {
         _paymentService = paymentService;
@@ -42,10 +51,22 @@ public class OrderService
         _cloudMessaging = cloudMessaging;
         _backgroundJobs = backgroundJobs;
         _userCustomizationService = userCustomizationService;
+        _itemAvailabilityService = itemAvailabilityService;
+        _branchRepo = branchRepo;
+        _tableRepo = tableRepo;
     }
 
     public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto)
     {
+
+        foreach (var item in placeOrderDto.Items)
+        {
+            var isAvailable = await _itemAvailabilityService.IsItemAvailable(item.ItemId, placeOrderDto.BranchId);
+            if (!isAvailable)
+            {
+                throw new InvalidOperationException($"Item with id {item.ItemId} is not available in branch {placeOrderDto.BranchId}.");
+            }
+        }
 
         var totalAmount = placeOrderDto.Items.Sum(oi => oi.Price * oi.Quantity);
 
@@ -122,12 +143,15 @@ public class OrderService
             return null;
         }
 
+        var branch = await _branchRepo.GetBranchById(orderIntent.BranchId)
+            ?? throw new KeyNotFoundException($"Branch with id {orderIntent.BranchId} not found.");
+
         var order = new Order
         {
             BranchId = orderIntent.BranchId,
             CustomerId = orderIntent.CustomerId,
             OrderType = orderIntent.OrderType,
-            TotalAmount = orderIntent.Amount,
+            TotalAmount = orderIntent.Amount + (orderIntent.Amount * (branch?.Restaurant?.OrderTax ?? 0.0m)),
             OrderDate = DateTime.UtcNow,
             Status = OrderStatus.Pending,
             IsPaid = isPaid,
@@ -169,6 +193,12 @@ public class OrderService
 
                 try
                 {
+                    if (item.Customizations == null || item.Customizations.Count == 0)
+                    {
+                        Console.WriteLine($"No customizations provided for item {item.ItemId}, skipping user customization processing.");
+                        continue;
+                    }
+                    
                     // Validate user customization input
                     if (!await _userCustomizationService.ValidateUserCustomization(item))
                     {
@@ -243,7 +273,7 @@ public class OrderService
     public async Task<IEnumerable<OrderDto>> GetCustomerOrders(string customerId)
     {
         var takeaways = await _orderRepo.GetTakeawaysByCustomerId(customerId);
-        var indoors = await _tableService.GetCustomerTableReservation(customerId);
+        var indoors = await _tableRepo.GetTableReservationsByCustomerId(customerId);
 
         if (takeaways == null)
         {
@@ -687,12 +717,19 @@ public class OrderService
     
     public async Task<bool> CancelOrderAsync(string orderId)
     {
-        var order = await _orderRepo.SetOrderStatus(orderId, OrderStatus.Cancelled);
+        var order = await _orderRepo.GetOrderById(orderId);
 
         if (order == null)
         {
             throw new KeyNotFoundException($"Order with id {orderId} not found.");
         }
+
+        if (order.Status != OrderStatus.Queued && order.Status != OrderStatus.Pending)
+        {
+            throw new InvalidOperationException($"Order with id {orderId} is not in a valid state for cancellation.");
+        }
+
+        var success = await _orderRepo.SetOrderStatus(orderId, OrderStatus.Cancelled);
 
         OrderEvents.OnOrderCancelled(order.BranchId, orderId);
 

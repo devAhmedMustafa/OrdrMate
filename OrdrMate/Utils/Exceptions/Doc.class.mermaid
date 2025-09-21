@@ -1,0 +1,10 @@
+classDiagram
+    IException <|-- NotFoundException
+    IException <|-- BadRequestException
+    IException <|-- UnauthorizedException
+
+    class IException {
+        <<interface>>
+        +string Message
+        +int StatusCode
+    }
