@@ -1,5 +1,6 @@
 using MongoDB.Driver;
 using OrdrMate.Data;
+using OrdrMate.Utils.Exceptions;
 
 namespace OrdrMate.Features.Customization;
 
@@ -47,5 +48,28 @@ public class UserCustomizationRepo
             .DeleteOneAsync(uc => uc.OrderId == orderId && uc.ItemId == itemId);
 
         return result.IsAcknowledged && result.DeletedCount > 0;
-    }  
+    }
+
+    public async Task<List<UserCustomization>> GetOrderCustomizationsAsync(string orderId)
+    {
+        try
+        {
+            ArgumentNullException.ThrowIfNull(orderId, nameof(orderId));
+
+            var customizations = await _context.UserCustomizations
+                .Find(uc => uc.OrderId == orderId)
+                .ToListAsync();
+
+            if (customizations == null || customizations.Count == 0)
+            {
+                return [];
+            }
+
+            return customizations;
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"An error occurred while retrieving order customizations: {ex.Message}");
+        }
+    }
 }
