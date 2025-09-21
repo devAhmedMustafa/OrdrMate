@@ -50,9 +50,9 @@ public class UserCustomizationService
         }
 
         var itemCustomizations = await _customizationService.GetItemCustomizations(orderItem.ItemId);
-        if (itemCustomizations == null)
+        if (itemCustomizations.Count() == 0)
         {
-            throw new ArgumentNullException(nameof(itemCustomizations), "Item customizations not found.");
+            return true;
         }
 
         foreach (var customization in itemCustomizations)

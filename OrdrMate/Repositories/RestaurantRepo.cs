@@ -111,4 +111,22 @@ public class RestaurantRepo(OrdrMateDbContext c) : IRestaurantRepo
 
         return existingProfile;
     }
+
+    public async Task<Restaurant> UpdateRestaurantOrderTax(string restaurantId, decimal newTax)
+    {
+        var existingRestaurant = await _db.Restaurant
+            .FirstOrDefaultAsync(r => r.Id == restaurantId);
+
+        if (existingRestaurant == null)
+        {
+            throw new InvalidOperationException($"Restaurant with id {restaurantId} does not exist.");
+        }
+
+        existingRestaurant.OrderTax = newTax;
+
+        _db.Restaurant.Update(existingRestaurant);
+        await _db.SaveChangesAsync();
+
+        return existingRestaurant;
+    }
 }

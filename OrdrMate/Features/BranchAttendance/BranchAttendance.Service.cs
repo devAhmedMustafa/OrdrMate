@@ -50,6 +50,35 @@ public class BranchAttendanceService
             TableNumber = request.TableNumber
         }; 
     }
+
+    public async Task<OrderDto?> DirectTableSeating(string branchId, int tableNumber)
+    {
+
+        var order = await _tableManager.BindNextReservation(branchId, tableNumber);
+        if (order == null) throw new Exception("Failed to bind reservation to order.");
+
+        return new OrderDto
+        {
+            OrderId = order.Id,
+            RestaurantName = order.Branch?.Restaurant?.Name ?? "Unknown",
+            CustomerId = order.CustomerId,
+            Customer = order.Customer?.Username ?? "Unknown",
+            OrderType = order.OrderType.ToString(),
+            OrderItems = order.OrderItems?.Select(oi => new OrderItemDto
+            {
+                ItemId = oi.ItemId,
+                Quantity = oi.Quantity,
+                Price = oi.Price
+            }).ToArray(),
+            PaymentMethod = order.Payment?.PaymentMethod ?? "Unpaid",
+            OrderDate = order.OrderDate,
+            OrderStatus = order.Status.ToString(),
+            TotalAmount = order.TotalAmount,
+            BranchId = order.BranchId,
+            IsPaid = order.IsPaid,
+            TableNumber = tableNumber
+        };
+    }
     
     public string GetBranchAttendanceCode(string branchId)
     {

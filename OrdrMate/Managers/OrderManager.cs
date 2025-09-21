@@ -6,6 +6,7 @@ using OrdrMate.Sockets;
 using OrdrMate.DTOs.Order;
 using OrdrMate.Services;
 using OrdrMate.DTOs.Item;
+using OrdrMate.Enums;
 
 namespace OrdrMate.Managers;
 
@@ -250,7 +251,7 @@ public class OrderManager
         {
             var cloudMessaging = scope.ServiceProvider.GetRequiredService<CloudMessaging>();
             var firebaseToken = await cloudMessaging.GetTokenByUserId(order.CustomerId);
-            
+
             if (string.IsNullOrEmpty(firebaseToken))
             {
                 Console.WriteLine($"No Firebase token found for customer with ID {order.CustomerId}.");
@@ -276,9 +277,10 @@ public class OrderManager
         using var scope = _scopeFactory.CreateScope();
         var orderRepo = scope.ServiceProvider.GetRequiredService<IOrderRepo>();
 
-        Console.WriteLine($"Order {orderId} is in progress.");
-        var branchId = restaurantManagers.FirstOrDefault(x => x.Value.IsOrderInProcess(orderId)).Key;
+        var branchId = orderRepo.GetOrderById(orderId).Result?.BranchId;
 
+        Console.WriteLine($"[OrderManager]: order in branch {branchId} is in progress.");
+    
         if (branchId == null)
         {
             Console.WriteLine($"No branch found for order {orderId}.");
@@ -339,4 +341,29 @@ public class OrderManager
 
         return itemQueues;
     }
+
+    public async Task SetOrderReady(string orderId)
+    {
+        try
+        {
+            var orderRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<IOrderRepo>();
+
+            var branchId = orderRepo.GetOrderById(orderId).Result?.BranchId;
+
+            if (branchId == null)
+            {
+                throw new Exception($"No branch found for order {orderId}.");
+            }
+
+            await orderRepo.SetOrderStatus(orderId, OrderStatus.Ready);
+
+            restaurantManagers[branchId].RemoveOrder(orderId);
+            OnOrderReady(orderId);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error setting order {orderId} as ready: {ex.Message}", ex);
+        }
+    }
+
 }

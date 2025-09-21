@@ -145,7 +145,7 @@ public class TableRepo : ITableRepo
     public async Task<IEnumerable<TableReservation>> GetTableReservationsByCustomerId(string customerId)
     {
         return await _context.TableReservation
-            .Include(r => r.Branch)
+            .Include(r => r.Branch).ThenInclude(b => b!.Restaurant)
             .Include(r => r.Customer)
             .Include(r => r.Order)
             .Where(r => r.CustomerId == customerId)
