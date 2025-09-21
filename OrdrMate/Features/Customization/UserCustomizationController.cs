@@ -21,7 +21,7 @@ public class UserCustomizationController : ControllerBase
         _authorizationService = authorizationService;
     }
 
-    [HttpGet("{orderId}")]
+    [HttpGet("order/{orderId}")]
     public async Task<ActionResult<OrderItemsCustomizationResponseDto>> GetOrderCustomizations(string orderId)
     {
         try
