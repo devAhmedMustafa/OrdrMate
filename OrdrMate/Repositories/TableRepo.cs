@@ -179,32 +179,22 @@ public class TableRepo : ITableRepo
             .Include(r => r.Order)
             .ToListAsync();
     }
-
     public async Task<Table?> GetTableByNumber(string branchId, int tableNumber)
-    {
-        try
-        {
-            return await _context.Table.FirstOrDefaultAsync(
-                t => t.BranchId == branchId && t.TableNumber == tableNumber
-                );
-        }
-        catch (Exception ex)
-        {
-            throw new InternalServerException($"An error occurred while retrieving the table: {ex.Message}");
-        }
-    }
+{
+    return await _context.Table.FirstOrDefaultAsync(t => t.BranchId == branchId && t.TableNumber == tableNumber);
+}
 
-    public async Task<Table> UpdateTable(Table table)
+    public async Task UpdateTable(Table table)
     {
-        try
-        {
-            _context.Update(table);
-            await _context.SaveChangesAsync();
-            return table;
-        }
-        catch (Exception ex)
-        {
-            throw new InternalServerException($"An error occurred while updating the table: {ex.Message}");
-        }
+        _context.Table.Update(table);
+        await _context.SaveChangesAsync();
     }
+public async Task<bool> UpdateTableReservationTableNumber(string reservationId, int newTableNumber)
+{
+    var reservation = await _context.TableReservation.FindAsync(reservationId);
+    if (reservation == null) return false;
+    reservation.TableNumber = newTableNumber;
+    await _context.SaveChangesAsync();
+    return true;
+}
 }
