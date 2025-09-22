@@ -6,4 +6,5 @@ public class TableDto
     public int Seats { get; set; }
     public string BranchId { get; set; } = string.Empty;
     public int ReservationCount { get; set; }
+    public required bool IsFrozen { get; set; }
 }

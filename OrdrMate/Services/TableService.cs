@@ -30,7 +30,8 @@ public class TableService
             TableNumber = t.TableNumber,
             Seats = t.Seats,
             BranchId = t.BranchId,
-            ReservationCount = _tableManager.GetReservationCount(branchId, t.TableNumber)
+            ReservationCount = _tableManager.GetReservationCount(branchId, t.TableNumber),
+            IsFrozen = t.IsFrozen
         });
     }
 
@@ -48,7 +49,8 @@ public class TableService
         {
             TableNumber = createdTable.TableNumber,
             Seats = createdTable.Seats,
-            BranchId = createdTable.BranchId
+            BranchId = createdTable.BranchId,
+            IsFrozen = createdTable.IsFrozen
         };
     }
 
