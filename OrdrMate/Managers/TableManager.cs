@@ -32,6 +32,7 @@ public class TableManager
         Init();
 
         BranchEvents.BranchCreated += OnBranchCreated;
+        TableEvents.TableCreated += OnTableCreated;
 
         _initialized = true;
     }
@@ -53,6 +54,18 @@ public class TableManager
         }
     }
 
+    public void OnTableCreated(Table table)
+    {
+        if (_branchQueues.TryGetValue(table.BranchId, out var queueManager))
+        {
+            queueManager.AddTable(table.TableNumber, table.Seats);
+        }
+        else
+        {
+            Console.WriteLine($"No queue manager found for branch {table.BranchId} when adding table {table.TableNumber}.");
+        }
+    }
+
     public void AddBranchQueue(Branch branch)
     {
         if (!_branchQueues.ContainsKey(branch.Id))
@@ -64,7 +77,7 @@ public class TableManager
 
             foreach (var reservation in reservations)
             {
-                if (reservation.ReservationStatus == "Queued" || reservation.ReservationStatus == "Seated")
+                if (reservation.ReservationStatus != "Left" && reservation.ReservationStatus != "Cancelled")
                 {
                     _branchQueues[branch.Id].ReserveTable(reservation.TableNumber, reservation);
                     Console.WriteLine($"Added reservation {reservation.ReservationId} to queue for branch {branch.Id}, table {reservation.TableNumber}.");
@@ -306,4 +319,32 @@ public class TableManager
         }
     }
 
+    public async Task MoveTableReservation(string branchId, int fromTableNumber, int toTableNumber, string reservationId)
+    {
+        try
+        {
+            if (_branchQueues.TryGetValue(branchId, out var queueManager))
+            {
+                var tableRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ITableRepo>();
+                queueManager.MoveTableReservation(fromTableNumber, toTableNumber, reservationId);
+                await tableRepo.UpdateTableReservationTableNumber(reservationId, toTableNumber);
+
+                var peekT1 = queueManager.PeekReservation(fromTableNumber);
+                if (peekT1 != null)
+                {
+                    await tableRepo.UpdateTableReservationStatus(peekT1.ReservationId, "Waiting");
+                }
+            }
+            else
+            {
+                Debug.WriteLine($"No reservation queue found for branch {branchId}.");
+                throw new Exception($"No reservation queue found for branch {branchId}.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error moving reservation {reservationId} from table {fromTableNumber} to table {toTableNumber} in branch {branchId}: {ex.Message}");
+            throw;
+        }
+    }
 }

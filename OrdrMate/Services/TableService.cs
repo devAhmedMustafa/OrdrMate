@@ -159,20 +159,4 @@ public class TableService
             PaymentMethod = order.Payment?.PaymentMethod ?? "Unknown",
         };
     }
-
-public async Task<bool> MoveOrderToAnotherTable(string branchId, int fromTableNumber, int toTableNumber, string orderId)
-{    var reservation = await _tableRepo.GetTableReservationByOrderId(orderId);
-    if (reservation == null || reservation.BranchId != branchId || reservation.TableNumber != fromTableNumber)
-        return false;
-
-    var targetTable = await _tableRepo.GetTableByNumber(branchId, toTableNumber);
-    if (targetTable == null)
-        return false;
-
-    reservation.TableNumber = toTableNumber;
-    await _tableRepo.UpdateTableReservationStatus(reservation.ReservationId, reservation.ReservationStatus); // If you have a dedicated update method, use it
-
-    return true;
-}
-
 }

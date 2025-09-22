@@ -132,25 +132,4 @@ public class TableController : ControllerBase
             return NotFound(new { err = ex.Message });
         }
     }
-
-    [HttpPost("move-order")]
-    [Authorize(Roles = "BranchManager")]
-    public async Task<IActionResult> MoveOrderToAnotherTable([FromBody] MoveOrderDto dto)
-    {
-        var authorization = await _authorizationService.AuthorizeAsync(User, dto.OrderId, "BranchManager");
-        if (!authorization.Succeeded)
-            return Forbid();
-
-        var result = await _tableService.MoveOrderToAnotherTable(
-            branchId: User.Claims.FirstOrDefault(c => c.Type == "branchId")?.Value ?? "",
-            fromTableNumber: dto.FromTableNumber,
-            toTableNumber: dto.ToTableNumber,
-            orderId: dto.OrderId
-        );
-        if (!result)
-            return BadRequest("Could not move order. Check table numbers, order, or table status.");
-
-        return Ok("Order moved to new table.");
-    }
-
 }
