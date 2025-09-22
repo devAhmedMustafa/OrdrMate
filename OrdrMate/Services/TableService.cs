@@ -3,18 +3,23 @@ namespace OrdrMate.Services;
 using OrdrMate.DTOs.Item;
 using OrdrMate.DTOs.Order;
 using OrdrMate.DTOs.Table;
+using OrdrMate.Features.FreezeTable;
 using OrdrMate.Managers;
 using OrdrMate.Models;
 using OrdrMate.Repositories;
+using OrdrMate.Utils.Exceptions;
 
 public class TableService
 {
     private readonly ITableRepo _tableRepo;
     private readonly TableManager _tableManager;
-    public TableService(ITableRepo tableRepo, TableManager tableManager)
+    private readonly FreezeTableService _freezeTableService;
+
+    public TableService(ITableRepo tableRepo, TableManager tableManager, FreezeTableService freezeTableService)
     {
         _tableRepo = tableRepo;
         _tableManager = tableManager;
+        _freezeTableService = freezeTableService;
     }
 
     public async Task<IEnumerable<TableDto>> GetAllTablesOfBranch(string branchId)
@@ -54,23 +59,40 @@ public class TableService
 
     public async Task<TableReservationDto> ReserveTable(OrderDto order, int tableNumber)
     {
-        var reservation = new TableReservation
+        try
         {
-            BranchId = order.BranchId,
-            CustomerId = order.CustomerId,
-            OrderId = order.OrderId,
-            ReservationTime = DateTime.UtcNow,
-            TableNumber = tableNumber,
-        };
+            var isTableFrozen = await _freezeTableService.IsTableFrozen(order.BranchId, tableNumber);
+            if (isTableFrozen)
+            {
+                throw new ForbidException("Table is currently frozen and cannot be reserved.");
+            }
 
-        await _tableManager.ReserveTable(tableNumber, reservation);
+            var reservation = new TableReservation
+            {
+                BranchId = order.BranchId,
+                CustomerId = order.CustomerId,
+                OrderId = order.OrderId,
+                ReservationTime = DateTime.UtcNow,
+                TableNumber = tableNumber,
+            };
 
-        reservation.TableNumber = tableNumber;
+            await _tableManager.ReserveTable(tableNumber, reservation);
 
-        return new TableReservationDto
+            reservation.TableNumber = tableNumber;
+
+            return new TableReservationDto
+            {
+                TableNumber = tableNumber,
+            };
+        }
+        catch (OException)
         {
-            TableNumber = tableNumber,
-        };
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"Failed to reserve table: {ex.Message}");
+        }
     }
 
     public async Task<int> GetFreeTableCount(string branchId)
