@@ -132,22 +132,4 @@ public class TableController : ControllerBase
             return NotFound(new { err = ex.Message });
         }
     }
-    
-    [HttpPost("freeze/{branchId}/{tableNumber}")]
-[Authorize(Roles = "BranchManager")]
-public async Task<IActionResult> FreezeTable(string branchId, int tableNumber)
-{
-    var result = await _tableService.FreezeTable(branchId, tableNumber);
-    if (!result) return NotFound("Table not found.");
-    return Ok("Table frozen.");
-}
-
-[HttpPost("unfreeze/{branchId}/{tableNumber}")]
-[Authorize(Roles = "BranchManager")]
-public async Task<IActionResult> UnfreezeTable(string branchId, int tableNumber)
-{
-    var result = await _tableService.UnfreezeTable(branchId, tableNumber);
-    if (!result) return NotFound("Table not found.");
-    return Ok("Table unfrozen.");
-}
 }

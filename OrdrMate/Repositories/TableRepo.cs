@@ -3,6 +3,7 @@ namespace OrdrMate.Repositories;
 using OrdrMate.Models;
 using OrdrMate.Data;
 using Microsoft.EntityFrameworkCore;
+using OrdrMate.Utils.Exceptions;
 
 public class TableRepo : ITableRepo
 {
@@ -178,14 +179,32 @@ public class TableRepo : ITableRepo
             .Include(r => r.Order)
             .ToListAsync();
     }
-    public async Task<Table?> GetTableByNumber(string branchId, int tableNumber)
-{
-    return await _context.Table.FirstOrDefaultAsync(t => t.BranchId == branchId && t.TableNumber == tableNumber);
-}
 
-public async Task UpdateTable(Table table)
-{
-    _context.Table.Update(table);
-    await _context.SaveChangesAsync();
-}
+    public async Task<Table?> GetTableByNumber(string branchId, int tableNumber)
+    {
+        try
+        {
+            return await _context.Table.FirstOrDefaultAsync(
+                t => t.BranchId == branchId && t.TableNumber == tableNumber
+                );
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"An error occurred while retrieving the table: {ex.Message}");
+        }
+    }
+
+    public async Task<Table> UpdateTable(Table table)
+    {
+        try
+        {
+            _context.Update(table);
+            await _context.SaveChangesAsync();
+            return table;
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"An error occurred while updating the table: {ex.Message}");
+        }
+    }
 }
