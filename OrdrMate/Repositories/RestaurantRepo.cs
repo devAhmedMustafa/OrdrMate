@@ -64,7 +64,7 @@ public class RestaurantRepo(OrdrMateDbContext c) : IRestaurantRepo
             throw new InvalidOperationException($"Restaurant with id {restaurantId} does not exist.");
         }
 
-        return restaurant.Categories.Select(c => new Category
+        return restaurant.Categories!.Select(c => new Category
         {
             Name = c.Name,
             RestaurantId = c.RestaurantId
@@ -92,24 +92,12 @@ public class RestaurantRepo(OrdrMateDbContext c) : IRestaurantRepo
         return profile;
     }
 
-    public async Task<RestaurantProfile?> UpdateRestaurantProfile(string restaurantId, RestaurantProfile profile)
+    public async Task<RestaurantProfile?> UpdateRestaurantProfile(RestaurantProfile profile)
     {
-        var existingProfile = await _db.RestaurantProfile
-            .FirstOrDefaultAsync(p => p.RestaurantId == restaurantId);
-
-        if (existingProfile == null)
-        {
-            throw new InvalidOperationException($"Profile for restaurant {restaurantId} does not exist.");
-        }
-
-        existingProfile.Description = profile.Description;
-        existingProfile.LogoUrl = profile.LogoUrl;
-        existingProfile.CoverImageUrl = profile.CoverImageUrl;
-
-        _db.RestaurantProfile.Update(existingProfile);
+        _db.RestaurantProfile.Update(profile);
         await _db.SaveChangesAsync();
 
-        return existingProfile;
+        return profile;
     }
 
     public async Task<Restaurant> UpdateRestaurantOrderTax(string restaurantId, decimal newTax)

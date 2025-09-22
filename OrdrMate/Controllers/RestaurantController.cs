@@ -133,7 +133,7 @@ public class RestaurantController(RestaurantService r, IAuthorizationService aut
             if (!authorization.Succeeded)
             {
                 return Forbid();
-            }   
+            }
 
             var updatedProfile = await _service.UpdateRestaurantProfile(restaurantId, profileDto);
             if (updatedProfile == null)
@@ -147,4 +147,23 @@ public class RestaurantController(RestaurantService r, IAuthorizationService aut
             return BadRequest(new { err = e.Message });
         }
     }
+
+    [HttpGet("instapay/{restaurantId}")]
+    public async Task<ActionResult<InstapayDetailsDto>> GetInstapayDetails(string restaurantId)
+    {
+        try
+        {
+            var instapayDetails = await _service.GetInstapayDetails(restaurantId);
+            if (instapayDetails == null)
+            {
+                return NotFound(new { err = "No Instapay details found for this restaurant" });
+            }
+            return Ok(instapayDetails);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new { err = e.Message });
+        }
+    }
+    
 }
