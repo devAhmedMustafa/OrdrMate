@@ -7,6 +7,7 @@ using OrdrMate.Repositories;
 using OrdrMate.Utils;
 using OrdrMate.Events;
 using OrdrMate.Managers;
+using OrdrMate.DTOs.Restaurant;
 
 public class BranchService(
     IBranchRepo branchRepo,
@@ -207,6 +208,25 @@ public class BranchService(
             StartWorkingHour = branch.StartWorkingHour,
             EndWorkingHour = branch.EndWorkingHour
         };
+    }
+
+    public async Task<InstapayDetailsDto> GetInstapayDetails(string branchId)
+    {
+        try
+        {
+            var branch = await _branchRepo.GetBranchById(branchId);
+            if (branch == null)
+            {
+                throw new KeyNotFoundException($"Branch with id {branchId} not found.");
+            }
+
+            var data = await _restaurantService.GetInstapayDetails(branch.RestaurantId);
+            return data;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to get Instapay details for branch {branchId}: {ex.Message}");
+        }
     }
 
 }
