@@ -7,6 +7,7 @@ public class Restaurant
     public string Phone { get; set; }
     public string Email { get; set; }
     public required string ManagerId { get; set; }
+    public decimal OrderTax { get; set; } = 0.0m;
     public User? Manager { get; set; }
     public RestaurantProfile? Profile { get; set; }
     public List<Category>? Categories { get; set; } = [];

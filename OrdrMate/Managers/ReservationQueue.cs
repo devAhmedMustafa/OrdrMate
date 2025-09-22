@@ -53,4 +53,28 @@ public class ReservationQueue
         }
         return -1;
     }
+
+    public TableReservation? RemoveReservationById(string reservationId)
+    {
+        var tempQueue = new Queue<TableReservation>();
+        TableReservation? removedReservation = null;
+
+        while (_queue.Count > 0)
+        {
+            var reservation = _queue.Dequeue();
+            if (reservation.ReservationId == reservationId)
+            {
+                removedReservation = reservation;
+                continue;
+            }
+            tempQueue.Enqueue(reservation);
+        }
+
+        while (tempQueue.Count > 0)
+        {
+            _queue.Enqueue(tempQueue.Dequeue());
+        }
+
+        return removedReservation;
+    }
 }

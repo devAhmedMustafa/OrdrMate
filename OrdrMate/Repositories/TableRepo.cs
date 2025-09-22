@@ -3,6 +3,7 @@ namespace OrdrMate.Repositories;
 using OrdrMate.Models;
 using OrdrMate.Data;
 using Microsoft.EntityFrameworkCore;
+using OrdrMate.Utils.Exceptions;
 
 public class TableRepo : ITableRepo
 {
@@ -131,7 +132,7 @@ public class TableRepo : ITableRepo
         var reservation = await _context.TableReservation
             .Include(r => r.Customer)
             .Include(r => r.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i=> i!.Kitchen)
+            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i => i!.Kitchen)
             .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
 
         if (reservation == null)
@@ -145,7 +146,7 @@ public class TableRepo : ITableRepo
     public async Task<IEnumerable<TableReservation>> GetTableReservationsByCustomerId(string customerId)
     {
         return await _context.TableReservation
-            .Include(r => r.Branch)
+            .Include(r => r.Branch).ThenInclude(b => b!.Restaurant)
             .Include(r => r.Customer)
             .Include(r => r.Order)
             .Where(r => r.CustomerId == customerId)
@@ -169,7 +170,7 @@ public class TableRepo : ITableRepo
             .Include(r => r.Order)
             .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
     }
-    
+
     public async Task<IEnumerable<TableReservation>> GetTableReservationsInQueue(string branchId, int tableNumber)
     {
         return await _context.TableReservation.OrderBy(r => r.ReservationTime)
@@ -178,5 +179,22 @@ public class TableRepo : ITableRepo
             .Include(r => r.Order)
             .ToListAsync();
     }
+    public async Task<Table?> GetTableByNumber(string branchId, int tableNumber)
+{
+    return await _context.Table.FirstOrDefaultAsync(t => t.BranchId == branchId && t.TableNumber == tableNumber);
+}
 
+    public async Task UpdateTable(Table table)
+    {
+        _context.Table.Update(table);
+        await _context.SaveChangesAsync();
+    }
+public async Task<bool> UpdateTableReservationTableNumber(string reservationId, int newTableNumber)
+{
+    var reservation = await _context.TableReservation.FindAsync(reservationId);
+    if (reservation == null) return false;
+    reservation.TableNumber = newTableNumber;
+    await _context.SaveChangesAsync();
+    return true;
+}
 }

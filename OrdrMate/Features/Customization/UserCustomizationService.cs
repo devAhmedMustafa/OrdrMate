@@ -1,5 +1,7 @@
 using OrdrMate.DTOs.Order;
+using OrdrMate.Features.Customization.DTOs;
 using OrdrMate.Services;
+using OrdrMate.Utils.Exceptions;
 
 namespace OrdrMate.Features.Customization;
 
@@ -50,9 +52,9 @@ public class UserCustomizationService
         }
 
         var itemCustomizations = await _customizationService.GetItemCustomizations(orderItem.ItemId);
-        if (itemCustomizations == null)
+        if (itemCustomizations.Count() == 0)
         {
-            throw new ArgumentNullException(nameof(itemCustomizations), "Item customizations not found.");
+            return true;
         }
 
         foreach (var customization in itemCustomizations)
@@ -64,5 +66,44 @@ public class UserCustomizationService
         }
 
         return true;
+    }
+
+    public async Task<OrderItemsCustomizationResponseDto?> GetOrderCustomizationsAsync(string orderId)
+    {
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(orderId))
+            {
+                throw new BadRequestException("Order ID cannot be null or empty.");
+            }
+
+            var customizations = await _repo.GetOrderCustomizationsAsync(orderId);
+
+            var response = new OrderItemsCustomizationResponseDto
+            {
+                OrderId = orderId,
+                Items = []
+            };
+
+            foreach (var customization in customizations)
+            {
+                response.Items.Add(new OrderItemCustomizationDto
+                {
+                    ItemId = customization.ItemId,
+                    Customization = customization.CustomizationValues.ToDictionary()
+                });
+            }
+
+            return response;
+        }
+        catch (OException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"An error occurred while retrieving order customizations: {ex.Message}");
+        }
     }
 }
