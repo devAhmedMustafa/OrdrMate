@@ -120,8 +120,6 @@ public class TableManager
                     CustomerName = createdReservation.Customer?.Username ?? "Unknown",
                     ReservationDate = createdReservation.ReservationTime,
                     ReservationStatus = createdReservation.ReservationStatus,
-                    OrderId = createdReservation.OrderId,
-                    OrderStatus = "Pending",
                 }
             };
 
@@ -166,7 +164,7 @@ public class TableManager
         }
     }
 
-    public async Task<Order?> BindNextReservation(string branchId, int tableNumber)
+    public async Task<IEnumerable<Order>?> BindNextReservation(string branchId, int tableNumber)
     {
         try
         {
@@ -188,19 +186,21 @@ public class TableManager
                 return null;
             }
 
-            var order = await tableRepo.GetTableOrderByReservationId(peekReservation.ReservationId);
-            if (order == null || order.OrderItems == null)
+            var orders = await tableRepo.GetTableOrdersByReservationId(peekReservation.ReservationId);
+            if (orders == null)
             {
                 throw new Exception($"No order found for reservation {peekReservation.ReservationId} in branch {peekReservation.BranchId}.");
             }
 
-            Console.WriteLine($"[Table Manager]: Order items: {order.OrderItems.Count}");
-
             await tableRepo.UpdateTableReservationStatus(peekReservation.ReservationId, "Seated");
             Console.WriteLine($"Reservation {peekReservation.ReservationId} for table {tableNumber} in branch {branchId} is now seated.");
-            OrderEvents.OnOrderPlaced(peekReservation.BranchId, [.. order.OrderItems]);
 
-            return order;
+            foreach (var order in orders)
+            {
+                OrderEvents.OnOrderPlaced(peekReservation.BranchId, [.. order.OrderItems!]);
+            }
+
+            return orders;
         }
         catch (Exception ex)
         {
@@ -234,7 +234,7 @@ public class TableManager
 
         if (_branchQueues.TryGetValue(reservation.BranchId, out var queueManager))
         {
-            return queueManager.GetOrderPosition(reservation.TableNumber, reservation.OrderId) + 1;
+            return queueManager.GetReservationPosition(reservation.TableNumber, reservation.ReservationId) + 1;
         }
         else
         {

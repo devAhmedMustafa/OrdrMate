@@ -236,12 +236,16 @@ public class OrderService
             case OrderType.Takeaway:
 
                 var takeaway = await PlaceTakeawayOrder(order);
+                order.TakeawayId = takeaway.Id;
+                await _orderRepo.UpdateOrder(order);
                 orderDto.OrderNumber = takeaway.OrderNumber;
                 OrderEvents.OnOrderPlaced(order.BranchId, orderItems);
                 break;
 
             case OrderType.DineIn:
                 var reservation = await _tableService.ReserveTable(orderDto, orderIntent.TableNumber ?? 1);
+                order.TableReservationId = reservation.ReservationId;
+                await _orderRepo.UpdateOrder(order);
                 orderDto.TableNumber = reservation.TableNumber;
                 break;
 
@@ -272,57 +276,30 @@ public class OrderService
 
     public async Task<IEnumerable<OrderDto>> GetCustomerOrders(string customerId)
     {
-        var takeaways = await _orderRepo.GetTakeawaysByCustomerId(customerId);
-        var indoors = await _tableRepo.GetTableReservationsByCustomerId(customerId);
+        var orders = await _orderRepo.GetOrdersByCustomerId(customerId);
 
-        if (takeaways == null)
+        if (orders == null)
         {
-            Console.WriteLine($"No takeaways orders found for customer with ID: {customerId}");
-            takeaways = [];
+            Console.WriteLine($"No orders found for customer with ID: {customerId}");
+            orders = [];
         }
 
-        if (indoors == null)
+        return orders.Select(o => new OrderDto
         {
-            Console.WriteLine($"No dine-in orders found for customer with ID: {customerId}");
-            indoors = [];
-        }
-
-        var takeawayDtos = takeaways.Select(t => new OrderDto
-        {
-            OrderId = t.Order.Id,
-            RestaurantName = t.Order.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
-            Customer = t.Order.Customer?.Username ?? "Unknown Customer",
-            OrderType = OrderType.Takeaway.ToString(),
-            PaymentMethod = t.Order.Payment?.PaymentMethod ?? "Cash",
-            OrderDate = t.Order.OrderDate,
-            OrderStatus = t.Order.Status.ToString(),
-            TotalAmount = t.Order.TotalAmount,
-            BranchId = t.Order.BranchId,
-            OrderNumber = t.OrderNumber,
-            IsPaid = t.Order.IsPaid,
-            CustomerId = t.Order.CustomerId
+            OrderId = o.Id,
+            RestaurantName = o.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
+            Customer = o.Customer?.Username ?? "Unknown Customer",
+            OrderType = o.OrderType.ToString(),
+            PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
+            OrderDate = o.OrderDate,
+            OrderStatus = o.Status.ToString(),
+            TotalAmount = o.TotalAmount,
+            BranchId = o.BranchId,
+            IsPaid = o.IsPaid,
+            CustomerId = o.CustomerId,
+            OrderNumber = o.Takeaway?.OrderNumber ?? null,
+            TableNumber = o?.TableReservation?.TableNumber ?? null
         });
-
-        var indoorDtos = indoors.Select(i => new OrderDto
-        {
-            OrderId = i.Order!.Id,
-            RestaurantName = i.Order.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
-            Customer = i.Order.Customer?.Username ?? "Unknown Customer",
-            OrderType = OrderType.DineIn.ToString(),
-            PaymentMethod = i.Order.Payment?.PaymentMethod ?? "Cash",
-            OrderDate = i.Order.OrderDate,
-            OrderStatus = i.Order.Status.ToString(),
-            TotalAmount = i.Order.TotalAmount,
-            BranchId = i.Order.BranchId,
-            TableNumber = i.TableNumber,
-            IsPaid = i.Order.IsPaid,
-            CustomerId = i.Order.CustomerId
-        });
-
-        var orders = takeawayDtos.Concat(indoorDtos);
-        orders = orders.OrderByDescending(o => o.OrderDate);
-
-        return orders;
 
     }
 
@@ -382,26 +359,14 @@ public class OrderService
                 },
                 Quantity = oi.Quantity,
                 Price = oi.Price,
-            }).ToArray()
+            }).ToArray(),
+            
+            OrderNumber = order.Takeaway?.OrderNumber ?? null,
+            TableNumber = order?.TableReservation?.TableNumber ?? null,
 
         };
 
-        var takeaway = await _orderRepo.GetTakeawayById(orderId);
-
-        if (takeaway != null)
-        {
-            orderDto.OrderNumber = takeaway.OrderNumber;
-            return orderDto;
-        }
-
-        var indoor = await _tableService.GetTableReservationByOrderId(orderId);
-        if (indoor != null)
-        {
-            orderDto.TableNumber = indoor.TableNumber;
-            return orderDto;
-        }
-
-        throw new KeyNotFoundException($"Order with id {orderId} not found.");
+        return orderDto;
 
     }
 
@@ -687,7 +652,7 @@ public class OrderService
         return orders.Select(o => new OrderDto
         {
             OrderId = o.OrderId,
-            Customer = o.Order.Customer?.Username!,
+            Customer = o.Order!.Customer?.Username!,
             CustomerId = o.Order.Customer?.Id ?? string.Empty,
             TotalAmount = o.Order.TotalAmount,
             OrderDate = o.Order.OrderDate,

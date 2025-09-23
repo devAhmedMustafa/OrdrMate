@@ -59,7 +59,7 @@ public class TableService
         return await _tableRepo.DeleteTable(branchId, tableNum);
     }
 
-    public async Task<TableReservationDto> ReserveTable(OrderDto order, int tableNumber)
+    public async Task<TableReservation> ReserveTable(OrderDto order, int tableNumber)
     {
         try
         {
@@ -73,19 +73,12 @@ public class TableService
             {
                 BranchId = order.BranchId,
                 CustomerId = order.CustomerId,
-                OrderId = order.OrderId,
                 ReservationTime = DateTime.UtcNow,
                 TableNumber = tableNumber,
             };
 
             await _tableManager.ReserveTable(tableNumber, reservation);
-
-            reservation.TableNumber = tableNumber;
-
-            return new TableReservationDto
-            {
-                TableNumber = tableNumber,
-            };
+            return reservation;
         }
         catch (OException)
         {
@@ -116,7 +109,7 @@ public class TableService
         return reservations.Select(r => new TableReservationDto
         {
             TableNumber = r.TableNumber,
-            Order = r.Order
+            Orders = r.Orders
         });
     }
 
@@ -128,7 +121,7 @@ public class TableService
         return new TableReservationDto
         {
             TableNumber = reservation.TableNumber,
-            Order = reservation.Order,
+            Orders = reservation.Orders,
             ReservationTime = reservation.ReservationTime
         };
     }
@@ -143,27 +136,32 @@ public class TableService
             CustomerName = r.Customer?.Username ?? "Unknown",
             ReservationDate = r.ReservationTime,
             ReservationStatus = r.ReservationStatus,
-            OrderId = r.OrderId,
-            OrderStatus = r.Order?.Status.ToString() ?? "Unknown"
         });
     }
 
     public async Task<OrderDto?> GetOrderByTableReservationId(string reservationId)
     {
-        var order = await _tableRepo.GetTableOrderByReservationId(reservationId);
 
-        if (order == null) throw new Exception("Order not found");
+        var reservation = await _tableRepo.GetTableReservationById(reservationId);
+        if (reservation == null)
+        {
+            throw new NotFoundException("Reservation not found");
+        }
+
+        var orders = await _tableRepo.GetTableOrdersByReservationId(reservationId);
+
+        if (orders == null) throw new Exception("Orders not found");
 
         return new OrderDto
         {
-            OrderId = order.Id,
-            BranchId = order.BranchId,
-            CustomerId = order.CustomerId,
-            OrderStatus = order.Status.ToString(),
-            OrderType = order.OrderType.ToString(),
-            OrderDate = order.OrderDate,
-            TotalAmount = order.TotalAmount,
-            OrderItems = [.. order.OrderItems!.Select(oi => new OrderItemDto
+            OrderId = orders.First().Id,
+            BranchId = reservation.BranchId,
+            CustomerId = reservation.CustomerId,
+            OrderStatus = "Unknown",
+            OrderType = orders.First().OrderType.ToString(),
+            OrderDate = orders.First().OrderDate,
+            TotalAmount = orders.First().TotalAmount,
+            OrderItems = [.. orders.SelectMany(o => o.OrderItems!).Select(oi => new OrderItemDto
             {
                 ItemId = oi.ItemId,
                 Quantity = oi.Quantity,
@@ -178,9 +176,9 @@ public class TableService
                     Category = oi.Item?.CategoryName ?? "Unknown"
                 }
             })],
-            RestaurantName = order.Branch?.Restaurant?.Name ?? "Unknown",
-            Customer = order.Customer?.Username ?? "Unknown",
-            PaymentMethod = order.Payment?.PaymentMethod ?? "Unknown",
+            RestaurantName = reservation.Branch?.Restaurant?.Name ?? "Unknown",
+            Customer = reservation.Customer?.Username ?? "Unknown",
+            PaymentMethod = "Unknown",
         };
     }
 }

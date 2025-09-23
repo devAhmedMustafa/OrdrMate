@@ -96,11 +96,11 @@ public class TableQueueManager
         }
     }
 
-    public int GetOrderPosition(int tableNumber, string orderId)
+    public int GetReservationPosition(int tableNumber, string reservationId)
     {
         if (_tableQueues.TryGetValue(tableNumber, out var queue))
         {
-            return queue.GetOrderPosition(orderId);
+            return queue.GetReservationPosition(reservationId);
         }
         else
         {

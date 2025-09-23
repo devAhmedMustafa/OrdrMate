@@ -40,12 +40,12 @@ public class ReservationQueue
         return _queue.Peek();
     }
 
-    public int GetOrderPosition(string orderId)
+    public int GetReservationPosition(string reservationId)
     {
         int position = 0;
         foreach (var reservation in _queue)
         {
-            if (reservation.OrderId == orderId)
+            if (reservation.ReservationId == reservationId)
             {
                 return position;
             }
