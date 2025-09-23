@@ -1,3 +1,4 @@
+using OrdrMate.DTOs.Item;
 using OrdrMate.DTOs.Order;
 using OrdrMate.Models;
 
@@ -20,7 +21,18 @@ public static class OrdersDtoMapper
             {
                 ItemId = oi.ItemId,
                 Quantity = oi.Quantity,
-                Price = oi.Price
+                Price = oi.Price,
+                Item = oi.Item != null ? new ItemDto
+                {
+                    Id = oi.Item.Id,
+                    Name = oi.Item.Name,
+                    Description = oi.Item.Description,
+                    Price = oi.Item.Price,
+                    Category = oi.Item.CategoryName,
+                    ImageUrl = oi.Item.ImageUrl,
+                    PreparationTime = oi.Item.PreperationTime,
+                    KitchenName = oi.Item.Kitchen?.Name ?? "Main",
+                } : null,
             }).ToArray(),
             PaymentMethod = order.Payment?.PaymentMethod ?? "Unpaid",
             OrderDate = order.OrderDate,
@@ -49,7 +61,18 @@ public static class OrdersDtoMapper
             {
                 ItemId = oi.ItemId,
                 Quantity = oi.Quantity,
-                Price = oi.Price
+                Price = oi.Price,
+                Item = oi.Item != null ? new ItemDto
+                {
+                    Id = oi.Item.Id,
+                    Name = oi.Item.Name,
+                    Description = oi.Item.Description,
+                    Price = oi.Item.Price,
+                    Category = oi.Item.CategoryName,
+                    ImageUrl = oi.Item.ImageUrl,
+                    PreparationTime = oi.Item.PreperationTime,
+                    KitchenName = oi.Item.Kitchen?.Name ?? "Main",
+                } : null,
             }).ToArray(),
             PaymentMethod = orders.First().Payment?.PaymentMethod ?? "Unpaid",
             OrderDate = orders.First().OrderDate,
