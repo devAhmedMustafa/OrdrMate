@@ -30,4 +30,36 @@ public class TableReservationJwtMiddleware(IConfiguration c)
         return new JwtSecurityTokenHandler().WriteToken(token);
 
     }
+
+    public bool ValidateJWT(string token)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = Encoding.UTF8.GetBytes(_config["ShareReservationJwt:Key"]!);
+
+        try
+        {
+            tokenHandler.ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _config["ShareReservationJwt:Issuer"],
+                ValidAudience = _config["ShareReservationJwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            }, out SecurityToken validatedToken);
+
+            var jwtToken = (JwtSecurityToken)validatedToken;
+
+            return true;
+        }
+        catch (SecurityTokenExpiredException)
+        {
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }
