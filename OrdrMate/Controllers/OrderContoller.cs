@@ -572,7 +572,6 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet("get-reservation/{orderId}")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme + ",ShareReservationJwt")]
     public async Task<ActionResult<TableReservationDto>> GetReservationByOrderId(string orderId)
     {
         try
