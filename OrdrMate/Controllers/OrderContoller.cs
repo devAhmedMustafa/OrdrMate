@@ -542,7 +542,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet("reservation/{reservationId}")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme+",ShareReservationJwt")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme + ",ShareReservationJwt")]
     public async Task<ActionResult<IEnumerable<OrderDto>>> GetOrdersByReservationId(string reservationId)
     {
         try
@@ -567,6 +567,35 @@ public class OrderController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"An error occurred while retrieving orders for reservation ID {reservationId}: {ex.Message}");
+        }
+    }
+    
+    [HttpPost("add-order-to-reservation")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme + ",ShareReservationJwt")]
+    public async Task<ActionResult<OrderDto>> AddOrder([FromBody] PlaceOrderDto request)
+    {
+        try
+        {
+            var reservationId = User.FindFirst("reservationId")?.Value;
+            if (string.IsNullOrEmpty(reservationId))
+            {
+                return BadRequest(new { Message = "Invalid reservation ID." });
+            }
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Forbid("User ID not found in claims.");
+            }
+
+            request.CustomerId = userId;
+
+            var result = await _orderService.CreateOrderIntent(request, reservationId);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { ex.Message });
         }
     }
 }
