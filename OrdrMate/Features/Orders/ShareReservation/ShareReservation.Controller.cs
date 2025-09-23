@@ -37,9 +37,19 @@ public class ShareReservationController : ControllerBase
         try
         {
             var token = HttpContext.Request.Headers["x-shared-reservation-token"].ToString();
+            if (string.IsNullOrEmpty(token))
+            {
+                return BadRequest(new { Message = "Token is required." });
+            }
 
-            var reservationDetails = _shareReservationService.AccessSharedReservation(token);
-            return Ok(reservationDetails);
+            var reservationId = User.FindFirst("reservationId")?.Value;
+            if (string.IsNullOrEmpty(reservationId))
+            {
+                return Unauthorized(new { Message = "Invalid or expired token." });
+            }
+
+            _shareReservationService.AccessSharedReservation(token);
+            return Ok(new { ReservationId = reservationId });
         }
         catch (UnauthorizedAccessException ex)
         {
