@@ -715,7 +715,7 @@ public class OrderService
         var reservation = await _tableRepo.GetTableReservationById(reservationId)
             ?? throw new KeyNotFoundException($"Reservation with id {reservationId} not found.");
 
-        var orders = await _orderRepo.GetOrdersByCustomerId(reservation.CustomerId);
+        var orders = await _tableRepo.GetTableOrdersByReservationId(reservationId);
 
         if (orders == null || !orders.Any())
         {
