@@ -103,4 +103,21 @@ public class ManagerService(IUserRepo r, IRestaurantRepo rr, IConfiguration c, I
     {
         return await _repo.IsUsernameTaken(username);
     }
+
+    public async Task<ManagerDTO> ChangeManagerRole(string managerId, UserRole newRole)
+    {
+        var manager = await _repo.GetUserById(managerId)
+            ?? throw new Exception("Manager not found");
+
+        manager.Role = newRole;
+
+        var updatedManager = await _repo.UpdateUser(manager);
+
+        return new ManagerDTO
+        {
+            Id = updatedManager.Id,
+            Username = updatedManager.Username,
+            Role = updatedManager.Role
+        };
+    }
 }
