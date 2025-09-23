@@ -24,7 +24,9 @@ public class CashierOrderService
         {
             case OrderType.DineIn:
 
-                await _branchAttendanceService.DirectTableSeating(placeOrderDto.BranchId, placeOrderDto.TableNumber!.Value);
+                int tableNumber = placeOrderDto.TableNumber ?? throw new ArgumentNullException(nameof(placeOrderDto.TableNumber), "Table number is required for DineIn orders.");
+
+                await _branchAttendanceService.DirectTableSeating(placeOrderDto.BranchId, tableNumber);
 
                 break;
             default:
