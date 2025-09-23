@@ -5,6 +5,7 @@ using OrdrMate.DTOs.Order;
 using OrdrMate.DTOs.Table;
 using OrdrMate.Features.FreezeTable;
 using OrdrMate.Managers;
+using OrdrMate.Mappers.Orders;
 using OrdrMate.Models;
 using OrdrMate.Repositories;
 using OrdrMate.Utils.Exceptions;
@@ -143,44 +144,28 @@ public class TableService
 
     public async Task<OrderDto?> GetOrderByTableReservationId(string reservationId)
     {
-
-        var reservation = await _tableRepo.GetTableReservationById(reservationId);
-        if (reservation == null)
+        try
         {
-            throw new NotFoundException("Reservation not found");
-        }
-
-        var orders = await _tableRepo.GetTableOrdersByReservationId(reservationId);
-
-        if (orders == null) throw new Exception("Orders not found");
-
-        return new OrderDto
-        {
-            OrderId = orders.First().Id,
-            BranchId = reservation.BranchId,
-            CustomerId = reservation.CustomerId,
-            OrderStatus = "Unknown",
-            OrderType = orders.First().OrderType.ToString(),
-            OrderDate = orders.First().OrderDate,
-            TotalAmount = orders.First().TotalAmount,
-            OrderItems = [.. orders.SelectMany(o => o.OrderItems!).Select(oi => new OrderItemDto
+            var reservation = await _tableRepo.GetTableReservationById(reservationId);
+            if (reservation == null)
             {
-                ItemId = oi.ItemId,
-                Quantity = oi.Quantity,
-                Price = oi.Price,
-                Item = new ItemDto
-                {
-                    Name = oi.Item?.Name ?? "Unknown",
-                    Description = oi.Item?.Description ?? "Unknown",
-                    Price = oi.Item?.Price ?? 0,
-                    PreparationTime = oi.Item?.PreperationTime ?? 0,
-                    KitchenName = oi.Item?.Kitchen?.Name ?? "Unknown",
-                    Category = oi.Item?.CategoryName ?? "Unknown"
-                }
-            })],
-            RestaurantName = reservation.Branch?.Restaurant?.Name ?? "Unknown",
-            Customer = reservation.Customer?.Username ?? "Unknown",
-            PaymentMethod = "Unknown",
-        };
+                throw new NotFoundException("Reservation not found");
+            }
+
+            var orders = await _tableRepo.GetTableOrdersByReservationId(reservationId);
+
+            if (orders == null) throw new NotFoundException("Orders not found");
+            if (orders.Count() == 0) throw new NotFoundException("No orders found");
+
+            return orders.Select(o => o.ToDto()).FirstOrDefault();
+        }
+        catch (OException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"Failed to get order by reservation ID: {ex.Message}");
+        }
     }
 }

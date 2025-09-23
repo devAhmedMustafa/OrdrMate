@@ -129,18 +129,25 @@ public class TableRepo : ITableRepo
 
     public async Task<IEnumerable<Order>> GetTableOrdersByReservationId(string reservationId)
     {
-        var reservation = await _context.TableReservation
-            .Include(r => r.Customer)
-            .Include(r => r.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(r => r.Orders!).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i => i!.Kitchen)
-            .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
-
-        if (reservation == null)
+        try
         {
-            throw new InvalidOperationException($"Reservation with id {reservationId} does not exist.");
-        }
+            var reservation = await _context.TableReservation
+                .Include(r => r.Customer)
+                .Include(r => r.Branch).ThenInclude(b => b!.Restaurant)
+                .Include(r => r.Orders!).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i => i!.Kitchen)
+                .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
 
-        return reservation.Orders!;
+            if (reservation == null)
+            {
+                throw new InvalidOperationException($"Reservation with id {reservationId} does not exist.");
+            }
+
+            return reservation.Orders!;
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"Failed to retrieve orders: {ex.Message}");
+        }
     }
 
     public async Task<IEnumerable<TableReservation>> GetTableReservationsByCustomerId(string customerId)

@@ -129,7 +129,7 @@ public class TableController : ControllerBase
         }
         catch (Exception ex)
         {
-            return NotFound(new { err = ex.Message });
+            return StatusCode(500, new { err = ex.Message });
         }
     }
 }
