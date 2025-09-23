@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OrdrMate.Data;
@@ -11,9 +12,11 @@ using OrdrMate.Data;
 namespace OrdrMate.Migrations
 {
     [DbContext(typeof(OrdrMateDbContext))]
-    partial class OrdrMateDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250923000118_FixCollectionOrdersReservation")]
+    partial class FixCollectionOrdersReservation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -419,9 +422,6 @@ namespace OrdrMate.Migrations
 
                     b.Property<int?>("TableNumber")
                         .HasColumnType("integer");
-
-                    b.Property<string>("TableReservationId")
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 

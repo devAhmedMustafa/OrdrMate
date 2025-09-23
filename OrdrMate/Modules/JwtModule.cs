@@ -29,6 +29,33 @@ public class JwtModule : IModule
                 ),
                 RoleClaimType = ClaimTypes.Role,
             };
+        })
+        .AddJwtBearer("ShareReservationJwt", options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = configuration["ShareReservationJwt:Issuer"],
+                ValidAudience = configuration["ShareReservationJwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(configuration["ShareReservationJwt:Key"]!)
+                )
+            };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    if (context.Request.Headers.TryGetValue("x-share-reservation-token", out var token))
+                    {
+                        context.Token = token.ToString();
+                    }
+                    return Task.CompletedTask;
+                }
+            };
         });
     }
 }

@@ -1,0 +1,27 @@
+classDiagram
+    class JWT_Reservation {
+        + reservationId: string
+        + expiresIn: number = 900
+    }
+
+    class JwtTableReservationService {
+        + createReservationToken(reservationId: string): string
+    }
+
+    JwtTableReservationService --o JWT_Reservation : creates
+    
+    class ShareReservationController {
+        + generateShareLink(reservationId: string): string
+        + validateShareLink(token: string): string
+        + addOrderToReservation(token: string, order: Order): void
+    }
+
+    class ShareReservationService {
+        + generateShareLink(reservationId: string): string
+        + validateShareLink(token: string): string
+        + addOrderToReservation(token: string, order: Order): void
+    }
+
+    ShareReservationController --o ShareReservationService : uses
+    ShareReservationService --o JwtTableReservationService : uses
+    ShareReservationService --o OrderRepo
