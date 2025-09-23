@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrdrMate.DTOs.Order;
+using OrdrMate.DTOs.Table;
 using OrdrMate.Features.CashierOrder;
 using OrdrMate.Features.Orders.ShareReservation.Enums;
 using OrdrMate.Managers;
@@ -569,7 +570,25 @@ public class OrderController : ControllerBase
             return StatusCode(500, $"An error occurred while retrieving orders for reservation ID {reservationId}: {ex.Message}");
         }
     }
-    
+
+    [HttpGet("get-reservation/{orderId}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme + ",ShareReservationJwt")]
+    public async Task<ActionResult<TableReservationDto>> GetReservationByOrderId(string orderId)
+    {
+        try
+        {
+            var reservation = await _orderService.GetReservationByOrderId(orderId);
+            if (reservation == null)
+                return NotFound($"No reservation found for order ID {orderId}.");
+
+            return Ok(reservation);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving reservation for order ID {orderId}: {ex.Message}");
+        }
+    }
+
     [HttpPost("add-order-to-reservation")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme + ",ShareReservationJwt")]
     public async Task<ActionResult<OrderDto>> AddOrder([FromBody] PlaceOrderDto request)

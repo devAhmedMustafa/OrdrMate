@@ -108,6 +108,7 @@ public class TableService
         var reservations = await _tableRepo.GetTableReservationsByCustomerId(customerId);
         return reservations.Select(r => new TableReservationDto
         {
+            ReservationId = r.ReservationId,
             TableNumber = r.TableNumber,
             Orders = r.Orders
         });
@@ -120,6 +121,7 @@ public class TableService
 
         return new TableReservationDto
         {
+            ReservationId = reservation.ReservationId,
             TableNumber = reservation.TableNumber,
             Orders = reservation.Orders,
             ReservationTime = reservation.ReservationTime

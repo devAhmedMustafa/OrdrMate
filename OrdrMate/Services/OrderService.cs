@@ -11,6 +11,8 @@ using OrdrMate.Features.ItemAvailability;
 using OrdrMate.Features.Orders.Tax;
 using System.Formats.Asn1;
 using OrdrMate.Mappers.Orders;
+using OrdrMate.DTOs.Table;
+using OrdrMate.Utils.Exceptions;
 
 namespace OrdrMate.Services;
 
@@ -156,7 +158,7 @@ public class OrderService
             OrderType = orderIntent.OrderType,
             TotalAmount = orderIntent.Amount + (orderIntent.Amount * (branch?.Restaurant?.OrderTax ?? 0.0m)),
             OrderDate = DateTime.UtcNow,
-            Status = OrderStatus.Pending,
+            Status = orderIntent.TableReservationId != null ? OrderStatus.Queued : OrderStatus.Pending,
             IsPaid = isPaid,
             TableReservationId = orderIntent.TableReservationId,
         };
@@ -249,7 +251,7 @@ public class OrderService
             case OrderType.DineIn:
                 if (orderIntent.TableReservationId != null)
                     break;
-                
+
                 var reservation = await _tableService.ReserveTable(orderDto, orderIntent.TableNumber ?? 1);
                 order.TableReservationId = reservation.ReservationId;
                 await _orderRepo.UpdateOrder(order);
@@ -707,7 +709,7 @@ public class OrderService
 
         return order != null;
     }
-    
+
     public async Task<IEnumerable<OrderDto>> GetOrdersByReservationId(string reservationId)
     {
         var reservation = await _tableRepo.GetTableReservationById(reservationId)
@@ -722,6 +724,30 @@ public class OrderService
         }
 
         return orders.Select(OrdersDtoMapper.ToDto);
+    }
+
+    public async Task<TableReservationDto?> GetReservationByOrderId(string orderId)
+    {
+        try
+        {
+            var reservation = await _tableService.GetTableReservationByOrderId(orderId);
+            if (reservation == null)
+            {
+                Console.WriteLine($"No reservation found for order ID {orderId}.");
+                return null;
+            }
+
+            return new TableReservationDto
+            {
+                ReservationId = reservation.ReservationId,
+                TableNumber = reservation.TableNumber,
+                ReservationTime = reservation.ReservationTime,
+            };
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException(ex.Message);
+        }
     }
 
 }
