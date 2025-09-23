@@ -36,7 +36,7 @@ public class ShareReservationController : ControllerBase
     {
         try
         {
-            var token = HttpContext.Request.Headers["x-shared-reservation-token"].ToString();
+            var token = HttpContext.Request.Headers["x-share-reservation-token"].ToString();
             if (string.IsNullOrEmpty(token))
             {
                 return BadRequest(new { Message = "Token is required." });
