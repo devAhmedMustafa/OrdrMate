@@ -9,6 +9,8 @@ using OrdrMate.Features.Customization;
 using MongoDB.Bson;
 using OrdrMate.Features.ItemAvailability;
 using OrdrMate.Features.Orders.Tax;
+using System.Formats.Asn1;
+using OrdrMate.Mappers.Orders;
 
 namespace OrdrMate.Services;
 
@@ -56,7 +58,7 @@ public class OrderService
         _tableRepo = tableRepo;
     }
 
-    public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto)
+    public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto, string? tableReservationId = null)
     {
 
         foreach (var item in placeOrderDto.Items)
@@ -79,8 +81,9 @@ public class OrderService
             PaymentMethod = placeOrderDto.PaymentMethod,
             OrderType = placeOrderDto.OrderType,
             PaymentProvider = placeOrderDto.PaymentMethod == "cash" ? "cash" : "paymob",
-            OrderItems = [..placeOrderDto.Items],
+            OrderItems = [.. placeOrderDto.Items],
             TableNumber = placeOrderDto.TableNumber,
+            TableReservationId = tableReservationId,
         };
 
         var redirectUrl = string.Empty;
@@ -155,6 +158,7 @@ public class OrderService
             OrderDate = DateTime.UtcNow,
             Status = OrderStatus.Pending,
             IsPaid = isPaid,
+            TableReservationId = orderIntent.TableReservationId,
         };
 
         order = await _orderRepo.CreateOrder(order);
@@ -198,7 +202,7 @@ public class OrderService
                         Console.WriteLine($"No customizations provided for item {item.ItemId}, skipping user customization processing.");
                         continue;
                     }
-                    
+
                     // Validate user customization input
                     if (!await _userCustomizationService.ValidateUserCustomization(item))
                     {
@@ -243,6 +247,9 @@ public class OrderService
                 break;
 
             case OrderType.DineIn:
+                if (orderIntent.TableReservationId != null)
+                    break;
+                
                 var reservation = await _tableService.ReserveTable(orderDto, orderIntent.TableNumber ?? 1);
                 order.TableReservationId = reservation.ReservationId;
                 await _orderRepo.UpdateOrder(order);
@@ -360,7 +367,7 @@ public class OrderService
                 Quantity = oi.Quantity,
                 Price = oi.Price,
             }).ToArray(),
-            
+
             OrderNumber = order.Takeaway?.OrderNumber ?? null,
             TableNumber = order?.TableReservation?.TableNumber ?? null,
 
@@ -679,7 +686,7 @@ public class OrderService
 
         return true;
     }
-    
+
     public async Task<bool> CancelOrderAsync(string orderId)
     {
         var order = await _orderRepo.GetOrderById(orderId);
@@ -699,6 +706,22 @@ public class OrderService
         OrderEvents.OnOrderCancelled(order.BranchId, orderId);
 
         return order != null;
+    }
+    
+    public async Task<IEnumerable<OrderDto>> GetOrdersByReservationId(string reservationId)
+    {
+        var reservation = await _tableRepo.GetTableReservationById(reservationId)
+            ?? throw new KeyNotFoundException($"Reservation with id {reservationId} not found.");
+
+        var orders = await _orderRepo.GetOrdersByCustomerId(reservation.CustomerId);
+
+        if (orders == null || !orders.Any())
+        {
+            Console.WriteLine($"No orders found for reservation with ID: {reservationId}");
+            return [];
+        }
+
+        return orders.Select(OrdersDtoMapper.ToDto);
     }
 
 }

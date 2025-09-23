@@ -1,4 +1,4 @@
-namespace OrdrMate.Features.ShareReservation;
+namespace OrdrMate.Features.Orders.ShareReservation;
 
 public record GenerateLinkRequest
 {

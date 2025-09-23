@@ -27,4 +27,5 @@ public class OrderIntent
     public Branch? Branch { get; set; }
     public int? TableNumber { get; set; }
     public int? Seats { get; set; }
+    public string? TableReservationId { get; set; }
 }

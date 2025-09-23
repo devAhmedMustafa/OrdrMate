@@ -51,7 +51,7 @@ public class JwtModule : IModule
                 {
                     if (context.Request.Headers.TryGetValue("x-share-reservation-token", out var token))
                     {
-                        context.Token = token;
+                        context.Token = token.ToString();
                     }
                     return Task.CompletedTask;
                 }

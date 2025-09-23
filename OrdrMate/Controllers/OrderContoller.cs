@@ -1,8 +1,10 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrdrMate.DTOs.Order;
 using OrdrMate.Features.CashierOrder;
+using OrdrMate.Features.Orders.ShareReservation.Enums;
 using OrdrMate.Managers;
 using OrdrMate.Services;
 using OrdrMate.Utils;
@@ -536,6 +538,35 @@ public class OrderController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"An error occurred while processing your request: {ex.Message}");
+        }
+    }
+
+    [HttpGet("reservation/{reservationId}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme+",ShareReservationJwt")]
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetOrdersByReservationId(string reservationId)
+    {
+        try
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return Forbid("User ID not found in claims.");
+
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, reservationId, AuthPolicies.TableReservationAccess);
+
+            if (!authorizationResult.Succeeded)
+                return Forbid("You do not have access to this reservation's orders.");
+
+            var orders = await _orderService.GetOrdersByReservationId(reservationId);
+
+            if (orders == null || !orders.Any())
+                return NotFound($"No orders found for reservation ID {reservationId}.");
+
+            return Ok(orders);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving orders for reservation ID {reservationId}: {ex.Message}");
         }
     }
 }
