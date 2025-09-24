@@ -54,7 +54,7 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
         if (item.SubCategoryName != null)
         {
             var subCategory = await _context.Category
-                .FirstOrDefaultAsync(c => c.Name == item.SubCategoryName && c.PharmacyId == item.PharmacyId);
+                .FirstOrDefaultAsync(c => c.Name == item.SubCategoryName && c.PharmacyId == item.PharmacyId && c.Parent == item.CategoryName);
 
             if (subCategory == null)
             {
