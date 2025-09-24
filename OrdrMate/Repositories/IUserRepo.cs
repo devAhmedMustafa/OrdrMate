@@ -10,4 +10,5 @@ public interface IUserRepo
     Task<User?> GetUserById(string id);
     Task<User> CreateUser(User user);
     Task<bool> IsUsernameTaken(string username);
+    Task<User> UpdateUser(User user);
 }

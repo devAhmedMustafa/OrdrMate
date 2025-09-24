@@ -54,13 +54,18 @@ public class AiService
 
         Console.WriteLine($"Predicting stay duration for reservation: {reservation.ReservationId} at branch {reservation.BranchId}");
 
-        var timeToPrepareOrder = await _orderManager.GetEstimatedTimeForOrder(reservation.BranchId, reservation.OrderId);
+
+        var timeToPrepareOrder = 0;
+        foreach (var order in reservation.Orders ?? [])
+        {
+            await _orderManager.GetEstimatedTimeForOrder(reservation.BranchId, order.Id);
+        }
 
         List<ItemRequest> items = [];
 
-        if (reservation.Order?.OrderItems != null)
+        if (reservation.Orders != null)
         {
-            items = [.. reservation.Order.OrderItems.Select(i => new ItemRequest
+            items = [.. reservation.Orders.SelectMany(o => o.OrderItems!).Select(i => new ItemRequest
             {
                 item_name = i.Item?.Name!,
                 quantity = i.Quantity
@@ -68,15 +73,7 @@ public class AiService
         }
         else
         {
-            var order = await _orderRepo.GetDetailedOrderById(reservation.OrderId);
-            if (order?.OrderItems != null)
-            {
-                items = [.. order.OrderItems.Select(i => new ItemRequest
-                {
-                    item_name = i.Item?.Name!,
-                    quantity = i.Quantity
-                })];
-            }
+            throw new ArgumentException("No orders associated with the reservation.");
         }
 
         var body = new

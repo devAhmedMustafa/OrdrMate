@@ -3,6 +3,7 @@ namespace OrdrMate.Repositories;
 using OrdrMate.Models;
 using OrdrMate.Data;
 using Microsoft.EntityFrameworkCore;
+using OrdrMate.Utils.Exceptions;
 
 public class TableRepo : ITableRepo
 {
@@ -100,7 +101,7 @@ public class TableRepo : ITableRepo
         return await _context.TableReservation
             .Include(r => r.Branch).OrderBy(r => r.ReservationTime)
             .Include(r => r.Customer)
-            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item)
+            .Include(r => r.Orders!).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item)
             .Where(r => r.BranchId == branchId)
             .ToListAsync();
     }
@@ -126,20 +127,27 @@ public class TableRepo : ITableRepo
         return existingReservation;
     }
 
-    public async Task<Order?> GetTableOrderByReservationId(string reservationId)
+    public async Task<IEnumerable<Order>> GetTableOrdersByReservationId(string reservationId)
     {
-        var reservation = await _context.TableReservation
-            .Include(r => r.Customer)
-            .Include(r => r.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(r => r.Order).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i=> i!.Kitchen)
-            .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
-
-        if (reservation == null)
+        try
         {
-            throw new InvalidOperationException($"Reservation with id {reservationId} does not exist.");
-        }
+            var reservation = await _context.TableReservation
+                .Include(r => r.Customer)
+                .Include(r => r.Branch).ThenInclude(b => b!.Restaurant)
+                .Include(r => r.Orders!).ThenInclude(o => o!.OrderItems)!.ThenInclude(oi => oi.Item).ThenInclude(i => i!.Kitchen)
+                .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
 
-        return reservation.Order;
+            if (reservation == null)
+            {
+                throw new InvalidOperationException($"Reservation with id {reservationId} does not exist.");
+            }
+
+            return reservation.Orders!;
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"Failed to retrieve orders: {ex.Message}");
+        }
     }
 
     public async Task<IEnumerable<TableReservation>> GetTableReservationsByCustomerId(string customerId)
@@ -147,7 +155,7 @@ public class TableRepo : ITableRepo
         return await _context.TableReservation
             .Include(r => r.Branch).ThenInclude(b => b!.Restaurant)
             .Include(r => r.Customer)
-            .Include(r => r.Order)
+            .Include(r => r.Orders)
             .Where(r => r.CustomerId == customerId)
             .ToListAsync();
     }
@@ -157,8 +165,8 @@ public class TableRepo : ITableRepo
         return await _context.TableReservation
             .Include(r => r.Branch)
             .Include(r => r.Customer)
-            .Include(r => r.Order)
-            .FirstOrDefaultAsync(r => r.OrderId == orderId);
+            .Include(r => r.Orders)
+            .FirstOrDefaultAsync(r => r.Orders!.Any(o => o.Id == orderId));
     }
 
     public async Task<TableReservation?> GetTableReservationById(string reservationId)
@@ -166,17 +174,36 @@ public class TableRepo : ITableRepo
         return await _context.TableReservation
             .Include(r => r.Branch)
             .Include(r => r.Customer)
-            .Include(r => r.Order)
+            .Include(r => r.Orders)
             .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
     }
-    
+
     public async Task<IEnumerable<TableReservation>> GetTableReservationsInQueue(string branchId, int tableNumber)
     {
         return await _context.TableReservation.OrderBy(r => r.ReservationTime)
             .Where(r => r.BranchId == branchId && r.TableNumber == tableNumber && r.ReservationStatus != "Left")
             .Include(r => r.Customer)
-            .Include(r => r.Order)
+            .Include(r => r.Orders)
             .ToListAsync();
     }
+    public async Task<Table?> GetTableByNumber(string branchId, int tableNumber)
+    {
+        return await _context.Table.FirstOrDefaultAsync(t => t.BranchId == branchId && t.TableNumber == tableNumber);
+    }
 
+    public async Task<Table> UpdateTable(Table table)
+    {
+        _context.Table.Update(table);
+        await _context.SaveChangesAsync();
+        return table;
+    }
+
+    public async Task<bool> UpdateTableReservationTableNumber(string reservationId, int newTableNumber)
+    {
+        var reservation = await _context.TableReservation.FindAsync(reservationId);
+        if (reservation == null) return false;
+        reservation.TableNumber = newTableNumber;
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

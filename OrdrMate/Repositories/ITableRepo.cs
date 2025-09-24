@@ -11,9 +11,12 @@ public interface ITableRepo
     Task<TableReservation?> CreateTableReservation(TableReservation reservation);
     Task<IEnumerable<TableReservation>> GetTableReservationsByBranchId(string branchId);
     Task<TableReservation> UpdateTableReservationStatus(string reservationId, string status);
-    Task<Order?> GetTableOrderByReservationId(string reservationId);
+    Task<IEnumerable<Order>> GetTableOrdersByReservationId(string reservationId);
     Task<IEnumerable<TableReservation>> GetTableReservationsByCustomerId(string customerId);
     Task<TableReservation?> GetTableReservationByOrderId(string orderId);
     Task<TableReservation?> GetTableReservationById(string reservationId);
     Task<IEnumerable<TableReservation>> GetTableReservationsInQueue(string branchId, int tableNumber);
+    Task<Table?> GetTableByNumber(string branchId, int tableNumber);
+    Task<bool> UpdateTableReservationTableNumber(string reservationId, int newTableNumber);
+    Task<Table> UpdateTable(Table table);
 }

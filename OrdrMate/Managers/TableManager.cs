@@ -32,6 +32,7 @@ public class TableManager
         Init();
 
         BranchEvents.BranchCreated += OnBranchCreated;
+        TableEvents.TableCreated += OnTableCreated;
 
         _initialized = true;
     }
@@ -53,6 +54,18 @@ public class TableManager
         }
     }
 
+    public void OnTableCreated(Table table)
+    {
+        if (_branchQueues.TryGetValue(table.BranchId, out var queueManager))
+        {
+            queueManager.AddTable(table.TableNumber, table.Seats);
+        }
+        else
+        {
+            Console.WriteLine($"No queue manager found for branch {table.BranchId} when adding table {table.TableNumber}.");
+        }
+    }
+
     public void AddBranchQueue(Branch branch)
     {
         if (!_branchQueues.ContainsKey(branch.Id))
@@ -64,7 +77,7 @@ public class TableManager
 
             foreach (var reservation in reservations)
             {
-                if (reservation.ReservationStatus == "Queued" || reservation.ReservationStatus == "Seated")
+                if (reservation.ReservationStatus != "Left" && reservation.ReservationStatus != "Cancelled")
                 {
                     _branchQueues[branch.Id].ReserveTable(reservation.TableNumber, reservation);
                     Console.WriteLine($"Added reservation {reservation.ReservationId} to queue for branch {branch.Id}, table {reservation.TableNumber}.");
@@ -107,8 +120,6 @@ public class TableManager
                     CustomerName = createdReservation.Customer?.Username ?? "Unknown",
                     ReservationDate = createdReservation.ReservationTime,
                     ReservationStatus = createdReservation.ReservationStatus,
-                    OrderId = createdReservation.OrderId,
-                    OrderStatus = "Pending",
                 }
             };
 
@@ -153,7 +164,7 @@ public class TableManager
         }
     }
 
-    public async Task<Order?> BindNextReservation(string branchId, int tableNumber)
+    public async Task<IEnumerable<Order>?> BindNextReservation(string branchId, int tableNumber)
     {
         try
         {
@@ -175,19 +186,21 @@ public class TableManager
                 return null;
             }
 
-            var order = await tableRepo.GetTableOrderByReservationId(peekReservation.ReservationId);
-            if (order == null || order.OrderItems == null)
+            var orders = await tableRepo.GetTableOrdersByReservationId(peekReservation.ReservationId);
+            if (orders == null)
             {
                 throw new Exception($"No order found for reservation {peekReservation.ReservationId} in branch {peekReservation.BranchId}.");
             }
 
-            Console.WriteLine($"[Table Manager]: Order items: {order.OrderItems.Count}");
-
             await tableRepo.UpdateTableReservationStatus(peekReservation.ReservationId, "Seated");
             Console.WriteLine($"Reservation {peekReservation.ReservationId} for table {tableNumber} in branch {branchId} is now seated.");
-            OrderEvents.OnOrderPlaced(peekReservation.BranchId, [.. order.OrderItems]);
 
-            return order;
+            foreach (var order in orders)
+            {
+                OrderEvents.OnOrderPlaced(peekReservation.BranchId, [.. order.OrderItems!]);
+            }
+
+            return orders;
         }
         catch (Exception ex)
         {
@@ -221,7 +234,7 @@ public class TableManager
 
         if (_branchQueues.TryGetValue(reservation.BranchId, out var queueManager))
         {
-            return queueManager.GetOrderPosition(reservation.TableNumber, reservation.OrderId) + 1;
+            return queueManager.GetReservationPosition(reservation.TableNumber, reservation.ReservationId) + 1;
         }
         else
         {
@@ -306,4 +319,32 @@ public class TableManager
         }
     }
 
+    public async Task MoveTableReservation(string branchId, int fromTableNumber, int toTableNumber, string reservationId)
+    {
+        try
+        {
+            if (_branchQueues.TryGetValue(branchId, out var queueManager))
+            {
+                var tableRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ITableRepo>();
+                queueManager.MoveTableReservation(fromTableNumber, toTableNumber, reservationId);
+                await tableRepo.UpdateTableReservationTableNumber(reservationId, toTableNumber);
+
+                var peekT1 = queueManager.PeekReservation(fromTableNumber);
+                if (peekT1 != null)
+                {
+                    await tableRepo.UpdateTableReservationStatus(peekT1.ReservationId, "Waiting");
+                }
+            }
+            else
+            {
+                Debug.WriteLine($"No reservation queue found for branch {branchId}.");
+                throw new Exception($"No reservation queue found for branch {branchId}.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error moving reservation {reservationId} from table {fromTableNumber} to table {toTableNumber} in branch {branchId}: {ex.Message}");
+            throw;
+        }
+    }
 }
