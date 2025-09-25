@@ -443,6 +443,8 @@ public class OrderService
             BranchId = o.BranchId,
             IsPaid = o.IsPaid,
             CustomerId = o.CustomerId,
+            TableNumber = o?.TableReservation?.TableNumber ?? null,
+            OrderNumber = o?.Takeaway?.OrderNumber ?? null
         });
     }
 
@@ -469,6 +471,8 @@ public class OrderService
             BranchId = o.BranchId,
             IsPaid = o.IsPaid,
             CustomerId = o.CustomerId,
+            TableNumber = o.TableReservation?.TableNumber ?? null,
+            OrderNumber = o.Takeaway?.OrderNumber ?? null
         });
     }
 
