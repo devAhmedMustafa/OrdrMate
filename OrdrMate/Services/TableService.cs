@@ -157,7 +157,7 @@ public class TableService
             if (orders == null) throw new NotFoundException("Orders not found");
             if (orders.Count() == 0) throw new NotFoundException("No orders found");
 
-            return orders.Select(o => o.ToDto()).FirstOrDefault();
+            return OrdersDtoMapper.ToDto(orders);
         }
         catch (OException)
         {
