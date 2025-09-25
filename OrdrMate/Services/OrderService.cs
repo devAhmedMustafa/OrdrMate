@@ -312,6 +312,7 @@ public class OrderService
             TotalAmount = order.TotalAmount,
             BranchId = order.BranchId,
             IsPaid = order.IsPaid,
+            OrderNumber = order.OrderType == OrderType.Takeaway ? order.Takeaway?.OrderNumber : null,
             OrderItems = order.OrderItems?.Select(oi => new OrderItemDto
             {
                 ItemId = oi.ItemId,
@@ -332,14 +333,6 @@ public class OrderService
             }).ToArray()
 
         };
-
-        var takeaway = await _orderRepo.GetTakeawayById(orderId);
-
-        if (takeaway != null)
-        {
-            orderDto.OrderNumber = takeaway.OrderNumber;
-            return orderDto;
-        }
 
         throw new KeyNotFoundException($"Order with id {orderId} not found.");
 
