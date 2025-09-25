@@ -7,6 +7,8 @@ using OrdrMate.Repositories;
 using OrdrMate.Events;
 using Hangfire;
 using OrdrMate.Features.BestBranchToOrder;
+using OrdrMate.Features.ItemAvailability;
+using OrdrMate.Mappers.Orders;
 
 namespace OrdrMate.Services;
 
@@ -19,6 +21,7 @@ public class OrderService
     private readonly CloudMessaging _cloudMessaging;
     private readonly IBackgroundJobClient _backgroundJobs;
     private readonly BestBranchToOrderService _bestBranchService;
+    private readonly ItemAvailabilityService _itemAvailabilityService;
 
     private static readonly Dictionary<string, string> _jobIds = new Dictionary<string, string>();
 
@@ -29,7 +32,8 @@ public class OrderService
         PaymobService paymobService,
         CloudMessaging cloudMessaging,
         IBackgroundJobClient backgroundJobs,
-        BestBranchToOrderService bestBranchService
+        BestBranchToOrderService bestBranchService,
+        ItemAvailabilityService itemAvailabilityService
     )
     {
         _paymentService = paymentService;
@@ -39,6 +43,7 @@ public class OrderService
         _cloudMessaging = cloudMessaging;
         _backgroundJobs = backgroundJobs;
         _bestBranchService = bestBranchService;
+        _itemAvailabilityService = itemAvailabilityService;
     }
 
     public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto)
@@ -176,6 +181,12 @@ public class OrderService
                 };
 
                 var savedOrderItem = await _orderRepo.CreateOrderItem(orderItem);
+                if (savedOrderItem == null)
+                {
+                    throw new InvalidOperationException("Failed to create order item.");
+                }
+
+                await _itemAvailabilityService.DecreaseItemQuantity(item.ItemId, order.BranchId, item.Quantity);
                 orderItems.Add(savedOrderItem);
             }
 
@@ -189,11 +200,12 @@ public class OrderService
 
                 var takeaway = await PlaceTakeawayOrder(order);
                 orderDto.OrderNumber = takeaway.OrderNumber;
+                await _orderRepo.SetOrderStatus(order.Id, OrderStatus.Ready);
                 OrderEvents.OnOrderPlaced(order.BranchId, orderItems);
                 break;
 
             case OrderType.Delivery:
-                var delivery = await PlaceDeliveryOrder(order, orderIntent);
+                await PlaceDeliveryOrder(order, orderIntent);
                 OrderEvents.OnOrderPlaced(order.BranchId, orderItems);
                 break;
 
@@ -334,7 +346,7 @@ public class OrderService
 
         };
 
-        throw new KeyNotFoundException($"Order with id {orderId} not found.");
+        return orderDto;
 
     }
 
@@ -641,7 +653,7 @@ public class OrderService
 
         return true;
     }
-    
+
     public async Task<bool> CancelOrderAsync(string orderId)
     {
         var order = await _orderRepo.SetOrderStatus(orderId, OrderStatus.Cancelled);
@@ -654,6 +666,27 @@ public class OrderService
         OrderEvents.OnOrderCancelled(order.BranchId, orderId);
 
         return order != null;
+    }
+
+    public async Task<IEnumerable<OrderDto>> GetOrdersQueueByBranchId(string branchId)
+    {
+        try
+        {
+            var orders = await _orderRepo.GetOrdersQueueByBranchId(branchId);
+
+            if (orders == null || !orders.Any())
+            {
+                Console.WriteLine($"No orders in queue found for branch with ID: {branchId}");
+                return [];
+            }
+
+            return OrdersDtoMapper.ToDtoList(orders);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching orders queue: {ex.Message}");
+            throw;
+        }
     }
 
 }

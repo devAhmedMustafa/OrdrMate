@@ -72,7 +72,8 @@ public class ItemAvailabilityService
         return instance.IsAvailable;
     }
 
-    public async Task<IEnumerable<ItemAvailabilityResponse>> GetItemAvailabilities(string branchId) {
+    public async Task<IEnumerable<ItemAvailabilityResponse>> GetItemAvailabilities(string branchId)
+    {
         try
         {
             var itemAvailabilities = await _repository.GetAllItemAvailabilities(branchId);
@@ -98,5 +99,21 @@ public class ItemAvailabilityService
             throw new ArgumentException("Quantity cannot be negative", nameof(data.Quantity));
 
         await _repository.UpdateItemQuantity(data.ItemId, data.BranchId, data.Quantity);
+    }
+    
+    public async Task DecreaseItemQuantity(string itemId, string branchId, int quantity)
+    {
+        if (quantity <= 0)
+            throw new ArgumentException("Quantity must be greater than zero", nameof(quantity));
+
+        var itemAvailability = await _repository.GetItemAvailability(itemId, branchId);
+        if (itemAvailability == null)
+            throw new InvalidOperationException("Item availability record not found");
+
+        if (itemAvailability.AvailableQuantity < quantity)
+            throw new InvalidOperationException("Insufficient stock available");
+
+        itemAvailability.AvailableQuantity -= quantity;
+        await _repository.UpdateItemAvailability(itemAvailability);
     }
 }

@@ -180,26 +180,48 @@ public class OrderRepo : IOrderRepo
             .Where(o => o.BranchId == branchId && o.IsPaid == true)
             .ToListAsync();
     }
-public async Task<bool> CancelOrderAsync(string orderId)
-{
-    var order = await _db.Order
-        .FirstOrDefaultAsync(o => o.Id == orderId);
 
-    if (order == null)
+    public async Task<bool> CancelOrderAsync(string orderId)
     {
-        return false; 
-    }
+        var order = await _db.Order
+            .FirstOrDefaultAsync(o => o.Id == orderId);
 
-    if (order.Status == OrderStatus.Cancelled)
-    {
-        return false; 
-    }
+        if (order == null)
+        {
+            return false;
+        }
+
+        if (order.Status == OrderStatus.Cancelled)
+        {
+            return false;
+        }
         if (order.Status != OrderStatus.Queued)
-    {
-        return false; 
+        {
+            return false;
+        }
+
+        await SetOrderStatus(orderId, OrderStatus.Cancelled);
+        return true;
     }
 
-    await SetOrderStatus(orderId, OrderStatus.Cancelled);
-    return true;
-}
+    public async Task<IEnumerable<Order>> GetOrdersQueueByBranchId(string branchId)
+    {
+        try
+        {
+            return await _db.Order
+                .Where(o => o.BranchId == branchId && o.Status == OrderStatus.Pending)
+                .Include(o => o.Payment)
+                .Include(o => o.Customer)
+                .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
+                .OrderByDescending(o => o.OrderDate)
+                .OrderByDescending(o => o.OrderTime)
+                .AsSplitQuery()
+                .ToListAsync();
+
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error retrieving orders queue for branch {branchId}: {ex.Message}", ex);
+        }
+    }
 }

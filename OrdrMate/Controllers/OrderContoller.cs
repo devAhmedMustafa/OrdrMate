@@ -257,31 +257,26 @@ public class OrderController : ControllerBase
         }
     }
 
-    // [HttpGet("item_queues/{branchId}")]
-    // [Authorize(Roles = "BranchManager")]
-    // public async Task<ActionResult> GetItemQueues(string branchId)
-    // {
-    //     try
-    //     {
-    //         var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
-    //         if (!authorizationResult.Succeeded)
-    //         {
-    //             return Forbid("You do not have permission to view item queues for this branch.");
-    //         }
+    [HttpGet("branch-queue/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetBranchOrderQueue(string branchId)
+    {
+        try
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to view the order queue for this branch.");
+            }
 
-    //         var itemQueues = _orderManager.GetItemQueues(branchId);
-    //         if (itemQueues == null || itemQueues.Count == 0)
-    //         {
-    //             return NotFound($"No item queues found for branch {branchId}.");
-    //         }
-
-    //         return Ok(itemQueues);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         return StatusCode(500, $"An error occurred while retrieving item queues: {ex.Message}");
-    //     }
-    // }
+            var queueLength = await _orderService.GetOrdersQueueByBranchId(branchId);
+            return Ok(queueLength);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving the order queue length: {ex.Message}");
+        }
+    }
 
     [HttpPost("deliver_request")]
     [Authorize(Roles = "BranchManager")]

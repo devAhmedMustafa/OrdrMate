@@ -23,4 +23,5 @@ public interface IOrderRepo
     Task<IEnumerable<Order>> GetAllOrdersByBranchId(string branchId);
     Task<IEnumerable<Order>> GetUnpaidOrdersByBranchId(string branchId);
     Task<IEnumerable<Order>> GetPaidOrdersOfBranch(string branchId);
+    Task<IEnumerable<Order>> GetOrdersQueueByBranchId(string customerId);
 }
