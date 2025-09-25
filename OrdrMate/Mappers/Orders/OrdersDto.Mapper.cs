@@ -57,23 +57,26 @@ public static class OrdersDtoMapper
             CustomerId = orders.First().CustomerId,
             Customer = orders.First().Customer?.Username ?? "Unknown",
             OrderType = orders.First().OrderType.ToString(),
-            OrderItems = orders.First().OrderItems?.Select(oi => new OrderItemDto
-            {
-                ItemId = oi.ItemId,
-                Quantity = oi.Quantity,
-                Price = oi.Price,
-                Item = oi.Item != null ? new ItemDto
+            OrderItems = orders
+                .SelectMany(o => o.OrderItems ?? Enumerable.Empty<OrderItem>())
+                .Select(oi => new OrderItemDto
                 {
-                    Id = oi.Item.Id,
-                    Name = oi.Item.Name,
-                    Description = oi.Item.Description,
-                    Price = oi.Item.Price,
-                    Category = oi.Item.CategoryName,
-                    ImageUrl = oi.Item.ImageUrl,
-                    PreparationTime = oi.Item.PreperationTime,
-                    KitchenName = oi.Item.Kitchen?.Name ?? "Main",
-                } : null,
-            }).ToArray(),
+                    ItemId = oi.ItemId,
+                    Quantity = oi.Quantity,
+                    Price = oi.Price,
+                    Item = oi.Item != null ? new ItemDto
+                    {
+                        Id = oi.Item.Id,
+                        Name = oi.Item.Name,
+                        Description = oi.Item.Description,
+                        Price = oi.Item.Price,
+                        Category = oi.Item.CategoryName,
+                        ImageUrl = oi.Item.ImageUrl,
+                        PreparationTime = oi.Item.PreperationTime,
+                        KitchenName = oi.Item.Kitchen?.Name ?? "Main",
+                    } : null,
+                })
+                .ToArray(),
             PaymentMethod = orders.First().Payment?.PaymentMethod ?? "Unpaid",
             OrderDate = orders.First().OrderDate,
             OrderStatus = "Unified",
