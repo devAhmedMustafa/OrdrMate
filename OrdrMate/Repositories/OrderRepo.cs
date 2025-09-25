@@ -163,9 +163,13 @@ public class OrderRepo : IOrderRepo
     public async Task<IEnumerable<Order>> GetUnpaidOrdersByBranchId(string branchId)
     {
         return await _db.Order
+            .OrderByDescending(o => o.OrderDate)
+            .OrderByDescending(o => o.OrderTime)
             .Where(o => o.BranchId == branchId && o.IsPaid == false)
             .Include(o => o.Payment)
             .Include(o => o.Customer)
+            .Include(o => o.TableReservation)
+            .Include(o => o.Takeaway)
             .ToListAsync();
     }
 
@@ -173,8 +177,11 @@ public class OrderRepo : IOrderRepo
     {
         return await _db.Order
             .OrderByDescending(o => o.OrderDate)
-            .Where(o => o.BranchId == branchId)
+            .OrderByDescending(o => o.OrderTime)
+            .Where(o => o.BranchId == branchId) 
             .Include(o => o.Customer)
+            .Include(o => o.TableReservation)
+            .Include(o => o.Takeaway)
             .ToListAsync();
     }
 
