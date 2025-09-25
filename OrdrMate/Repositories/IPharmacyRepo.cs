@@ -10,8 +10,8 @@ public interface IPharmacyRepo
 
     Task<Pharmacy?> GetPharmacyByManagerId(string managerId);
     Task<IEnumerable<Pharmacy>> GetAllPharmacies();
-    Task<IEnumerable<Category>> GetPharmacyCategories(string pharmacyId);
-    Task<IEnumerable<Category>> GetPharmacyMainCategories(string pharmacyId);
+    Task<IEnumerable<string>> GetPharmacyCategories(string pharmacyId);
+    Task<IEnumerable<string>> GetPharmacyMainCategories(string pharmacyId);
     Task<PharmacyProfile?> GetPharmacyProfile(string pharmacyId);
     Task<PharmacyProfile?> UpdatePharmacyProfile(string pharmacyId, PharmacyProfile profile);
 }

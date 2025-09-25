@@ -137,7 +137,7 @@ public class PharmacyService(IPharmacyRepo r, IUserRepo m)
             var categories = await _repo.GetPharmacyCategories(pharmacyId);
             return [.. categories.Select(c => new CategoryDto
             {
-                Name = c.Name,
+                Name = c,
             })];
         }
         catch (Exception e)
@@ -212,7 +212,7 @@ public class PharmacyService(IPharmacyRepo r, IUserRepo m)
             var categories = await _repo.GetPharmacyMainCategories(pharmacyId);
             return [.. categories.Select(c => new CategoryDto
             {
-                Name = c.Name,
+                Name = c,
             })];
         }
         catch (Exception e)

@@ -19,75 +19,6 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
             throw new Exception("Pharmacy not found");
         }
 
-
-        // Create a category if it doesn't exist
-        var category = await _context.Category
-            .FirstOrDefaultAsync(c => c.Name == item.CategoryName && c.PharmacyId == item.PharmacyId);
-
-        if (category == null)
-        {
-            try
-            {
-                category = new Category
-                {
-                    Name = item.CategoryName,
-                    PharmacyId = item.PharmacyId
-                };
-                // Add the new category to the database
-                await _context.Category.AddAsync(category);
-
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Error creating category: {ex.Message}");
-                throw new Exception("Failed to create category");
-            }
-        }
-        else
-        {
-            Console.WriteLine("----------------------------------------");
-            Console.WriteLine($"Category {item.CategoryName} already exists for Pharmacy {Pharmacy.Name}");
-            Console.WriteLine("----------------------------------------");
-
-        }
-
-        if (item.SubCategoryName != null)
-        {
-            var subCategory = await _context.Category
-                .FirstOrDefaultAsync(c => c.Name == item.SubCategoryName && c.PharmacyId == item.PharmacyId && c.Parent == item.CategoryName);
-
-            if (subCategory == null)
-            {
-                try
-                {
-                    subCategory = new Category
-                    {
-                        Name = item.SubCategoryName,
-                        PharmacyId = item.PharmacyId,
-                        Parent = item.CategoryName
-                    };
-                    // Add the new sub-category to the database
-                    await _context.Category.AddAsync(subCategory);
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine($"Error creating sub-category: {ex.Message}");
-                    throw new Exception("Failed to create sub-category");
-                }
-            }
-            else
-            {
-                Console.WriteLine("----------------------------------------");
-                Console.WriteLine($"Sub-Category {item.SubCategoryName} already exists for Pharmacy {Pharmacy.Name}");
-                Console.WriteLine("----------------------------------------");
-
-            }
-        }
-        else
-        {
-            item.SubCategoryName = item.CategoryName;
-        }
-
         await _context.Item.AddAsync(item);
         await _context.SaveChangesAsync();
         return item;
@@ -125,7 +56,7 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
         existingItem.Description = item.Description;
         existingItem.ImageUrl = item.ImageUrl;
         existingItem.Price = item.Price;
-        existingItem.CategoryName = item.CategoryName;
+        existingItem.Category = item.Category;
         existingItem.Priority = item.Priority;
         existingItem.Tags = item.Tags;
 
@@ -170,7 +101,7 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
     public async Task<IEnumerable<Item>> GetItemsByCategory(string pharmacyId, string category)
     {
         return await _context.Item
-            .Where(i => i.PharmacyId == pharmacyId && i.CategoryName == category)
+            .Where(i => i.PharmacyId == pharmacyId && i.Category == category)
             .ToListAsync();
     }
 }

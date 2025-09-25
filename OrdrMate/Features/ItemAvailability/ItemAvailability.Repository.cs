@@ -32,8 +32,6 @@ public class ItemAvailabilityRepository
     public async Task<List<ItemAvailability>> GetAllItemAvailabilities(string branchId)
     {
         var itemAvailabilities = await _db.ItemAvailabilities
-            .Include(i => i.Item)
-            .OrderByDescending(i => i.Item!.Priority)
             .Where(ia => ia.BranchId == branchId)
             .ToListAsync();
 

@@ -54,49 +54,26 @@ public class PharmacyRepo(OrdrMateDbContext c) : IPharmacyRepo
         return await _db.Pharmacy.Include(r => r.Profile).ToListAsync();
     }
 
-    public async Task<IEnumerable<Category>> GetPharmacyCategories(string PharmacyId)
+    public async Task<IEnumerable<string>> GetPharmacyCategories(string PharmacyId)
     {
-        var Pharmacy = await _db.Pharmacy
-            .Include(r => r.Categories)
-            .FirstOrDefaultAsync(r => r.Id == PharmacyId);
+        var categories = await _db.Item
+            .Where(i => i.PharmacyId == PharmacyId)
+            .Select(i => i.Category)
+            .Distinct()
+            .ToListAsync();
 
-        if (Pharmacy == null)
-        {
-            throw new InvalidOperationException($"Pharmacy with id {PharmacyId} does not exist.");
-        }
-
-        if (Pharmacy.Categories == null)
-        {
-            return [];
-        }
-
-        return [.. Pharmacy.Categories.Select(c => new Category
-        {
-            Name = c.Name,
-            PharmacyId = c.PharmacyId
-        })];
+        return categories;
     }
 
-    public async Task<IEnumerable<Category>> GetPharmacyMainCategories(string PharmacyId)
+    public async Task<IEnumerable<string>> GetPharmacyMainCategories(string PharmacyId)
     {
-        var Pharmacy = await _db.Pharmacy
-            .Include(r => r.Categories)
-            .FirstOrDefaultAsync(r => r.Id == PharmacyId);
+        var categories = await _db.Item
+            .Where(i => i.PharmacyId == PharmacyId)
+            .Select(i => i.Category)
+            .Distinct()
+            .ToListAsync();
 
-        if (Pharmacy == null)
-        {
-            throw new InvalidOperationException($"Pharmacy with id {PharmacyId} does not exist.");
-        }
-
-        if (Pharmacy.Categories == null)
-        {
-            return [];
-        }
-
-        var mainCategories = Pharmacy.Categories
-            .Where(c => c.Parent == null);
-
-        return mainCategories;
+        return categories;
     }
 
     public async Task<PharmacyProfile?> GetPharmacyProfile(string PharmacyId)

@@ -42,7 +42,8 @@ public class ItemAvailabilityService
             Description = ia.Item.Description,
             ImageUrl = ia.Item.ImageUrl,
             Price = ia.Item.Price,
-            Category = ia.Item.CategoryName,
+            Category = ia.Item.Category,
+            SubCategory = ia.Item.SubCategory,
             IsAvailable = ia.IsAvailable,
             Priority = ia.Item.Priority,
             Tags = ia.Item.Tags,
@@ -69,6 +70,25 @@ public class ItemAvailabilityService
         }
 
         return instance.IsAvailable;
+    }
+
+    public async Task<IEnumerable<ItemAvailabilityResponse>> GetItemAvailabilities(string branchId) {
+        try
+        {
+            var itemAvailabilities = await _repository.GetAllItemAvailabilities(branchId);
+            return itemAvailabilities.Select(ia => new ItemAvailabilityResponse
+            {
+                ItemId = ia.ItemId,
+                BranchId = ia.BranchId,
+                IsAvailable = ia.IsAvailable,
+                Stock = ia.AvailableQuantity
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while fetching item availabilities: {ex.Message}");
+            throw; // Re-throw the exception after logging it
+        }
     }
 
     public async Task UpdateItemQuantity(UpdateItemQuantityDto data)

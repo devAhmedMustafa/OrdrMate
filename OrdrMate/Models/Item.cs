@@ -9,11 +9,9 @@ public class Item
     public required decimal Price { get; set; }
     public int Priority { get; set; } = 0;
     public string Tags { get; set; } = string.Empty;
-    public required string CategoryName { get; set; }
-    public string? SubCategoryName { get; set; }
+    public required string Category { get; set; }
+    public string? SubCategory { get; set; }
     public required string PharmacyId { get; set; }
     public required string Brand { get; set; }
-    public Category? Category { get; set; }
     public Pharmacy? Pharmacy { get; set; }
-    public List<ItemCustomization>? Customizations { get; set; }
 }

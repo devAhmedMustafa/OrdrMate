@@ -21,8 +21,8 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
                 Description = item.Description,
                 ImageUrl = item.ImageUrl,
                 Price = item.Price,
-                CategoryName = item.Category,
-                SubCategoryName = item.SubCategory,
+                Category = item.Category,
+                SubCategory = item.SubCategory,
                 PharmacyId = item.PharmacyId,
                 Brand = item.Brand,
                 Priority = item.Priority,
@@ -46,8 +46,8 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
                 Description = addedItem.Description,
                 ImageUrl = addedItem.ImageUrl,
                 Price = addedItem.Price,
-                Category = addedItem.CategoryName,
-                SubCategory = addedItem.SubCategoryName,
+                Category = addedItem.Category,
+                SubCategory = addedItem.SubCategory,
                 Brand = addedItem.Brand,
                 Priority = addedItem.Priority,
                 Tags = addedItem.Tags
@@ -76,7 +76,8 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             Description = item.Description,
             ImageUrl = item.ImageUrl,
             Price = item.Price,
-            Category = item.CategoryName,
+            Category = item.Category,
+            SubCategory = item.SubCategory,
             Brand = item.Brand,
             Priority = item.Priority,
             Tags = item.Tags
@@ -99,8 +100,8 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             Description = item.Description,
             ImageUrl = item.ImageUrl,
             Price = item.Price,
-            Category = item.CategoryName,
-            SubCategory = item.SubCategoryName,
+            Category = item.Category,
+            SubCategory = item.SubCategory,
             Priority = item.Priority,
             Tags = item.Tags,
             Brand = item.Brand
@@ -124,7 +125,9 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
         if (updatedItem.Price is not null)
             existingItem.Price = updatedItem.Price.Value;
         if (updatedItem.Category is not null)
-            existingItem.CategoryName = updatedItem.Category;
+            existingItem.Category = updatedItem.Category;
+        if (updatedItem.SubCategory is not null)
+            existingItem.SubCategory = updatedItem.SubCategory;
         if (updatedItem.Priority is not null)
             existingItem.Priority = updatedItem.Priority.Value;
         if (updatedItem.Tags is not null)
@@ -148,7 +151,8 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             Description = updated.Description,
             ImageUrl = updated.ImageUrl,
             Price = updated.Price,
-            Category = updated.CategoryName,
+            Category = updated.Category,
+            SubCategory = updated.SubCategory,
             Brand = updated.Brand,
             Priority = updated.Priority,
             Tags = updated.Tags
@@ -194,8 +198,8 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             Description = item.Description,
             ImageUrl = item.ImageUrl,
             Price = item.Price,
-            Category = item.CategoryName,
-            SubCategory = item.SubCategoryName,
+            Category = item.Category,
+            SubCategory = item.SubCategory,
             Priority = item.Priority,
             Tags = item.Tags,
             Brand = item.Brand

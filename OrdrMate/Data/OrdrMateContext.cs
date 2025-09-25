@@ -14,8 +14,7 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<PharmacyProfile> PharmacyProfile => Set<PharmacyProfile>();
     public DbSet<Item> Item => Set<Item>();
     public DbSet<ItemAvailability> ItemAvailabilities => Set<ItemAvailability>();
-    public DbSet<ItemCustomization> ItemCustomizations => Set<ItemCustomization>();
-    public DbSet<Category> Category => Set<Category>();
+    // public DbSet<ItemCustomization> ItemCustomizations => Set<ItemCustomization>();
     public DbSet<Branch> Branch => Set<Branch>();
     public DbSet<BranchRequest> BranchRequest => Set<BranchRequest>();
     public DbSet<Order> Order => Set<Order>();
@@ -62,30 +61,10 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .HasForeignKey<PharmacyProfile>(rp => rp.PharmacyId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Category
-
-        modelBuilder.Entity<Category>().HasIndex(c => new { c.Name, c.PharmacyId }).IsUnique();
-        modelBuilder.Entity<Category>().HasKey(c => new { c.Name, c.PharmacyId });
-        modelBuilder.Entity<Category>()
-            .HasOne(c => c.Pharmacy)
-            .WithMany(r => r.Categories)
-            .HasForeignKey(c => c.PharmacyId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<Category>()
-            .HasOne(c => c.ParentCategory)
-            .WithMany(c => c.Subcategories)
-            .HasForeignKey(c => new { c.Parent, c.PharmacyId })
-            .OnDelete(DeleteBehavior.Restrict);
-
         // Item
 
         modelBuilder.Entity<Item>().HasKey(i => i.Id);
-        modelBuilder.Entity<Item>().HasIndex(i => new { i.Name, i.CategoryName, i.PharmacyId }).IsUnique();
-        modelBuilder.Entity<Item>()
-            .HasOne(i => i.Category)
-            .WithMany(c => c.Items)
-            .HasForeignKey(i => new { i.CategoryName, i.PharmacyId });
+        modelBuilder.Entity<Item>().HasIndex(i => new { i.Name, i.Category, i.SubCategory, i.PharmacyId }).IsUnique();
 
         modelBuilder.Entity<Item>()
             .HasOne(i => i.Pharmacy)
@@ -191,12 +170,12 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
 
         // Item Customization
 
-        modelBuilder.Entity<ItemCustomization>().HasKey(ic => new { ic.ItemId, ic.CategoryId });
-        modelBuilder.Entity<ItemCustomization>()
-            .HasOne(ic => ic.Item)
-            .WithMany(i => i.Customizations)
-            .HasForeignKey(ic => ic.ItemId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // modelBuilder.Entity<ItemCustomization>().HasKey(ic => new { ic.ItemId, ic.CategoryId });
+        // modelBuilder.Entity<ItemCustomization>()
+        //     .HasOne(ic => ic.Item)
+        //     .WithMany(i => i.Customizations)
+        //     .HasForeignKey(ic => ic.ItemId)
+        //     .OnDelete(DeleteBehavior.Cascade);
 
         // Delivery
         modelBuilder.Entity<Delivery>().HasKey(d => d.OrderId);
