@@ -51,5 +51,36 @@ public class UserCustomizationController : ControllerBase
             return StatusCode(500, $"An error occurred while processing your request: {ex.Message}");
         }
     }
+
+    [HttpGet("reservation/{reservationId}")]
+    public async Task<ActionResult<OrderItemsCustomizationResponseDto>> GetReservationCustomizations(string reservationId)
+    {
+        try
+        {
+            var result = await _service.GetReservationCustomizations(reservationId);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
+
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InternalServerException ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while processing your request: {ex.Message}");
+        }
+    }
     
 }
