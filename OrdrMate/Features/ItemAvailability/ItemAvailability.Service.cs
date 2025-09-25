@@ -87,7 +87,7 @@ public class ItemAvailabilityService
         catch (Exception ex)
         {
             Console.WriteLine($"An error occurred while fetching item availabilities: {ex.Message}");
-            throw; // Re-throw the exception after logging it
+            throw;
         }
     }
 

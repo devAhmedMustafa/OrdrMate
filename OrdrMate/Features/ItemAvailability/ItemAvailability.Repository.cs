@@ -29,13 +29,21 @@ public class ItemAvailabilityRepository
         return await _db.ItemAvailabilities.FirstOrDefaultAsync(ia => ia.ItemId == itemId && ia.BranchId == branchId);
     }
 
-    public async Task<List<ItemAvailability>> GetAllItemAvailabilities(string branchId)
+    public async Task<IEnumerable<ItemAvailability>> GetAllItemAvailabilities(string branchId)
     {
-        var itemAvailabilities = await _db.ItemAvailabilities
-            .Where(ia => ia.BranchId == branchId)
-            .ToListAsync();
+        try
+        {
+            var itemAvailabilities = await _db.ItemAvailabilities
+                .Where(ia => ia.BranchId == branchId)
+                .ToListAsync();
 
-        return itemAvailabilities;
+            return itemAvailabilities;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while fetching item availabilities: {ex.Message}");
+            throw;
+        }
     }
 
     public async Task<ItemAvailability> UpdateItemAvailability(ItemAvailability itemAvailability)

@@ -20,11 +20,18 @@ public class ItemAvailabilityController : ControllerBase
     }
 
     [HttpGet("get-availability-items/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
     public async Task<ActionResult<IEnumerable<ItemAvailabilityResponse>>> GetAllItemAvailabilities(string branchId)
     {
         try
         {
-            var items = await _itemAvailabilityService.GetAllItemAvailabilities(branchId);
+            var isAuthorized = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+            if (!isAuthorized.Succeeded)
+            {
+                return Forbid();
+            }
+
+            var items = await _itemAvailabilityService.GetItemAvailabilities(branchId);
             return Ok(items);
         }
         catch (Exception ex)
