@@ -14,13 +14,17 @@ public class TableService
 {
     private readonly ITableRepo _tableRepo;
     private readonly TableManager _tableManager;
+    private readonly OrderManager _orderManager;
     private readonly FreezeTableService _freezeTableService;
 
-    public TableService(ITableRepo tableRepo, TableManager tableManager, FreezeTableService freezeTableService)
+    public TableService(
+        ITableRepo tableRepo,
+    TableManager tableManager, FreezeTableService freezeTableService, OrderManager orderManager)
     {
         _tableRepo = tableRepo;
         _tableManager = tableManager;
         _freezeTableService = freezeTableService;
+        _orderManager = orderManager;
     }
 
     public async Task<IEnumerable<TableDto>> GetAllTablesOfBranch(string branchId)
@@ -166,6 +170,35 @@ public class TableService
         catch (Exception ex)
         {
             throw new InternalServerException($"Failed to get order by reservation ID: {ex.Message}");
+        }
+    }
+
+    public async Task SetOrderReadyByReservationId(string reservationId)
+    {
+        try
+        {
+            var orders = await _tableRepo.GetTableOrdersByReservationId(reservationId);
+            if (orders == null || !orders.Any())
+            {
+                throw new NotFoundException("No orders found for the given reservation ID");
+            }
+
+            foreach (var order in orders)
+            {
+                if (order.Status >= Enums.OrderStatus.Ready)
+                {
+                    continue; // Skip if already ready or completed
+                }
+                await _orderManager.SetOrderReady(order.Id);
+            }
+        }
+        catch (OException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"Failed to set order ready by reservation ID: {ex.Message}");
         }
     }
 }
