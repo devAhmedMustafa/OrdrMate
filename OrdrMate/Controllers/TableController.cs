@@ -132,4 +132,18 @@ public class TableController : ControllerBase
             return StatusCode(500, new { err = ex.Message });
         }
     }
+
+    [HttpPut("orders/set-ready/{reservationId}")]
+    public async Task<IActionResult> SetOrderReadyByReservationId(string reservationId)
+    {
+        try
+        {
+            await _tableService.SetOrderReadyByReservationId(reservationId);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { err = ex.Message });
+        }
+    }
 }
