@@ -27,6 +27,6 @@ public class OrderModule : IModule
                 policy.Requirements.Add(new OrderBranchAccessRequirement()));
         });
 
-        services.AddScoped<OrderBranchAccessHandler>();
+        services.AddScoped<IAuthorizationHandler, OrderBranchAccessHandler>();
     }
 }
