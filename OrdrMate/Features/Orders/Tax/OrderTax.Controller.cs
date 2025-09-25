@@ -63,4 +63,22 @@ public class OrderTaxController : ControllerBase
             return StatusCode(500, new { message = "An error occurred while retrieving the order tax.", details = ex.Message });
         }
     }
+
+    [HttpGet("get-by-branch/{branchId}")]
+    public async Task<IActionResult> GetOrderTaxByBranch(string branchId)
+    {
+        try
+        {
+            var tax = await _orderTaxService.GetOrderTaxByBranch(branchId);
+            return Ok(new { tax });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while retrieving the order tax.", details = ex.Message });
+        }
+    }
 }
