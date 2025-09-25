@@ -136,7 +136,7 @@ public class UserCustomizationService
 
             foreach (var order in orders)
             {
-                var customizations = await _repo.GetOrderCustomizationsAsync(reservationId);
+                var customizations = await _repo.GetOrderCustomizationsAsync(order.Id);
                 if (customizations == null || !customizations.Any())
                 {
                     throw new NotFoundException($"No orders found for reservation ID {reservationId}.");
