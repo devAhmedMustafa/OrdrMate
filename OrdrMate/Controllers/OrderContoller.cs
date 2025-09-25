@@ -426,4 +426,27 @@ public class OrderController : ControllerBase
         return Ok(new { message = "Order cancelled successfully." });
     }
 
+
+    [HttpPut("confirm-pending/{orderId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<IActionResult> ConfirmPendingOrder(string orderId)
+    {
+        try
+        {
+            var authResult = await _authorizationService.AuthorizeAsync(User, orderId, "OrderBranchAccess");
+            if (!authResult.Succeeded)
+            {
+                return Forbid("You do not have permission to confirm this order.");
+            }
+
+            var result = await _orderService.ConfirmPendingOrder(orderId);
+
+            return Ok(new { message = "Order confirmed successfully." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while confirming the pending order: {ex.Message}");
+        }
+    }
+
 }

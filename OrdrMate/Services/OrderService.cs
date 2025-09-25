@@ -688,6 +688,40 @@ public class OrderService
         }
     }
 
+    public async Task<OrderDto> ConfirmPendingOrder(string orderId)
+    {
+        var order = await _orderRepo.GetOrderById(orderId) ?? throw new KeyNotFoundException($"Order with id {orderId} not found.");
+
+        if (order.Status != OrderStatus.Pending)
+        {
+            throw new InvalidOperationException($"Order with id {orderId} is not in a valid state for confirmation.");
+        }
+
+        var newStatus = order.OrderType switch
+        {
+            OrderType.Takeaway => OrderStatus.Ready,
+            OrderType.Delivery => OrderStatus.Queued,
+            _ => throw new NotImplementedException($"Order type {order.OrderType} is not implemented yet."),
+        };
+
+        order = await _orderRepo.SetOrderStatus(orderId, newStatus) ?? throw new InvalidOperationException($"Failed to confirm order with id {orderId}.");
+
+        return new OrderDto
+        {
+            OrderId = order.Id,
+            PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
+            Customer = order.Customer?.Username ?? "Unknown Customer",
+            OrderType = order.OrderType.ToString(),
+            PaymentMethod = order.Payment?.PaymentMethod ?? "Unknown",
+            OrderDate = order.OrderDate,
+            OrderStatus = order.Status.ToString(),
+            TotalAmount = order.TotalAmount,
+            BranchId = order.BranchId,
+            IsPaid = order.IsPaid,
+            CustomerId = order.CustomerId,
+        };
+    }
+
 }
 
 public class IntentResponse

@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using OrdrMate.Core;
+using OrdrMate.Middlewares;
 using OrdrMate.Repositories;
 using OrdrMate.Services;
 
@@ -18,5 +20,13 @@ public class OrderModule : IModule
         services.AddScoped<IDeliverRequestRepo, DeliverRequestRepo>();
         services.AddScoped<IPaymentRepo, PaymentRepo>();
         services.AddScoped<PaymentService, PaymentService>();
+
+        services.Configure<AuthorizationOptions>(options =>
+        {
+            options.AddPolicy("OrderBranchAccess", policy =>
+                policy.Requirements.Add(new OrderBranchAccessRequirement()));
+        });
+
+        services.AddScoped<OrderBranchAccessHandler>();
     }
 }
