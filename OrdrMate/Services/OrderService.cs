@@ -200,7 +200,6 @@ public class OrderService
 
                 var takeaway = await PlaceTakeawayOrder(order);
                 orderDto.OrderNumber = takeaway.OrderNumber;
-                await _orderRepo.SetOrderStatus(order.Id, OrderStatus.Ready);
                 OrderEvents.OnOrderPlaced(order.BranchId, orderItems);
                 break;
 
