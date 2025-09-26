@@ -134,12 +134,34 @@ public class TableController : ControllerBase
     }
 
     [HttpPut("order/set-ready/{reservationId}")]
+    [Authorize(Roles = "BranchManager")]
     public async Task<IActionResult> SetOrderReadyByReservationId(string reservationId)
     {
         try
         {
+            var authResult = await _authorizationService.AuthorizeAsync(User, reservationId, "ManageOrderPolicy");
+            if (!authResult.Succeeded)
+            {
+                return Forbid();
+            }
+
             await _tableService.SetOrderReadyByReservationId(reservationId);
             return Ok();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { err = ex.Message });
+        }
+    }
+
+    [HttpPut("order/pay/{reservationId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<OrderDto>> PayOrderByReservationId(string reservationId)
+    {
+        try
+        {
+            var order = await _tableService.PayOrderByReservationId(reservationId);
+            return Ok(order);
         }
         catch (Exception ex)
         {
