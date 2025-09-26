@@ -9,6 +9,7 @@ public class OrderDto
     public required string OrderType { get; set; }
     public OrderItemDto[]? OrderItems { get; set; }
     public required string PaymentMethod { get; set; }
+    public string? PaymentProvider { get; set; }
     public required DateTime OrderDate { get; set; }
     public required string OrderStatus { get; set; }
     public string? PaymentRedirectUrl { get; set; }

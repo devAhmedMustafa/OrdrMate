@@ -35,6 +35,7 @@ public static class OrdersDtoMapper
                 } : null,
             }).ToArray(),
             PaymentMethod = order.Payment?.PaymentMethod ?? "Unpaid",
+            PaymentProvider = order.Payment?.Provider ?? "Unpaid",
             OrderDate = order.OrderDate,
             OrderStatus = order.Status.ToString(),
             TotalAmount = order.TotalAmount,
@@ -78,6 +79,7 @@ public static class OrdersDtoMapper
                 })
                 .ToArray(),
             PaymentMethod = orders.First().Payment?.PaymentMethod ?? "Unpaid",
+            PaymentProvider = orders.First().Payment?.Provider ?? "Unpaid",
             OrderDate = orders.First().OrderDate,
             OrderStatus = orders.Select(o =>
             {
