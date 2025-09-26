@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OrdrMate.Features.ItemAvailability;
 using OrdrMate.Features.Preport;
+using OrdrMate.Features.Shifts;
 using OrdrMate.Models;
 
 namespace OrdrMate.Data;
@@ -29,7 +30,7 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<OrderIntent> OrderIntent => Set<OrderIntent>();
     public DbSet<DeliverRequest> DeliverRequest => Set<DeliverRequest>();
     public DbSet<PickupReport> PickupReports { get; set; }
-
+    public DbSet<BranchShift> BranchShifts { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
