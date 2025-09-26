@@ -133,7 +133,7 @@ public class TableController : ControllerBase
         }
     }
 
-    [HttpPut("orders/set-ready/{reservationId}")]
+    [HttpPut("order/set-ready/{reservationId}")]
     public async Task<IActionResult> SetOrderReadyByReservationId(string reservationId)
     {
         try

@@ -79,7 +79,11 @@ public static class OrdersDtoMapper
                 .ToArray(),
             PaymentMethod = orders.First().Payment?.PaymentMethod ?? "Unpaid",
             OrderDate = orders.First().OrderDate,
-            OrderStatus = "Unified",
+            OrderStatus = orders.Select(o =>
+            {
+                if (o.Status == Enums.OrderStatus.Cancelled) return Enums.OrderStatus.Ready;
+                return o.Status;
+            }).Min().ToString(),
             TotalAmount = orders.Sum(o => o.TotalAmount),
             BranchId = orders.First().BranchId,
             IsPaid = orders.First().IsPaid,

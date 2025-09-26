@@ -145,7 +145,7 @@ public class ItemController : ControllerBase
         try
         {
             var items = await _service.GetAvailableItems(branchId);
-            if (items == null || !items.Any())
+            if (items == null)
             {
                 return NotFound($"No items found for branch with ID {branchId}.");
             }

@@ -185,10 +185,11 @@ public class TableService
 
             foreach (var order in orders)
             {
-                if (order.Status >= Enums.OrderStatus.Ready)
+                if (order.Status >= Enums.OrderStatus.Ready || order.Status == Enums.OrderStatus.Cancelled)
                 {
-                    continue; // Skip if already ready or completed
+                    continue;
                 }
+
                 await _orderManager.SetOrderReady(order.Id);
             }
         }
