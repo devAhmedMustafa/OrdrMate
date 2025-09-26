@@ -465,23 +465,7 @@ public class OrderService
             return [];
         }
 
-        return orders.Select(o => new OrderDto
-        {
-            OrderId = o.Id,
-            RestaurantName = o.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
-            Customer = o.Customer?.Username ?? "Unknown Customer",
-            OrderType = o.OrderType.ToString(),
-            PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
-            PaymentProvider = o.Payment?.Provider ?? "Unknown",
-            OrderDate = o.OrderDate,
-            OrderStatus = o.Status.ToString(),
-            TotalAmount = o.TotalAmount,
-            BranchId = o.BranchId,
-            IsPaid = o.IsPaid,
-            CustomerId = o.CustomerId,
-            TableNumber = o.TableReservation?.TableNumber ?? null,
-            OrderNumber = o.Takeaway?.OrderNumber ?? null
-        });
+        return orders.Select(OrdersDtoMapper.ToDto);
     }
 
     public async Task<OrderInvoiceDto?> PickOrder(string orderId)

@@ -178,7 +178,8 @@ public class OrderRepo : IOrderRepo
         return await _db.Order
             .OrderByDescending(o => o.OrderDate)
             .OrderByDescending(o => o.OrderTime)
-            .Where(o => o.BranchId == branchId) 
+            .Where(o => o.BranchId == branchId)
+            .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
             .Include(o => o.Customer)
             .Include(o => o.TableReservation)
             .Include(o => o.Takeaway)
