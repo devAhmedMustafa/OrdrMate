@@ -86,7 +86,7 @@ public static class OrdersDtoMapper
             }).Min().ToString(),
             TotalAmount = orders.Sum(o => o.TotalAmount),
             BranchId = orders.First().BranchId,
-            IsPaid = orders.First().IsPaid,
+            IsPaid = orders.All(o => o.IsPaid),
             TableNumber = orders.First().TableReservation?.TableNumber
         };
     }
