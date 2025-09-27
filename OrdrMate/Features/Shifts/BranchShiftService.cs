@@ -3,6 +3,7 @@ using OrdrMate.Models;
 using OrdrMate.Utils.Exceptions;
 using OrdrMate.DTOs.Order;
 using OrdrMate.Mappers.Orders;
+using Microsoft.AspNetCore.Http.HttpResults;
 namespace OrdrMate.Features.Shifts
 {
     public class BranchShiftService
@@ -68,6 +69,28 @@ namespace OrdrMate.Features.Shifts
             catch (Exception ex)
             {
                 throw new InternalServerException($"An error occurred while ending the shift: {ex.Message}");
+            }
+        }
+
+        public async Task<BranchShift> GetCurrentShiftStatusAsync(string branchId)
+        {
+            try
+            {
+                var shift = await _branchShiftRepo.GetCurrentShiftByBranchId(branchId);
+                if (shift == null)
+                {
+                    throw new NotFoundException("No ongoing shift found for the branch.");
+                }
+
+                return shift;
+            }
+            catch (OException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new InternalServerException($"An error occurred while retrieving the shift status: {ex.Message}");
             }
         }
 
