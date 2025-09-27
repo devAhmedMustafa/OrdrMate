@@ -1,6 +1,8 @@
 using OrdrMate.Repositories;
 using OrdrMate.Models;
 using OrdrMate.Utils.Exceptions;
+using OrdrMate.DTOs.Order;
+using OrdrMate.Mappers.Orders;
 namespace OrdrMate.Features.Shifts
 {
     public class BranchShiftService
@@ -69,9 +71,28 @@ namespace OrdrMate.Features.Shifts
             }
         }
 
-        public async Task<IEnumerable<Order>> GetOrdersForShift(int shiftId)
+        public async Task<IEnumerable<OrderDto>> GetOrdersForShift(string shiftId)
         {
-            return await _orderRepo.GetOrdersByShiftId(shiftId);
+            try
+            {
+                var shift = await _branchShiftRepo.GetById(shiftId);
+
+                if (shift == null)
+                {
+                    throw new NotFoundException("Shift not found.");
+                }
+
+                var orders = await _orderRepo.GetOrdersWithinShift(shift.BranchId, shift.ShiftStartTime, shift.ShiftEndTime ?? DateTime.UtcNow);
+                return orders.Select(OrdersDtoMapper.ToDto);
+            }
+            catch (OException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new InternalServerException($"An error occurred while retrieving orders for the shift: {ex.Message}");
+            }
         }
     }
 }

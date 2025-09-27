@@ -26,6 +26,18 @@ namespace OrdrMate.Features.Shifts
             }
         }
 
+        public async Task<BranchShift?> GetById(string shiftId)
+        {
+            try
+            {
+                return await _context.BranchShifts.FindAsync(shiftId);
+            }
+            catch (Exception ex)
+            {
+                throw new InternalServerException($"Error retrieving shift: {ex.Message}");
+            }
+        }
+
         public async Task<BranchShift> UpdateShift(BranchShift shift)
         {
             var entry = _context.BranchShifts.Update(shift);

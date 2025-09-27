@@ -48,7 +48,7 @@ public class BranchShiftController : ControllerBase
         }
     }
     [HttpGet("{shiftId}/orders")]
-    public async Task<ActionResult<IEnumerable<Order>>> GetOrdersForShift(int shiftId)
+    public async Task<ActionResult<IEnumerable<Order>>> GetOrdersForShift(string shiftId)
     {
         try
         {
