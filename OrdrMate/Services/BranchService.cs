@@ -251,6 +251,7 @@ public class BranchService(
                 Address = branch.Address,
                 Phone = branch.Phone,
                 RestaurantName = branch.Restaurant?.Name ?? "Unknown",
+                TaxRate = branch.Restaurant?.OrderTax ?? 0,
                 LogoUrl = logoUrl.IsSuccess ? logoUrl.Data?.FileUrl : null,
             };
         }
