@@ -35,6 +35,7 @@ public static class OrdersDtoMapper
                 } : null,
             }).ToArray(),
             PaymentMethod = order.Payment?.PaymentMethod ?? "Unpaid",
+            PaymentProvider = order.Payment?.Provider ?? "Unpaid",
             OrderDate = order.OrderDate,
             OrderStatus = order.Status.ToString(),
             TotalAmount = order.TotalAmount,
@@ -49,7 +50,6 @@ public static class OrdersDtoMapper
     {
         if (orders == null) throw new ArgumentNullException(nameof(orders));
 
-        var orderList = orders.Select(o => o.ToDto()).ToList();
         return new OrderDto
         {
             OrderId = orders.First().Id,
@@ -57,7 +57,7 @@ public static class OrdersDtoMapper
             CustomerId = orders.First().CustomerId,
             Customer = orders.First().Customer?.Username ?? "Unknown",
             OrderType = orders.First().OrderType.ToString(),
-            OrderItems = orders
+            OrderItems = [.. orders
                 .SelectMany(o => o.OrderItems ?? Enumerable.Empty<OrderItem>())
                 .Select(oi => new OrderItemDto
                 {
@@ -75,14 +75,18 @@ public static class OrdersDtoMapper
                         PreparationTime = oi.Item.PreperationTime,
                         KitchenName = oi.Item.Kitchen?.Name ?? "Main",
                     } : null,
-                })
-                .ToArray(),
+                })],
             PaymentMethod = orders.First().Payment?.PaymentMethod ?? "Unpaid",
+            PaymentProvider = orders.First().Payment?.Provider ?? "Unpaid",
             OrderDate = orders.First().OrderDate,
-            OrderStatus = "Unified",
+            OrderStatus = orders.Select(o =>
+            {
+                if (o.Status == Enums.OrderStatus.Cancelled) return Enums.OrderStatus.Ready;
+                return o.Status;
+            }).Min().ToString(),
             TotalAmount = orders.Sum(o => o.TotalAmount),
             BranchId = orders.First().BranchId,
-            IsPaid = orders.First().IsPaid,
+            IsPaid = orders.All(o => o.IsPaid),
             TableNumber = orders.First().TableReservation?.TableNumber
         };
     }

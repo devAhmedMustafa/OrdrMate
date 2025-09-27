@@ -5,6 +5,8 @@ using OrdrMate.Models;
 using OrdrMate.DTOs.Item;
 using OrdrMate.Features.ItemAvailability;
 using OrdrMate.Events;
+using Microsoft.AspNetCore.Http.HttpResults;
+using OrdrMate.Utils.Exceptions;
 
 public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailabilityService)
 {
@@ -56,7 +58,7 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
         }
     }
 
-    public async Task<ItemDto?> GetItem(string id)
+    public async Task<ItemDto?> GetItem(string id, string? branchId)
     {
         var item = await _itemRepo.GetItem(id);
 
@@ -65,7 +67,7 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             throw new Exception("Item not found");
         }
 
-        return new ItemDto
+        var itemResponse = new ItemDto
         {
             Id = item.Id,
             Name = item.Name,
@@ -77,8 +79,18 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             KitchenName = item.Kitchen?.Name ?? string.Empty,
             KitchenId = item.Kitchen?.Id,
             Priority = item.Priority,
-            Tags = item.Tags
+            Tags = item.Tags,
         };
+
+        if (branchId == null)
+        {
+            itemResponse.IsAvailable = true;
+        }
+        else {
+            itemResponse.IsAvailable = await _itemAvailabilityService.IsItemAvailable(id, branchId);
+        }
+
+        return itemResponse;
     }
 
     public async Task<IEnumerable<Item>> GetAllItems()

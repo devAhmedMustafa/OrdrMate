@@ -24,6 +24,7 @@ public class OrderService
     private readonly PaymobService _paymobService;
     private readonly TableService _tableService;
     private readonly CloudMessaging _cloudMessaging;
+    private readonly OrderTaxService _orderTaxService;
     private readonly IBackgroundJobClient _backgroundJobs;
     private readonly ItemAvailabilityService _itemAvailabilityService;
     private readonly UserCustomizationService _userCustomizationService;
@@ -58,6 +59,7 @@ public class OrderService
         _itemAvailabilityService = itemAvailabilityService;
         _branchRepo = branchRepo;
         _tableRepo = tableRepo;
+        _orderTaxService = orderTaxService;
     }
 
     public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto, string? tableReservationId = null)
@@ -82,7 +84,7 @@ public class OrderService
             Amount = totalAmount,
             PaymentMethod = placeOrderDto.PaymentMethod,
             OrderType = placeOrderDto.OrderType,
-            PaymentProvider = placeOrderDto.PaymentMethod == "cash" ? "cash" : "paymob",
+            PaymentProvider = placeOrderDto.PaymentProvider ?? "cash",
             OrderItems = [.. placeOrderDto.Items],
             TableNumber = placeOrderDto.TableNumber,
             TableReservationId = tableReservationId,
@@ -90,14 +92,15 @@ public class OrderService
 
         var redirectUrl = string.Empty;
 
-        switch (intent.PaymentProvider.ToLower())
+        switch (intent.PaymentMethod.ToLower())
         {
             case "cash":
                 var order = await ConfirmOrder(intent);
                 intent.OrderId = order!.OrderId;
+                var payment = await ProcessPayment(intent, "CASH_PAYMENT");
                 break;
 
-            case "paymob":
+            case "card":
                 var intentResponse = await CreatePaymentSession(intent)
                     ?? throw new InvalidOperationException("Failed to create payment session with Paymob.");
 
@@ -172,6 +175,7 @@ public class OrderService
             Customer = order.Customer?.Username ?? "Unknown Customer",
             OrderType = orderIntent.OrderType.ToString(),
             PaymentMethod = orderIntent.PaymentMethod,
+            PaymentProvider = orderIntent.PaymentProvider,
             OrderDate = order.OrderDate,
             OrderStatus = order.Status.ToString(),
             TotalAmount = order.TotalAmount,
@@ -325,6 +329,7 @@ public class OrderService
             Customer = order.Customer?.Username ?? "Unknown Customer",
             OrderType = "",
             PaymentMethod = order.Payment?.PaymentMethod ?? "Unknown",
+            PaymentProvider = order.Payment?.Provider ?? "Unknown",
             OrderDate = order.OrderDate,
             OrderStatus = order.Status.ToString(),
             TotalAmount = order.TotalAmount,
@@ -411,6 +416,7 @@ public class OrderService
             Customer = o.Customer?.Username ?? "Unknown Customer",
             OrderType = o.OrderType.ToString(),
             PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
+            PaymentProvider = o.Payment?.Provider ?? "Unknown",
             OrderDate = o.OrderDate,
             OrderStatus = o.Status.ToString(),
             TotalAmount = o.TotalAmount,
@@ -437,6 +443,7 @@ public class OrderService
             Customer = o.Customer?.Username ?? "Unknown Customer",
             OrderType = o.OrderType.ToString(),
             PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
+            PaymentProvider = o.Payment?.Provider ?? "Unknown",
             OrderDate = o.OrderDate,
             OrderStatus = o.Status.ToString(),
             TotalAmount = o.TotalAmount,
@@ -452,28 +459,13 @@ public class OrderService
     {
         var orders = await _orderRepo.GetAllOrdersByBranchId(branchId);
 
-        if (orders == null || !orders.Any())
+        if (orders == null)
         {
             Console.WriteLine($"No orders found for branch with ID: {branchId}");
             return [];
         }
 
-        return orders.Select(o => new OrderDto
-        {
-            OrderId = o.Id,
-            RestaurantName = o.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
-            Customer = o.Customer?.Username ?? "Unknown Customer",
-            OrderType = o.OrderType.ToString(),
-            PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
-            OrderDate = o.OrderDate,
-            OrderStatus = o.Status.ToString(),
-            TotalAmount = o.TotalAmount,
-            BranchId = o.BranchId,
-            IsPaid = o.IsPaid,
-            CustomerId = o.CustomerId,
-            TableNumber = o.TableReservation?.TableNumber ?? null,
-            OrderNumber = o.Takeaway?.OrderNumber ?? null
-        });
+        return orders.Select(OrdersDtoMapper.ToDto);
     }
 
     public async Task<OrderInvoiceDto?> PickOrder(string orderId)
@@ -566,6 +558,7 @@ public class OrderService
             Customer = o.Customer?.Username ?? "Unknown Customer",
             OrderType = o.OrderType.ToString(),
             PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
+            PaymentProvider = o.Payment?.Provider ?? "Unknown",
             OrderDate = o.OrderDate,
             OrderStatus = o.Status.ToString(),
             TotalAmount = o.TotalAmount,
@@ -674,6 +667,7 @@ public class OrderService
             IsPaid = o.Order.IsPaid,
             OrderType = o.Order.OrderType.ToString(),
             PaymentMethod = o.Order.Payment?.PaymentMethod ?? "Unknown",
+            PaymentProvider = o.Order.Payment?.Provider ?? "Unknown",
             RestaurantName = o.Order.Branch?.Restaurant?.Name ?? "Unknown Restaurant",
             OrderNumber = o.OrderNumber
         });

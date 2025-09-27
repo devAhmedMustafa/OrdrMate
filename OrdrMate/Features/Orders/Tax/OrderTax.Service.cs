@@ -3,9 +3,10 @@ using OrdrMate.Services;
 
 namespace OrdrMate.Features.Orders.Tax;
 
-public class OrderTaxService(IRestaurantRepo restaurantRepo)
+public class OrderTaxService(IRestaurantRepo restaurantRepo, IBranchRepo branchRepo)
 {
     private readonly IRestaurantRepo _restaurantRepo = restaurantRepo;
+    private readonly IBranchRepo _branchRepo = branchRepo;
 
     public async Task UpdateOrderTax(string restaurantId, decimal newTax)
     {
@@ -17,7 +18,7 @@ public class OrderTaxService(IRestaurantRepo restaurantRepo)
 
         restaurant.OrderTax = newTax;
         await _restaurantRepo.UpdateRestaurantOrderTax(restaurantId, newTax);
-    } 
+    }
 
     public async Task<decimal> GetOrderTax(string restaurantId)
     {
@@ -28,5 +29,21 @@ public class OrderTaxService(IRestaurantRepo restaurantRepo)
         }
 
         return restaurant.OrderTax;
+    }
+
+    public async Task<decimal> GetOrderTaxByBranch(string branchId)
+    {
+        var branch = await _branchRepo.GetBranchById(branchId);
+        if (branch == null)
+        {
+            throw new KeyNotFoundException($"Branch with id {branchId} not found.");
+        }
+
+        if (branch.Restaurant == null)
+        {
+            throw new KeyNotFoundException($"Restaurant for branch id {branchId} not found.");
+        }
+
+        return branch.Restaurant.OrderTax;
     }
 }

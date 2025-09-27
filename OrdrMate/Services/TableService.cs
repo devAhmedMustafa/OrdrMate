@@ -1,6 +1,5 @@
 namespace OrdrMate.Services;
 
-using OrdrMate.DTOs.Item;
 using OrdrMate.DTOs.Order;
 using OrdrMate.DTOs.Table;
 using OrdrMate.Features.FreezeTable;
@@ -15,16 +14,22 @@ public class TableService
     private readonly ITableRepo _tableRepo;
     private readonly TableManager _tableManager;
     private readonly OrderManager _orderManager;
+    private readonly IOrderRepo _orderRepo;
     private readonly FreezeTableService _freezeTableService;
 
     public TableService(
         ITableRepo tableRepo,
-    TableManager tableManager, FreezeTableService freezeTableService, OrderManager orderManager)
+        TableManager tableManager,
+        FreezeTableService freezeTableService,
+        OrderManager orderManager,
+        IOrderRepo orderRepo
+        )
     {
         _tableRepo = tableRepo;
         _tableManager = tableManager;
         _freezeTableService = freezeTableService;
         _orderManager = orderManager;
+        _orderRepo = orderRepo;
     }
 
     public async Task<IEnumerable<TableDto>> GetAllTablesOfBranch(string branchId)
@@ -185,10 +190,11 @@ public class TableService
 
             foreach (var order in orders)
             {
-                if (order.Status >= Enums.OrderStatus.Ready)
+                if (order.Status >= Enums.OrderStatus.Ready || order.Status == Enums.OrderStatus.Cancelled)
                 {
-                    continue; // Skip if already ready or completed
+                    continue;
                 }
+
                 await _orderManager.SetOrderReady(order.Id);
             }
         }
@@ -199,6 +205,41 @@ public class TableService
         catch (Exception ex)
         {
             throw new InternalServerException($"Failed to set order ready by reservation ID: {ex.Message}");
+        }
+    }
+
+    public async Task<OrderDto> PayOrderByReservationId(string reservationId)
+    {
+        try
+        {
+            var orders = await _tableRepo.GetTableOrdersByReservationId(reservationId);
+            if (orders == null)
+            {
+                throw new NotFoundException("No orders found for the given reservation ID");
+            }
+
+            List<Order> unPaidOrders = [];
+
+            foreach (var order in orders)
+            {
+                if (order.IsPaid || order.Status == Enums.OrderStatus.Cancelled)
+                {
+                    continue;
+                }
+
+                await _orderRepo.SetOrderPaidStatus(order.Id, true);
+                unPaidOrders.Add(order);
+            }
+
+            return OrdersDtoMapper.ToDto(unPaidOrders);
+        }
+        catch (OException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"Failed to pay order by reservation ID: {ex.Message}");
         }
     }
 }

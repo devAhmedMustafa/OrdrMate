@@ -12,5 +12,6 @@ public class PlaceOrderDto
     [Required] public required OrderItemDto[] Items { get; set; }
     [Required] public required OrderType OrderType { get; set; }
     [Required] public required string PaymentMethod { get; set; }
+    public string? PaymentProvider { get; set; }
     public int? TableNumber { get; set; } = null;
 }

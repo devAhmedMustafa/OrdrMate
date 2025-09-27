@@ -72,4 +72,16 @@ public class ItemAvailabilityService
 
         return instance.IsAvailable;
     }
+
+    public async Task<ItemAvailability?> GetItemAvailability(string itemId, string branchId)
+    {
+        try
+        {
+            return await _repository.GetItemAvailability(itemId, branchId);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
 }

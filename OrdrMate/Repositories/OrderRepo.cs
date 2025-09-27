@@ -178,7 +178,8 @@ public class OrderRepo : IOrderRepo
         return await _db.Order
             .OrderByDescending(o => o.OrderDate)
             .OrderByDescending(o => o.OrderTime)
-            .Where(o => o.BranchId == branchId) 
+            .Where(o => o.BranchId == branchId)
+            .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
             .Include(o => o.Customer)
             .Include(o => o.TableReservation)
             .Include(o => o.Takeaway)
@@ -245,5 +246,22 @@ public class OrderRepo : IOrderRepo
         {
             throw new InternalServerException($"Error updating order with id {order.Id}: {ex.Message}");
         }
+    }
+
+    public async Task<IEnumerable<Order>> GetOrdersWithinShift(string branchId, DateTime shiftStart, DateTime shiftEnd)
+    {
+        return await _db.Order
+            .Where(o => o.BranchId == branchId && o.IsPaid &&
+                o.OrderDate >= shiftStart && o.OrderDate <= shiftEnd
+            )
+            .OrderByDescending(o => o.OrderDate)
+            .OrderByDescending(o => o.OrderTime)
+            .Include(o => o.Branch).ThenInclude(b => b!.Restaurant)
+            .Include(o => o.Customer)
+            .Include(o => o.Payment)
+            .Include(o => o.TableReservation)
+            .Include(o => o.Takeaway)
+            .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
+            .ToListAsync();
     }
 }

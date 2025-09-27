@@ -23,5 +23,6 @@ public interface IOrderRepo
     Task<IEnumerable<Order>> GetUnpaidOrdersByBranchId(string branchId);
     Task<IEnumerable<Order>> GetPaidOrdersOfBranch(string branchId);
     Task<IEnumerable<Order>> GetOrdersByCustomerId(string customerId);
+    Task<IEnumerable<Order>> GetOrdersWithinShift(string branchId, DateTime shiftStart, DateTime shiftEnd);
     Task<Order> UpdateOrder(Order order);
 }
