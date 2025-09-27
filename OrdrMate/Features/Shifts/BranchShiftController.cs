@@ -30,6 +30,21 @@ public class BranchShiftController : ControllerBase
         }
     }
 
+    [HttpGet("list/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<IEnumerable<BranchShift>>> GetAllShiftsForBranch(string branchId)
+    {
+        try
+        {
+            var shifts = await _branchShiftService.GetAllShiftsForBranchAsync(branchId);
+            return Ok(shifts);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving shifts: {ex.Message}");
+        }
+    }
+
     [HttpPost("start")]
     [Authorize(Roles = "BranchManager")]
     public async Task<ActionResult<BranchShift>> StartShift([FromBody] StartShiftDto startShiftDto)

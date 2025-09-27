@@ -117,5 +117,21 @@ namespace OrdrMate.Features.Shifts
                 throw new InternalServerException($"An error occurred while retrieving orders for the shift: {ex.Message}");
             }
         }
+
+        public async Task<IEnumerable<BranchShift>> GetAllShiftsForBranchAsync(string branchId)
+        {
+            try
+            {
+                return await _branchShiftRepo.GetAllShiftsByBranchId(branchId);
+            }
+            catch (OException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new InternalServerException($"An error occurred while retrieving shifts: {ex.Message}");
+            }
+        }
     }
 }

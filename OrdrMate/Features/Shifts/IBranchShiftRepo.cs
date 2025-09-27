@@ -6,5 +6,6 @@ namespace OrdrMate.Features.Shifts
         Task<BranchShift> UpdateShift(BranchShift shift);
         Task<BranchShift?> GetById(string shiftId);
         Task<BranchShift?> GetCurrentShiftByBranchId(string branchId);
+        Task<IEnumerable<BranchShift>> GetAllShiftsByBranchId(string branchId);
     }
 }

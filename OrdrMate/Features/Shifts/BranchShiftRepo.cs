@@ -52,5 +52,13 @@ namespace OrdrMate.Features.Shifts
                 .Where(s => s.BranchId == branchId && s.Status == ShiftStatus.Started && !s.ShiftEndTime.HasValue)
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<IEnumerable<BranchShift>> GetAllShiftsByBranchId(string branchId)
+        {
+            return await _context.BranchShifts
+                .Where(s => s.BranchId == branchId)
+                .OrderByDescending(s => s.ShiftStartTime)
+                .ToListAsync();
+        }
     }
 }
