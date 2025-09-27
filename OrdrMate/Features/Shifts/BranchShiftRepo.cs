@@ -74,5 +74,20 @@ namespace OrdrMate.Features.Shifts
                 throw new InternalServerException($"Error retrieving shifts: {ex.Message}");
             }
         }
+
+        public async Task<BranchShift?> GetLastShiftByBranchId(string branchId)
+        {
+            try
+            {
+                return await _context.BranchShifts
+                    .Where(s => s.BranchId == branchId)
+                    .OrderByDescending(s => s.ShiftStartTime)
+                    .FirstOrDefaultAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new InternalServerException($"Error retrieving last shift: {ex.Message}");
+            }
+        }
     }
 }

@@ -1,9 +1,7 @@
 using OrdrMate.Repositories;
-using OrdrMate.Models;
 using OrdrMate.Utils.Exceptions;
 using OrdrMate.DTOs.Order;
 using OrdrMate.Mappers.Orders;
-using Microsoft.AspNetCore.Http.HttpResults;
 using System.Text;
 namespace OrdrMate.Features.Shifts
 {
@@ -161,5 +159,39 @@ namespace OrdrMate.Features.Shifts
                 throw new InternalServerException($"An error occurred while generating CSV for orders: {ex.Message}");
             }
         }
+        public async Task<ShiftEarningsResponse.Dto> GetEarningsForBranchAsync(string branchId)
+        {
+            try
+            {
+                var lastShift = await _branchShiftRepo.GetLastShiftByBranchId(branchId);
+                if (lastShift == null)
+                {
+                    throw new NotFoundException("No shifts found for the branch.");
+                }
+
+                var orders = await _orderRepo.GetOrdersWithinShift(branchId, lastShift.ShiftStartTime, lastShift.ShiftEndTime ?? DateTime.UtcNow);
+                var totalEarnings = orders.Sum(o => o.TotalAmount);
+                var totalOrders = orders.Count();
+
+                return new ShiftEarningsResponse.Dto
+                {
+                    ShiftId = lastShift.Id,
+                    BranchId = branchId,
+                    StartTime = lastShift.ShiftStartTime,
+                    EndTime = lastShift.ShiftEndTime,
+                    TotalEarnings = totalEarnings,
+                    TotalOrders = totalOrders
+                };
+            }
+            catch (OException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new InternalServerException($"An error occurred while calculating earnings: {ex.Message}");
+            }
+        }
     }
+
 }

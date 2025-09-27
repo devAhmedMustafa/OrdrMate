@@ -154,4 +154,28 @@ public class BranchShiftController : ControllerBase
             return StatusCode(500, $"An error occurred while retrieving orders for the shift: {ex.Message}");
         }
     }
+
+    [HttpGet("last-earnings/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<ShiftEarningsResponse.Dto>> GetEarningsForBranch(string branchId)
+    {
+        try
+        {
+            var earnings = await _branchShiftService.GetEarningsForBranchAsync(branchId);
+            return Ok(earnings);
+        }
+        catch (NotFoundException nfEx)
+        {
+            return NotFound(nfEx.Message);
+        }
+        catch (BadRequestException brEx)
+        {
+            return BadRequest(brEx.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving earnings for the branch: {ex.Message}");
+        }
+    }
+
 }
