@@ -171,6 +171,8 @@ public class OrderRepo : IOrderRepo
             .OrderByDescending(o => o.OrderDate)
             .Where(o => o.BranchId == branchId)
             .Include(o => o.Customer)
+            .Include(o => o.Payment)
+            .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
             .ToListAsync();
     }
 
