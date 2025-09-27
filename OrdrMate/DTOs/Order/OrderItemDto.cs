@@ -5,6 +5,7 @@ namespace OrdrMate.DTOs.Order;
 
 public class OrderItemDto
 {
+    public string? OrderId { get; set; } = string.Empty;
     public required string ItemId { get; set; }
     public int Quantity { get; set; } = 1;
     [Required] public decimal Price { get; set; }
