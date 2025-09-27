@@ -32,10 +32,10 @@ public class ReservationQueue
 
     public int Count => _queue.Count;
     public bool IsEmpty => _queue.Count == 0;
-    public TableReservation Peek()
+    public TableReservation? Peek()
     {
         if (_queue.Count == 0)
-            throw new InvalidOperationException("Queue is empty.");
+            return null;
 
         return _queue.Peek();
     }
