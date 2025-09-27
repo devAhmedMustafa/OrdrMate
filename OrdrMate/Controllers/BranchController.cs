@@ -190,6 +190,26 @@ public class BranchController : ControllerBase
         }
     }
 
+    [HttpGet("detailed-info/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<BranchInfoDetailedResponse>> GetDetailedBranchInfo(string branchId)
+    {
+        try
+        {
+            var detailedBranchInfo = await _branchService.GetDetailedBranchInfo(branchId);
+            if (detailedBranchInfo == null)
+            {
+                return NotFound($"Branch with ID {branchId} not found.");
+            }
+
+            return Ok(detailedBranchInfo);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound($"Branch with ID {branchId} not found: {ex.Message}");
+        }
+    }
+
     [HttpGet("live/{branchId}")]
     public async Task Socket(string branchId)
     {
