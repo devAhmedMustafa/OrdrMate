@@ -56,7 +56,7 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
         }
     }
 
-    public async Task<ItemDto?> GetItem(string id)
+    public async Task<ItemDto?> GetItem(string id, string? branchId = null)
     {
         var item = await _itemRepo.GetItem(id);
 
@@ -64,6 +64,14 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
         {
             throw new Exception("Item not found");
         }
+
+        if (branchId != null)
+        {
+            throw new NotImplementedException("Item availability by branch is not implemented yet");
+        }
+        
+        var isAvailable = branchId == null || await _itemAvailabilityService.IsItemAvailable(id, branchId);
+        
 
         return new ItemDto
         {
@@ -77,7 +85,8 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             KitchenName = item.Kitchen?.Name ?? string.Empty,
             KitchenId = item.Kitchen?.Id,
             Priority = item.Priority,
-            Tags = item.Tags
+            Tags = item.Tags,
+            IsAvailable = isAvailable
         };
     }
 

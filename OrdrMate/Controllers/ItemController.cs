@@ -57,11 +57,11 @@ public class ItemController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ItemDto>> GetItem(string id)
+    public async Task<ActionResult<ItemDto>> GetItem(string id, [FromQuery] string? branchId = null)
     {
         try
         {
-            var item = await _service.GetItem(id);
+            var item = await _service.GetItem(id, branchId);
             if (item == null)
             {
                 return NotFound(new { err = "Item not found" });
