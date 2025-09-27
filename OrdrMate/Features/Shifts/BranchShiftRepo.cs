@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OrdrMate.Data;
+using OrdrMate.Utils.Exceptions;
 namespace OrdrMate.Features.Shifts
 {
     public class BranchShiftRepo : IBranchShiftRepo
@@ -11,37 +12,29 @@ namespace OrdrMate.Features.Shifts
             _context = context;
         }
 
-        public async Task<BranchShift> StartShift(string branchId, DateTime startTime)
+        public async Task<BranchShift> StartShift(BranchShift shift)
         {
-            var shift = new BranchShift
+            try
             {
-                BranchId = branchId,
-                ShiftStartTime = startTime,
-                Status = ShiftStatus.Started
-            };
-
-            _context.BranchShifts.Add(shift);
-            await _context.SaveChangesAsync();
-
-            return shift;
+                _context.BranchShifts.Add(shift);
+                await _context.SaveChangesAsync();
+                return shift;
+            }
+            catch (Exception ex)
+            {
+                throw new InternalServerException($"Error starting shift: {ex.Message}");
+            }
         }
 
-        public async Task<BranchShift> EndShift(string branchId, DateTime endTime)
+        public async Task<BranchShift> UpdateShift(BranchShift shift)
         {
-            var currentShift = await GetCurrentShiftByBranchId(branchId);
-            if (currentShift == null || currentShift.Status == ShiftStatus.Ended)
-                return null;
-
-            currentShift.ShiftEndTime = endTime;
-            currentShift.Status = ShiftStatus.Ended;
-
-            _context.BranchShifts.Update(currentShift);
+            var entry = _context.BranchShifts.Update(shift);
             await _context.SaveChangesAsync();
 
-            return currentShift;
+            return entry.Entity;
         }
 
-        public async Task<BranchShift> GetCurrentShiftByBranchId(string branchId)
+        public async Task<BranchShift?> GetCurrentShiftByBranchId(string branchId)
         {
             return await _context.BranchShifts
                 .Where(s => s.BranchId == branchId && s.Status == ShiftStatus.Started && !s.ShiftEndTime.HasValue)

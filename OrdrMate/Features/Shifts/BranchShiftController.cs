@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrdrMate.Models;
-using OrdrMate.Features.Shifts;
+
 namespace OrdrMate.Features.Shifts;
 
 [ApiController]
@@ -21,7 +21,7 @@ public class BranchShiftController : ControllerBase
     {
         try
         {
-            var shift = await _branchShiftService.StartShiftAsync(startShiftDto.BranchId, startShiftDto.StartTime);
+            var shift = await _branchShiftService.StartShiftAsync(startShiftDto.BranchId);
             return Ok(shift);
         }
         catch (Exception ex)
@@ -36,7 +36,7 @@ public class BranchShiftController : ControllerBase
     {
         try
         {
-            var shift = await _branchShiftService.EndShiftAsync(endShiftDto.BranchId, endShiftDto.EndTime);
+            var shift = await _branchShiftService.EndShiftAsync(endShiftDto.BranchId);
             if (shift == null)
                 return NotFound("No ongoing shift found for the branch.");
 
