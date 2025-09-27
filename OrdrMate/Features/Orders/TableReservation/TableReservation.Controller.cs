@@ -18,7 +18,7 @@ public class TableReservationController : ControllerBase
 
     [HttpPut("push-to-kitchen/{reservationId}")]
     [Authorize(Roles = "BranchManager")]
-    public async Task<ActionResult<OrderDto>> PushToKitchen(string reservationId)
+    public async Task<ActionResult<PushToKitchenResponseDto>> PushToKitchen(string reservationId)
     {
         try
         {
