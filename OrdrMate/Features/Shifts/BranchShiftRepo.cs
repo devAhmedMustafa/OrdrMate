@@ -48,17 +48,31 @@ namespace OrdrMate.Features.Shifts
 
         public async Task<BranchShift?> GetCurrentShiftByBranchId(string branchId)
         {
-            return await _context.BranchShifts
-                .Where(s => s.BranchId == branchId && s.Status == ShiftStatus.Started && !s.ShiftEndTime.HasValue)
-                .FirstOrDefaultAsync();
+            try
+            {
+                return await _context.BranchShifts
+                    .Where(s => s.BranchId == branchId && s.Status == ShiftStatus.Started && !s.ShiftEndTime.HasValue)
+                    .FirstOrDefaultAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new InternalServerException($"Error retrieving current shift: {ex.Message}");
+            }
         }
 
         public async Task<IEnumerable<BranchShift>> GetAllShiftsByBranchId(string branchId)
         {
-            return await _context.BranchShifts
-                .Where(s => s.BranchId == branchId)
-                .OrderByDescending(s => s.ShiftStartTime)
-                .ToListAsync();
+            try
+            {
+                return await _context.BranchShifts
+                    .Where(s => s.BranchId == branchId)
+                    .OrderByDescending(s => s.ShiftStartTime)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new InternalServerException($"Error retrieving shifts: {ex.Message}");
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ using OrdrMate.Utils.Exceptions;
 using OrdrMate.DTOs.Order;
 using OrdrMate.Mappers.Orders;
 using Microsoft.AspNetCore.Http.HttpResults;
+using System.Text;
 namespace OrdrMate.Features.Shifts
 {
     public class BranchShiftService
@@ -106,6 +107,7 @@ namespace OrdrMate.Features.Shifts
                 }
 
                 var orders = await _orderRepo.GetOrdersWithinShift(shift.BranchId, shift.ShiftStartTime, shift.ShiftEndTime ?? DateTime.UtcNow);
+                Console.WriteLine($"[BranchShift]: Retrieved {orders.Count()} orders for shift {shiftId}.");
                 return orders.Select(OrdersDtoMapper.ToDto);
             }
             catch (OException)
@@ -131,6 +133,32 @@ namespace OrdrMate.Features.Shifts
             catch (Exception ex)
             {
                 throw new InternalServerException($"An error occurred while retrieving shifts: {ex.Message}");
+            }
+        }
+
+        public async Task<string> GetOrdersForShiftCsv(string shiftId)
+        {
+            try
+            {
+                var orders = await GetOrdersForShift(shiftId);
+
+                var csvBuilder = new StringBuilder();
+                csvBuilder.AppendLine("OrderId,TotalAmount,PaymentProvider,OrderDate");
+
+                foreach (var order in orders)
+                {
+                    csvBuilder.AppendLine($"{order.OrderId},{order.TotalAmount},{order.PaymentProvider},{order.OrderDate:O}");
+                }
+
+                return csvBuilder.ToString();
+            }
+            catch (OException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new InternalServerException($"An error occurred while generating CSV for orders: {ex.Message}");
             }
         }
     }

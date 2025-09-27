@@ -1,6 +1,8 @@
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OrdrMate.Models;
+using OrdrMate.DTOs.Order;
+using OrdrMate.Utils.Exceptions;
 
 namespace OrdrMate.Features.Shifts;
 
@@ -24,6 +26,14 @@ public class BranchShiftController : ControllerBase
             var shift = await _branchShiftService.GetCurrentShiftStatusAsync(branchId);
             return Ok(shift);
         }
+        catch (NotFoundException nfEx)
+        {
+            return NotFound(nfEx.Message);
+        }
+        catch (BadRequestException brEx)
+        {
+            return BadRequest(brEx.Message);
+        }
         catch (Exception ex)
         {
             return StatusCode(500, $"An error occurred while retrieving the shift status: {ex.Message}");
@@ -39,13 +49,21 @@ public class BranchShiftController : ControllerBase
             var shifts = await _branchShiftService.GetAllShiftsForBranchAsync(branchId);
             return Ok(shifts);
         }
+        catch (NotFoundException nfEx)
+        {
+            return NotFound(nfEx.Message);
+        }
+        catch (BadRequestException brEx)
+        {
+            return BadRequest(brEx.Message);
+        }
         catch (Exception ex)
         {
             return StatusCode(500, $"An error occurred while retrieving shifts: {ex.Message}");
         }
     }
 
-    [HttpPost("start")]
+    [HttpPost("new/start")]
     [Authorize(Roles = "BranchManager")]
     public async Task<ActionResult<BranchShift>> StartShift([FromBody] StartShiftDto startShiftDto)
     {
@@ -53,6 +71,14 @@ public class BranchShiftController : ControllerBase
         {
             var shift = await _branchShiftService.StartShiftAsync(startShiftDto.BranchId);
             return Ok(shift);
+        }
+        catch (NotFoundException nfEx)
+        {
+            return NotFound(nfEx.Message);
+        }
+        catch (BadRequestException brEx)
+        {
+            return BadRequest(brEx.Message);
         }
         catch (Exception ex)
         {
@@ -72,18 +98,56 @@ public class BranchShiftController : ControllerBase
 
             return Ok(shift);
         }
+        catch (NotFoundException nfEx)
+        {
+            return NotFound(nfEx.Message);
+        }
+        catch (BadRequestException brEx)
+        {
+            return BadRequest(brEx.Message);
+        }
         catch (Exception ex)
         {
             return StatusCode(500, $"An error occurred while ending the shift: {ex.Message}");
         }
     }
     [HttpGet("{shiftId}/orders")]
-    public async Task<ActionResult<IEnumerable<Order>>> GetOrdersForShift(string shiftId)
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetOrdersForShift(string shiftId)
     {
         try
         {
             var orders = await _branchShiftService.GetOrdersForShift(shiftId);
             return Ok(orders);
+        }
+        catch (NotFoundException nfEx)
+        {
+            return NotFound(nfEx.Message);
+        }
+        catch (BadRequestException brEx)
+        {
+            return BadRequest(brEx.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving orders for the shift: {ex.Message}");
+        }
+    }
+
+    [HttpGet("{shiftId}/orders/csv")]
+    public async Task<ActionResult> GetOrdersForShiftCsv(string shiftId)
+    {
+        try
+        {
+            var csv = await _branchShiftService.GetOrdersForShiftCsv(shiftId);
+            return File(new MemoryStream(Encoding.UTF8.GetBytes(csv)), "text/csv", $"orders_{shiftId}.csv");
+        }
+        catch (NotFoundException nfEx)
+        {
+            return NotFound(nfEx.Message);
+        }
+        catch (BadRequestException brEx)
+        {
+            return BadRequest(brEx.Message);
         }
         catch (Exception ex)
         {

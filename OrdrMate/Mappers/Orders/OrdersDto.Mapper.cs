@@ -50,7 +50,6 @@ public static class OrdersDtoMapper
     {
         if (orders == null) throw new ArgumentNullException(nameof(orders));
 
-        var orderList = orders.Select(o => o.ToDto()).ToList();
         return new OrderDto
         {
             OrderId = orders.First().Id,
@@ -58,7 +57,7 @@ public static class OrdersDtoMapper
             CustomerId = orders.First().CustomerId,
             Customer = orders.First().Customer?.Username ?? "Unknown",
             OrderType = orders.First().OrderType.ToString(),
-            OrderItems = orders
+            OrderItems = [.. orders
                 .SelectMany(o => o.OrderItems ?? Enumerable.Empty<OrderItem>())
                 .Select(oi => new OrderItemDto
                 {
@@ -76,8 +75,7 @@ public static class OrdersDtoMapper
                         PreparationTime = oi.Item.PreperationTime,
                         KitchenName = oi.Item.Kitchen?.Name ?? "Main",
                     } : null,
-                })
-                .ToArray(),
+                })],
             PaymentMethod = orders.First().Payment?.PaymentMethod ?? "Unpaid",
             PaymentProvider = orders.First().Payment?.Provider ?? "Unpaid",
             OrderDate = orders.First().OrderDate,

@@ -139,11 +139,11 @@ public class TableController : ControllerBase
     {
         try
         {
-            var authResult = await _authorizationService.AuthorizeAsync(User, reservationId, "ManageOrderPolicy");
-            if (!authResult.Succeeded)
-            {
-                return Forbid();
-            }
+            // var authResult = await _authorizationService.AuthorizeAsync(User, reservationId, "HaveAccessToOrder");
+            // if (!authResult.Succeeded)
+            // {
+            //     return Forbid();
+            // }
 
             await _tableService.SetOrderReadyByReservationId(reservationId);
             return Ok();

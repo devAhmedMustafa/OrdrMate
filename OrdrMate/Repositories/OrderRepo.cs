@@ -251,18 +251,12 @@ public class OrderRepo : IOrderRepo
     public async Task<IEnumerable<Order>> GetOrdersWithinShift(string branchId, DateTime shiftStart, DateTime shiftEnd)
     {
         return await _db.Order
-            .Where(o => o.BranchId == branchId &&
-                        o.OrderDate >= shiftStart.Date && o.OrderDate <= shiftEnd.Date &&
-                        (
-                            (o.OrderDate > shiftStart.Date) ||
-                            (o.OrderDate == shiftStart.Date && o.OrderTime >= TimeOnly.FromTimeSpan(shiftStart.TimeOfDay))
-                        ) &&
-                        (
-                            (o.OrderDate < shiftEnd.Date) ||
-                            (o.OrderDate == shiftEnd.Date && o.OrderTime <= TimeOnly.FromTimeSpan(shiftEnd.TimeOfDay))
-                        )
+            .Where(o => o.BranchId == branchId && o.IsPaid &&
+                o.OrderDate >= shiftStart && o.OrderDate <= shiftEnd
             )
             .OrderByDescending(o => o.OrderDate)
+            .OrderByDescending(o => o.OrderTime)
+            .Include(o => o.Branch).ThenInclude(b => b!.Restaurant)
             .Include(o => o.Customer)
             .Include(o => o.Payment)
             .Include(o => o.TableReservation)
