@@ -247,4 +247,27 @@ public class OrderRepo : IOrderRepo
             throw new InternalServerException($"Error updating order with id {order.Id}: {ex.Message}");
         }
     }
+
+    public async Task<IEnumerable<Order>> GetOrdersWithinShift(string branchId, DateTime shiftStart, DateTime shiftEnd)
+    {
+        return await _db.Order
+            .Where(o => o.BranchId == branchId &&
+                        o.OrderDate >= shiftStart.Date && o.OrderDate <= shiftEnd.Date &&
+                        (
+                            (o.OrderDate > shiftStart.Date) ||
+                            (o.OrderDate == shiftStart.Date && o.OrderTime >= TimeOnly.FromTimeSpan(shiftStart.TimeOfDay))
+                        ) &&
+                        (
+                            (o.OrderDate < shiftEnd.Date) ||
+                            (o.OrderDate == shiftEnd.Date && o.OrderTime <= TimeOnly.FromTimeSpan(shiftEnd.TimeOfDay))
+                        )
+            )
+            .OrderByDescending(o => o.OrderDate)
+            .Include(o => o.Customer)
+            .Include(o => o.Payment)
+            .Include(o => o.TableReservation)
+            .Include(o => o.Takeaway)
+            .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
+            .ToListAsync();
+    }
 }
