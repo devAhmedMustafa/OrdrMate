@@ -122,7 +122,7 @@ public class RestaurantService(IRestaurantRepo r, IUserRepo m)
                     Description = restaurant.Profile?.Description ?? string.Empty,
                     CoverUrl = restaurant.Profile?.CoverImageUrl ?? string.Empty
                 };
-                
+
                 if (restaurant.Email != null) responseDto.Email = restaurant.Email;
                 if (restaurant.Phone != null) responseDto.Phone = restaurant.Phone;
                 responseDtos.Add(responseDto);
@@ -179,15 +179,19 @@ public class RestaurantService(IRestaurantRepo r, IUserRepo m)
     {
         try
         {
-            var profile = new RestaurantProfile
+            var profile = await _repo.GetRestaurantProfile(id);
+            if (profile == null)
             {
-                RestaurantId = id,
-                Description = profileDto.Description,
-                LogoUrl = profileDto.LogoUrl,
-                CoverImageUrl = profileDto.CoverImageUrl
-            };
+                throw new Exception("No restaurant with " + id + " id");
+            }
 
-            var updatedProfile = await _repo.UpdateRestaurantProfile(id, profile);
+            profile.RestaurantId = id;
+            profile.Description = profileDto.Description ?? profile.Description;
+            profile.LogoUrl = profileDto.LogoUrl ?? profile.LogoUrl;
+            profile.CoverImageUrl = profileDto.CoverImageUrl ?? profile.CoverImageUrl;
+            profile.InstaPayLink = profileDto.InstaPayLink ?? profile.InstaPayLink;
+
+            var updatedProfile = await _repo.UpdateRestaurantProfile(profile);
 
             if (updatedProfile == null)
             {
@@ -199,12 +203,34 @@ public class RestaurantService(IRestaurantRepo r, IUserRepo m)
                 RestaurantId = updatedProfile.RestaurantId,
                 Description = updatedProfile.Description,
                 LogoUrl = updatedProfile.LogoUrl,
-                CoverImageUrl = updatedProfile.CoverImageUrl
+                CoverImageUrl = updatedProfile.CoverImageUrl,
+                InstaPayLink = updatedProfile.InstaPayLink
             };
         }
         catch (Exception e)
         {
             throw new Exception($"Error updating restaurant profile: {e.Message}");
+        }
+    }
+    
+    public async Task<InstapayDetailsDto> GetInstapayDetails(string restaurantId)
+    {
+        try
+        {
+            var profile = await _repo.GetRestaurantProfile(restaurantId);
+            if (profile == null)
+            {
+                throw new Exception("No profile for restaurant with " + restaurantId + " id");
+            }
+
+            return new InstapayDetailsDto
+            {
+                Link = profile.InstaPayLink ?? string.Empty
+            };
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Error getting Instapay details: {e.Message}");
         }
     }
 

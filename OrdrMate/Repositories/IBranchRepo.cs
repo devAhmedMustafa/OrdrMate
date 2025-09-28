@@ -17,4 +17,5 @@ public interface IBranchRepo
     Task<int> GetTableCount(string branchId);
     Task<int> GetAvailableTables(string branchId);
     Task<int> GetOrdersInQueue(string branchId);
+    Task<Branch> GetDetailedBranchInfo(string branchId);
 }

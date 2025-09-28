@@ -24,7 +24,7 @@ public class TableController : ControllerBase
     }
 
     [HttpGet("{branchId}")]
-    public async Task<IActionResult> GetAllTablesOfBranch(string branchId)
+    public async Task<ActionResult<IEnumerable<TableDto>>> GetAllTablesOfBranch(string branchId)
     {
         var authorization = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
         if (!authorization.Succeeded)
@@ -129,7 +129,43 @@ public class TableController : ControllerBase
         }
         catch (Exception ex)
         {
-            return NotFound(new { err = ex.Message });
+            return StatusCode(500, new { err = ex.Message });
+        }
+    }
+
+    [HttpPut("order/set-ready/{reservationId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<IActionResult> SetOrderReadyByReservationId(string reservationId)
+    {
+        try
+        {
+            // var authResult = await _authorizationService.AuthorizeAsync(User, reservationId, "HaveAccessToOrder");
+            // if (!authResult.Succeeded)
+            // {
+            //     return Forbid();
+            // }
+
+            await _tableService.SetOrderReadyByReservationId(reservationId);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { err = ex.Message });
+        }
+    }
+
+    [HttpPut("order/pay/{reservationId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<OrderDto>> PayOrderByReservationId(string reservationId)
+    {
+        try
+        {
+            var order = await _tableService.PayOrderByReservationId(reservationId);
+            return Ok(order);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { err = ex.Message });
         }
     }
 }

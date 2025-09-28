@@ -3,6 +3,7 @@ namespace OrdrMate.Repositories;
 using Microsoft.EntityFrameworkCore;
 using OrdrMate.Data;
 using OrdrMate.Models;
+using OrdrMate.Utils.Exceptions;
 
 public class BranchRepo : IBranchRepo
 {
@@ -30,6 +31,21 @@ public class BranchRepo : IBranchRepo
         .AsNoTracking()
         .FirstOrDefaultAsync(b => b.Id == id)
         ?? throw new KeyNotFoundException($"Branch with id {id} not found.");
+    }
+
+    public async Task<Branch> GetDetailedBranchInfo(string branchId)
+    {
+        try
+        {
+            return await _context.Branch
+            .Include(b => b.Restaurant).ThenInclude(r => r!.Profile)
+            .FirstOrDefaultAsync(b => b.Id == branchId)
+            ?? throw new KeyNotFoundException($"Branch with id {branchId} not found.");
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"An error occurred while retrieving detailed branch info: {ex.Message}");
+        }
     }
 
     public async Task<IEnumerable<Branch>> GetAllBranches()

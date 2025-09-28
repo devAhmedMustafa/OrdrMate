@@ -13,8 +13,6 @@ public class ItemAvailabilityModule : IModule
         services.AddScoped<ItemAvailabilityRepository, ItemAvailabilityRepository>();
         services.AddScoped<ItemAvailabilityService, ItemAvailabilityService>();
 
-        services.AddSingleton<ItemAvailabilityOrch, ItemAvailabilityOrch>();
-        var provider = services.BuildServiceProvider();
-        provider.GetService<ItemAvailabilityOrch>();
+        services.AddHostedService<ItemAvailabilityOrchestrator>();
     }
 }

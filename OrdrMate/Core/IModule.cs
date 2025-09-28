@@ -7,4 +7,5 @@ public interface IModule
         IConfiguration configuration,
         IHostEnvironment environment
     );
+
 }

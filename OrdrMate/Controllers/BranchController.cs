@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrdrMate.DTOs.Branch;
-using OrdrMate.Migrations;
-using OrdrMate.Models;
+using OrdrMate.DTOs.Restaurant;
 using OrdrMate.Repositories;
 using OrdrMate.Services;
 using OrdrMate.Sockets;
@@ -191,6 +190,26 @@ public class BranchController : ControllerBase
         }
     }
 
+    [HttpGet("detailed-info/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<BranchInfoDetailedResponse>> GetDetailedBranchInfo(string branchId)
+    {
+        try
+        {
+            var detailedBranchInfo = await _branchService.GetDetailedBranchInfo(branchId);
+            if (detailedBranchInfo == null)
+            {
+                return NotFound($"Branch with ID {branchId} not found.");
+            }
+
+            return Ok(detailedBranchInfo);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound($"Branch with ID {branchId} not found: {ex.Message}");
+        }
+    }
+
     [HttpGet("live/{branchId}")]
     public async Task Socket(string branchId)
     {
@@ -331,4 +350,23 @@ public class BranchController : ControllerBase
             return NotFound($"Branch with ID {branchId} not found: {ex.Message}");
         }
     }
+
+    [HttpGet("instapay/{branchId}")]
+    public async Task<ActionResult<InstapayDetailsDto>> GetBranchInstapayDetails(string branchId)
+    {
+        try
+        {
+            var instapayDetails = await _branchService.GetInstapayDetails(branchId);
+            if (instapayDetails == null)
+            {
+                return NotFound(new { err = "No Instapay details found for this branch" });
+            }
+            return Ok(instapayDetails);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new { err = e.Message });
+        }
+    }
+
 }

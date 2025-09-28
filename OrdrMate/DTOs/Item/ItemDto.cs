@@ -13,5 +13,7 @@ public class ItemDto
     public required string Category { get; set; } = string.Empty;
     [Required] public required string KitchenName { get; set; }
     public string? KitchenId { get; set; }
-    public bool? IsAvailable { get; set; } = true;
+    public int? Priority { get; set; }
+    public string? Tags { get; set; }
+    public bool? IsAvailable { get; set; }
 }

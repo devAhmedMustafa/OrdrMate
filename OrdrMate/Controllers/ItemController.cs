@@ -57,11 +57,11 @@ public class ItemController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ItemDto>> GetItem(string id)
+    public async Task<ActionResult<ItemDto>> GetItem(string id, [FromQuery] string? branchId = null)
     {
         try
         {
-            var item = await _service.GetItem(id);
+            var item = await _service.GetItem(id, branchId);
             if (item == null)
             {
                 return NotFound(new { err = "Item not found" });
@@ -145,7 +145,7 @@ public class ItemController : ControllerBase
         try
         {
             var items = await _service.GetAvailableItems(branchId);
-            if (items == null || !items.Any())
+            if (items == null)
             {
                 return NotFound($"No items found for branch with ID {branchId}.");
             }

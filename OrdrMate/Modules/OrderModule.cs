@@ -2,6 +2,9 @@ using OrdrMate.Core;
 using OrdrMate.Repositories;
 using OrdrMate.Services;
 using OrdrMate.Managers;
+using System.Net;
+using Microsoft.AspNetCore.Authorization;
+using OrdrMate.Middlewares;
 
 namespace OrdrMate.Modules;
 
@@ -21,6 +24,14 @@ public class OrderModule : IModule
         services.AddScoped<PaymentService, PaymentService>();
 
         services.AddScoped<OrderManager>();
+
+        services.Configure<AuthorizationOptions>(options =>
+        {
+            options.AddPolicy("HaveAccessToOrder", policy =>
+            {
+                policy.Requirements.Add(new HaveAccessToOrderRequirement());
+            });
+        });
 
     }
 }

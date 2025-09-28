@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OrdrMate.Features.ItemAvailability;
 using OrdrMate.Features.Preport;
+using OrdrMate.Features.Shifts;
 using OrdrMate.Models;
 
 namespace OrdrMate.Data;
@@ -13,6 +14,7 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<Restaurant> Restaurant => Set<Restaurant>();
     public DbSet<RestaurantProfile> RestaurantProfile => Set<RestaurantProfile>();
     public DbSet<Item> Item => Set<Item>();
+    public DbSet<ItemCustomization> ItemCustomization => Set<ItemCustomization>();
     public DbSet<ItemAvailability> ItemAvailabilities => Set<ItemAvailability>();
     public DbSet<Category> Category => Set<Category>();
     public DbSet<Branch> Branch => Set<Branch>();
@@ -22,19 +24,16 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<Kitchen> Kitchen => Set<Kitchen>();
     public DbSet<KitchenPower> KitchenPower => Set<KitchenPower>();
     public DbSet<Order> Order => Set<Order>();
-    public DbSet<Indoor> Indoor => Set<Indoor>();
     public DbSet<Takeaway> Takeaway => Set<Takeaway>();
     public DbSet<OrderItem> OrderItem => Set<OrderItem>();
     public DbSet<Payment> Payment => Set<Payment>();
     public DbSet<OrderIntent> OrderIntent => Set<OrderIntent>();
     public DbSet<DeliverRequest> DeliverRequest => Set<DeliverRequest>();
     public DbSet<PickupReport> PickupReports { get; set; }
-
+    public DbSet<BranchShift> BranchShifts { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrdrMateDbContext).Assembly);
 
         // Manager
 
@@ -151,11 +150,6 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .WithMany()
             .HasForeignKey(tr => tr.CustomerId)
             .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<TableReservation>()
-            .HasOne(tr => tr.Order)
-            .WithOne()
-            .HasForeignKey<TableReservation>(tr => tr.OrderId)
-            .OnDelete(DeleteBehavior.Cascade);
 
         // Kitchen
 
@@ -197,17 +191,32 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
         // Order
 
         modelBuilder.Entity<Order>().HasKey(o => o.Id);
+
         modelBuilder.Entity<Order>().HasIndex(o => o.OrderDate);
+
         modelBuilder.Entity<Order>()
             .HasOne(o => o.Branch)
             .WithMany(b => b.Orders)
             .HasForeignKey(o => o.BranchId)
             .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Order>()
             .HasOne(o => o.Customer)
             .WithMany()
             .HasForeignKey(o => o.CustomerId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Order>()
+            .HasOne(o => o.TableReservation)
+            .WithMany(t => t.Orders)
+            .HasForeignKey(o => o.TableReservationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Order>()
+            .HasOne(o => o.Takeaway)
+            .WithOne(t => t.Order)
+            .HasForeignKey<Order>(o => o.TakeawayId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // OrderItem
         modelBuilder.Entity<OrderItem>().HasKey(oi => new { oi.OrderId, oi.ItemId });
@@ -230,32 +239,13 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .HasForeignKey<Payment>("OrderId")
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Indoor
-
-        modelBuilder.Entity<Indoor>().HasKey(i => new { i.TableNumber, i.BranchId, i.OrderId });
-        modelBuilder.Entity<Indoor>()
-            .HasOne(i => i.Order)
-            .WithOne()
-            .HasForeignKey<Indoor>(i => i.OrderId)
-            .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<Indoor>()
-            .HasOne(i => i.Branch)
-            .WithMany()
-            .HasForeignKey(i => i.BranchId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         // Takeaway
 
-        modelBuilder.Entity<Takeaway>().HasKey(t => new { t.OrderId, t.OrderNumber });
+        modelBuilder.Entity<Takeaway>().HasKey(t => new { t.Id, t.OrderId });
         modelBuilder.Entity<Takeaway>()
             .HasOne(t => t.Order)
-            .WithOne()
+            .WithOne(o => o.Takeaway)
             .HasForeignKey<Takeaway>(t => t.OrderId)
-            .OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<Takeaway>()
-            .HasOne(t => t.Order)
-            .WithMany()
-            .HasForeignKey(t => t.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // DeliverRequest
@@ -273,6 +263,9 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .WithMany(i => i.Customizations)
             .HasForeignKey(ic => ic.ItemId)
             .OnDelete(DeleteBehavior.Cascade);
+
+
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrdrMateDbContext).Assembly);
 
     }
 

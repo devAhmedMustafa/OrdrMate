@@ -7,13 +7,17 @@ using OrdrMate.Repositories;
 using OrdrMate.Utils;
 using OrdrMate.Events;
 using OrdrMate.Managers;
+using OrdrMate.DTOs.Restaurant;
+using OrdrMate.Utils.Exceptions;
+using OrdrMate.Features.Storage;
 
 public class BranchService(
     IBranchRepo branchRepo,
     ManagerService managerService,
     RestaurantService restaurantService,
     OrderManager orderManager,
-    OrderService orderService
+    OrderService orderService,
+    IStorageService storageService
     )
 {
     private readonly IBranchRepo _branchRepo = branchRepo;
@@ -21,6 +25,7 @@ public class BranchService(
     private readonly OrderManager _orderManager = orderManager;
     private readonly RestaurantService _restaurantService = restaurantService;
     private readonly OrderService _orderService = orderService;
+    private readonly IStorageService _storageService = storageService;
 
     public async Task<BranchDto> GetBranchById(string id)
     {
@@ -207,6 +212,53 @@ public class BranchService(
             StartWorkingHour = branch.StartWorkingHour,
             EndWorkingHour = branch.EndWorkingHour
         };
+    }
+
+    public async Task<InstapayDetailsDto> GetInstapayDetails(string branchId)
+    {
+        try
+        {
+            var branch = await _branchRepo.GetBranchById(branchId);
+            if (branch == null)
+            {
+                throw new KeyNotFoundException($"Branch with id {branchId} not found.");
+            }
+
+            var data = await _restaurantService.GetInstapayDetails(branch.RestaurantId);
+            return data;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to get Instapay details for branch {branchId}: {ex.Message}");
+        }
+    }
+
+    public async Task<BranchInfoDetailedResponse> GetDetailedBranchInfo(string branchId)
+    {
+        try
+        {
+            var branch = await _branchRepo.GetDetailedBranchInfo(branchId);
+            if (branch == null)
+            {
+                throw new KeyNotFoundException($"Branch with id {branchId} not found.");
+            }
+
+            var logoUrl = _storageService.GetDownloadPresignedUrl(branch.Restaurant?.Profile?.LogoUrl ?? string.Empty);
+
+            return new BranchInfoDetailedResponse
+            {
+                BranchId = branch.Id,
+                Address = branch.Address,
+                Phone = branch.Phone,
+                RestaurantName = branch.Restaurant?.Name ?? "Unknown",
+                TaxRate = branch.Restaurant?.OrderTax ?? 0,
+                LogoUrl = logoUrl.IsSuccess ? logoUrl.Data?.FileUrl : null,
+            };
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"Failed to get detailed branch info for branch {branchId}: {ex.Message}");
+        }
     }
 
 }

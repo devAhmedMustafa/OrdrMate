@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using OrdrMate.Models;
+using OrdrMate.Utils.Exceptions;
 
 namespace OrdrMate.Managers;
 
@@ -21,6 +21,17 @@ public class TableQueueManager
             Console.WriteLine($"Adding table {table.TableNumber} with {table.Seats} seats to the queue manager.");
             _tableQueues[table.TableNumber] = new ReservationQueue(table.Seats, table.TableNumber);
         }
+    }
+
+    public void AddTable(int tableNumber, int seats)
+    {
+        if (_tableQueues.ContainsKey(tableNumber))
+        {
+            Console.WriteLine($"Table {tableNumber} already exists in the reservation system.");
+            throw new InvalidOperationException($"Table {tableNumber} already exists in the reservation system.");
+        }
+
+        _tableQueues[tableNumber] = new ReservationQueue(seats, tableNumber);
     }
 
     public int ReserveLessReservedTable(int seats, TableReservation reservation)
@@ -85,11 +96,11 @@ public class TableQueueManager
         }
     }
 
-    public int GetOrderPosition(int tableNumber, string orderId)
+    public int GetReservationPosition(int tableNumber, string reservationId)
     {
         if (_tableQueues.TryGetValue(tableNumber, out var queue))
         {
-            return queue.GetOrderPosition(orderId);
+            return queue.GetReservationPosition(reservationId);
         }
         else
         {
@@ -154,4 +165,34 @@ public class TableQueueManager
         return tablesWithSeats;
     }
 
+    public void MoveTableReservation(int fromTableNumber, int toTableNumber, string reservationId)
+    {
+        if (_tableQueues.TryGetValue(fromTableNumber, out var fromQueue) &&
+            _tableQueues.TryGetValue(toTableNumber, out var toQueue))
+        {
+
+            Console.WriteLine($"Attempting to move reservation {reservationId} from table {fromTableNumber} to table {toTableNumber}.");
+
+            if (toQueue.Queue.Count > 0)
+            {
+                throw new BadRequestException("Cannot move reservation to a table that is currently occupied.");
+            }
+
+            var reservation = fromQueue.RemoveReservationById(reservationId);
+            if (reservation != null)
+            {
+                toQueue.EnqueueReservation(reservation);
+            }
+            else
+            {
+                Console.WriteLine($"Reservation with ID {reservationId} not found in table {fromTableNumber}'s queue.");
+                throw new InvalidOperationException($"Reservation with ID {reservationId} not found in table {fromTableNumber}'s queue.");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"One or both tables ({fromTableNumber}, {toTableNumber}) do not exist in the reservation system.");
+            throw new InvalidOperationException($"One or both tables ({fromTableNumber}, {toTableNumber}) do not exist in the reservation system.");
+        }
+    }
 }

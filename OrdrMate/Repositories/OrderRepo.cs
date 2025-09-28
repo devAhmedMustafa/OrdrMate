@@ -4,6 +4,7 @@ using OrdrMate.Models;
 using OrdrMate.Data;
 using Microsoft.EntityFrameworkCore;
 using OrdrMate.Enums;
+using OrdrMate.Utils.Exceptions;
 
 public class OrderRepo : IOrderRepo
 {
@@ -69,15 +70,24 @@ public class OrderRepo : IOrderRepo
 
     public async Task<Order> GetDetailedOrderById(string orderId)
     {
-        return await _db.Order
-            .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
-            .Include(o => o.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(o => o.Customer)
-            .Include(o => o.Payment)
-            .AsSplitQuery()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(o => o.Id == orderId)
-            ?? throw new KeyNotFoundException($"Order with id {orderId} not found.");
+        try
+        {
+            return await _db.Order
+                .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
+                .Include(o => o.Branch).ThenInclude(b => b!.Restaurant)
+                .Include(o => o.Customer)
+                .Include(o => o.Payment)
+                .Include(o => o.TableReservation)
+                .Include(o => o.Takeaway)
+                .AsSplitQuery()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(o => o.Id == orderId)
+                ?? throw new KeyNotFoundException($"Order with id {orderId} not found.");
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"Error retrieving order with id {orderId}: {ex.Message}");
+        }
     }
 
     public async Task<Takeaway?> GetTakeawayById(string orderId)
@@ -85,38 +95,23 @@ public class OrderRepo : IOrderRepo
         return await _db.Takeaway.FirstOrDefaultAsync(t => t.OrderId == orderId);
     }
 
-    public async Task<Indoor?> GetDineInById(string orderId)
-    {
-        return await _db.Indoor.FirstOrDefaultAsync(i => i.OrderId == orderId);
-    }
-
     public async Task<IEnumerable<Takeaway>> GetTakeawaysByCustomerId(string customerId)
     {
         return await _db.Takeaway
-            .Include(t => t.Order).ThenInclude(o => o.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(t => t.Order).ThenInclude(o => o.Customer)
-            .Include(t => t.Order).ThenInclude(o => o.Payment)
-            .Where(t => t.Order.CustomerId == customerId)
+            .Include(t => t.Order).ThenInclude(o => o!.Branch).ThenInclude(b => b!.Restaurant)
+            .Include(t => t.Order).ThenInclude(o => o!.Customer)
+            .Include(t => t.Order).ThenInclude(o => o!.Payment)
+            .Where(t => t.Order!.CustomerId == customerId)
             .ToListAsync();
     }
 
     public async Task<IEnumerable<Takeaway>> GetAllTakeawaysByBranchId(string branchId)
     {
         return await _db.Takeaway
-            .Include(t => t.Order).ThenInclude(o => o.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(t => t.Order).ThenInclude(o => o.Customer)
-            .Include(t => t.Order).ThenInclude(o => o.Payment)
-            .Where(t => t.Order.BranchId == branchId)
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<Indoor>> GetIndoorsByCustomerId(string customerId)
-    {
-        return await _db.Indoor
-            .Include(i => i.Order).ThenInclude(o => o.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(i => i.Order).ThenInclude(o => o.Customer)
-            .Include(i => i.Order).ThenInclude(o => o.Payment)
-            .Where(i => i.Order.CustomerId == customerId)
+            .Include(t => t.Order).ThenInclude(o => o!.Branch).ThenInclude(b => b!.Restaurant)
+            .Include(t => t.Order).ThenInclude(o => o!.Customer)
+            .Include(t => t.Order).ThenInclude(o => o!.Payment)
+            .Where(t => t.Order!.BranchId == branchId)
             .ToListAsync();
     }
 
@@ -168,9 +163,13 @@ public class OrderRepo : IOrderRepo
     public async Task<IEnumerable<Order>> GetUnpaidOrdersByBranchId(string branchId)
     {
         return await _db.Order
+            .OrderByDescending(o => o.OrderDate)
+            .OrderByDescending(o => o.OrderTime)
             .Where(o => o.BranchId == branchId && o.IsPaid == false)
             .Include(o => o.Payment)
             .Include(o => o.Customer)
+            .Include(o => o.TableReservation)
+            .Include(o => o.Takeaway)
             .ToListAsync();
     }
 
@@ -178,8 +177,12 @@ public class OrderRepo : IOrderRepo
     {
         return await _db.Order
             .OrderByDescending(o => o.OrderDate)
+            .OrderByDescending(o => o.OrderTime)
             .Where(o => o.BranchId == branchId)
+            .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
             .Include(o => o.Customer)
+            .Include(o => o.TableReservation)
+            .Include(o => o.Takeaway)
             .ToListAsync();
     }
 
@@ -189,26 +192,92 @@ public class OrderRepo : IOrderRepo
             .Where(o => o.BranchId == branchId && o.IsPaid == true)
             .ToListAsync();
     }
-public async Task<bool> CancelOrderAsync(string orderId)
-{
-    var order = await _db.Order
-        .FirstOrDefaultAsync(o => o.Id == orderId);
 
-    if (order == null)
+    public async Task<bool> CancelOrderAsync(string orderId)
     {
-        return false; 
+        var order = await _db.Order
+            .FirstOrDefaultAsync(o => o.Id == orderId);
+
+        if (order == null)
+        {
+            return false;
+        }
+
+        if (order.Status == OrderStatus.Cancelled
+        || order.Status == OrderStatus.InProgress
+        || order.Status == OrderStatus.Ready)
+        {
+            return false;
+        }
+
+        await SetOrderStatus(orderId, OrderStatus.Cancelled);
+        return true;
     }
 
-    if (order.Status == OrderStatus.Cancelled)
+    public async Task<IEnumerable<Order>> GetOrdersByCustomerId(string customerId)
     {
-        return false; 
-    }
-        if (order.Status != OrderStatus.Queued)
-    {
-        return false; 
+        return await _db.Order
+            .Where(o => o.CustomerId == customerId)
+            .Include(o => o.Branch).ThenInclude(b => b!.Restaurant)
+            .Include(o => o.Customer)
+            .Include(o => o.Payment)
+            .Include(o => o.TableReservation)
+            .Include(o => o.Takeaway)
+            .ToListAsync();
     }
 
-    await SetOrderStatus(orderId, OrderStatus.Cancelled);
-    return true;
-}
+    public async Task<Order> UpdateOrder(Order order)
+    {
+        try
+        {
+            var existingOrder = await _db.Order
+                .FirstOrDefaultAsync(o => o.Id == order.Id);
+
+            if (existingOrder == null)
+            {
+                throw new KeyNotFoundException($"Order with id {order.Id} not found.");
+            }
+
+            _db.Entry(existingOrder).CurrentValues.SetValues(order);
+            await _db.SaveChangesAsync();
+            return existingOrder;
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"Error updating order with id {order.Id}: {ex.Message}");
+        }
+    }
+
+    public async Task<IEnumerable<Order>> GetOrdersWithinShift(string branchId, DateTime shiftStart, DateTime shiftEnd)
+    {
+        return await _db.Order
+            .Where(o => o.BranchId == branchId && o.IsPaid &&
+                o.OrderDate >= shiftStart && o.OrderDate <= shiftEnd
+            )
+            .OrderByDescending(o => o.OrderDate)
+            .OrderByDescending(o => o.OrderTime)
+            .Include(o => o.Branch).ThenInclude(b => b!.Restaurant)
+            .Include(o => o.Customer)
+            .Include(o => o.Payment)
+            .Include(o => o.TableReservation)
+            .Include(o => o.Takeaway)
+            .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
+            .ToListAsync();
+    }
+
+    public async Task DeliverOrdersByReservationId(string reservationId)
+    {
+        try
+        {
+            await _db.Order.Where(o => o.TableReservationId == reservationId && o.Status == OrderStatus.Ready)
+            .ExecuteUpdateAsync(o => o.SetProperty(o => o.Status, OrderStatus.Delivered));
+
+            await _db.Order.Where(o => o.TableReservationId == reservationId && o.Status != OrderStatus.Ready && o.Status != OrderStatus.Delivered)
+                .ExecuteUpdateAsync(o => o.SetProperty(o => o.Status, OrderStatus.Cancelled));
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"Error delivering orders for reservation id {reservationId}: {ex.Message}");
+        }
+    }
 }

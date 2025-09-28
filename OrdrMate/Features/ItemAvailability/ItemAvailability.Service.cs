@@ -11,7 +11,7 @@ public class ItemAvailabilityService
         _repository = repository;
     }
 
-    public async Task<bool> IsItemAvailabile(string itemId, string branchId)
+    public async Task<bool> IsItemAvailable(string itemId, string branchId)
     {
 
         var instance = await _repository.GetItemAvailability(itemId, branchId);
@@ -46,7 +46,9 @@ public class ItemAvailabilityService
             Category = ia.Item.CategoryName,
             KitchenName = ia.Item.Kitchen!.Name,
             KitchenId = ia.Item.KitchenId,
-            IsAvailable = ia.IsAvailable
+            IsAvailable = ia.IsAvailable,
+            Priority = ia.Item.Priority,
+            Tags = ia.Item.Tags
         });
     }
 
@@ -69,5 +71,17 @@ public class ItemAvailabilityService
         }
 
         return instance.IsAvailable;
+    }
+
+    public async Task<ItemAvailability?> GetItemAvailability(string itemId, string branchId)
+    {
+        try
+        {
+            return await _repository.GetItemAvailability(itemId, branchId);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 }
