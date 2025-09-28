@@ -47,4 +47,19 @@ public class UpdateOrderController : ControllerBase
         }
     }
 
+    [HttpPut("payment-provider/reservation/{reservationId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<IActionResult> UpdateReservationPayment(string reservationId, [FromBody] PaymentUpdateDto paymentUpdateDto)
+    {
+        try
+        {
+            await _updateOrderService.UpdateReservationPayment(reservationId, paymentUpdateDto);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while processing your request: {ex.Message}");
+        }
+    }
+
 }
