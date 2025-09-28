@@ -76,6 +76,20 @@ public class OrderService
 
         var totalAmount = placeOrderDto.Items.Sum(oi => oi.Price * oi.Quantity);
 
+        if (tableReservationId != null)
+        {
+            var reservation = await _tableRepo.GetTableReservationById(tableReservationId ?? string.Empty);
+            if (reservation == null)
+            {
+                throw new KeyNotFoundException($"Reservation with id {tableReservationId} not found.");
+            }
+
+            if (reservation.ReservationStatus == "Left")
+            {
+                throw new InvalidOperationException($"Reservation with id {tableReservationId} is already marked as left.");
+            }
+        }
+
         var intent = new OrderIntent
         {
             CustomerId = placeOrderDto.CustomerId,
