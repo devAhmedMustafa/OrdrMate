@@ -1,6 +1,7 @@
 using OrdrMate.DTOs.Order;
 using OrdrMate.Models;
 using OrdrMate.Repositories;
+using OrdrMate.Utils.Exceptions;
 
 namespace OrdrMate.Services;
 
@@ -38,5 +39,24 @@ public class PaymentService
         };
 
         return paymentDto;
+    }
+
+    public async Task UpdatePaymentProvider(string paymentId, string newProvider)
+    {
+        try
+        {
+            var payment = await _paymentRepo.GetPaymentById(paymentId);
+            if (payment == null)
+            {
+                throw new Exception("Payment not found");
+            }
+
+            payment.Provider = newProvider;
+            await _paymentRepo.UpdatePayment(payment);
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"Failed to update payment provider: {ex.Message}");
+        }
     }
 }

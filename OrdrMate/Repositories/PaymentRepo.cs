@@ -35,7 +35,24 @@ public class PaymentRepo : IPaymentRepo
 
     public Task<Payment> UpdatePayment(Payment payment)
     {
-        _db.Payment.Update(payment);
-        return _db.SaveChangesAsync().ContinueWith(_ => payment);
+
+        try
+        {
+
+            var existingPayment = _db.Payment.FirstOrDefault(p => p.Id == payment.Id);
+            if (existingPayment == null)
+            {
+                throw new KeyNotFoundException($"Payment with id {payment.Id} not found.");
+            }
+
+            _db.Entry(existingPayment).CurrentValues.SetValues(payment);
+            _db.SaveChangesAsync();
+            return Task.FromResult(payment);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to update payment: {ex.Message}");
+        }
+
     }
 }
