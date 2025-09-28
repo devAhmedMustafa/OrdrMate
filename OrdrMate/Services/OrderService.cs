@@ -204,7 +204,7 @@ public class OrderService
                 break;
 
             case OrderType.Delivery:
-                await PlaceDeliveryOrder(order, orderIntent);
+                var delivery = await PlaceDeliveryOrder(order, orderIntent);
                 OrderEvents.OnOrderPlaced(order.BranchId, orderItems);
                 break;
 
@@ -707,6 +707,45 @@ public class OrderService
             IsPaid = order.IsPaid,
             CustomerId = order.CustomerId,
         };
+    }
+
+    public async Task<OrderDto> SetOrderAsDelivered(string orderId)
+    {
+
+        try
+        {
+            var order = await _orderRepo.GetOrderById(orderId);
+
+            if (order == null)
+            {
+                throw new KeyNotFoundException($"Order with id {orderId} not found");
+            }
+
+            if (order.Status != OrderStatus.Ready && order.Status != OrderStatus.Queued)
+            {
+                throw new InvalidOperationException($"Order status is invalid");
+            }
+
+            var updatedOrder = await _orderRepo.SetOrderStatus(order.Id, OrderStatus.Delivered);
+            return OrdersDtoMapper.ToDto(updatedOrder!);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<OrderDto>> GetOrdersOutForDelivery(string branchId)
+    {
+        var orders = await _orderRepo.GetOrdersOutForDelivery(branchId);
+
+        if (orders == null || !orders.Any())
+        {
+            Console.WriteLine($"No delivery orders found for branch with ID: {branchId}");
+            return [];
+        }
+
+        return orders.Select(OrdersDtoMapper.ToDto);
     }
 
 }

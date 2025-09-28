@@ -449,4 +449,43 @@ public class OrderController : ControllerBase
         }
     }
 
+    [HttpPut("deliver/{orderId}")]
+    [Authorize(Roles="BranchManager")]
+    public async Task<ActionResult<OrderDto>> SetOrderAsDelivered(string orderId)
+    {
+        try {
+            var result = await _orderService.SetOrderAsDelivered(orderId);
+            return Ok(result);
+        }
+        catch(Exception ex){
+            return StatusCode(500, $"An error occured while delivering the order: {ex.Message}");
+        }
+    }
+
+    [HttpGet("list/out-delivery/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetOrdersOutForDelivery(string branchId)
+    {
+        try
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to view delivery orders for this branch.");
+            }
+
+            var deliveryOrders = await _orderService.GetOrdersOutForDelivery(branchId);
+            if (deliveryOrders == null)
+            {
+                return NotFound($"No delivery orders found for branch {branchId}.");
+            }
+
+            return Ok(deliveryOrders);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving delivery orders: {ex.Message}");
+        }
+    }
+
 }

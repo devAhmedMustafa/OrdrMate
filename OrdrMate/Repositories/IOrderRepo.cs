@@ -17,6 +17,8 @@ public interface IOrderRepo
     Task<Takeaway?> GetTakeawayById(string orderId);
     Task<IEnumerable<Takeaway>> GetTakeawaysByCustomerId(string customerId);
     Task<IEnumerable<Takeaway>> GetAllTakeawaysByBranchId(string branchId);
+    Task<IEnumerable<Order>> GetAllDeliveryOrdersByBranchId(string branchId);
+    Task<IEnumerable<Order>> GetOrdersOutForDelivery(string branchId);
     Task<Order?> SetOrderPaidStatus(string orderId, bool isPaid);
     Task<Order?> SetOrderStatus(string orderId, OrderStatus status);
     Task<IEnumerable<Order>> GetReadyOrdersByBranchId(string branchId);
@@ -24,4 +26,5 @@ public interface IOrderRepo
     Task<IEnumerable<Order>> GetUnpaidOrdersByBranchId(string branchId);
     Task<IEnumerable<Order>> GetPaidOrdersOfBranch(string branchId);
     Task<IEnumerable<Order>> GetOrdersQueueByBranchId(string customerId);
+    Task<Order> UpdateOrder(Order order);
 }

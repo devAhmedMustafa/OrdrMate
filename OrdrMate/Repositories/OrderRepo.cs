@@ -176,6 +176,42 @@ public class OrderRepo : IOrderRepo
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Order>> GetAllDeliveryOrdersByBranchId(string branchId)
+    {
+        try
+        {
+            return await _db.Order
+                .Where(o => o.BranchId == branchId && o.DeliveryId != null)
+                .Include(o => o.Payment)
+                .Include(o => o.Customer)
+                .Include(o => o.Delivery)
+                .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error retrieving delivery orders for branch {branchId}: {ex.Message}", ex);
+        }
+    }
+
+    public async Task<IEnumerable<Order>> GetOrdersOutForDelivery(string branchId)
+    {
+        try
+        {
+            return await _db.Order
+                .Where(o => o.BranchId == branchId && o.Status == OrderStatus.Queued)
+                .Include(o => o.Payment)
+                .Include(o => o.Customer)
+                .Include(o => o.Delivery)
+                .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error retrieving orders out for delivery for branch {branchId}: {ex.Message}", ex);
+        }
+    }
+
     public async Task<IEnumerable<Order>> GetPaidOrdersOfBranch(string branchId)
     {
         return await _db.Order
@@ -225,5 +261,20 @@ public class OrderRepo : IOrderRepo
         {
             throw new Exception($"Error retrieving orders queue for branch {branchId}: {ex.Message}", ex);
         }
+    }
+
+    public async Task<Order> UpdateOrder(Order order)
+    {
+        var existingOrder = await _db.Order
+            .FirstOrDefaultAsync(o => o.Id == order.Id);
+
+        if (existingOrder == null)
+        {
+            throw new KeyNotFoundException($"Order with id {order.Id} not found.");
+        }
+
+        _db.Entry(existingOrder).CurrentValues.SetValues(order);
+        await _db.SaveChangesAsync();
+        return existingOrder;
     }
 }
