@@ -166,6 +166,7 @@ public class OrderRepo : IOrderRepo
             .OrderByDescending(o => o.OrderDate)
             .OrderByDescending(o => o.OrderTime)
             .Where(o => o.BranchId == branchId && o.IsPaid == false)
+            .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
             .Include(o => o.Payment)
             .Include(o => o.Customer)
             .Include(o => o.TableReservation)
