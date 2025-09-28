@@ -11,4 +11,5 @@ public interface IUserRepo
     Task<User> CreateUser(User user);
     Task<bool> IsUsernameTaken(string username);
     Task<User> UpdateUser(User user);
+    Task<bool> DeleteUser(string id);
 }

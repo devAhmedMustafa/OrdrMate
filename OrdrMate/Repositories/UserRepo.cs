@@ -34,11 +34,24 @@ public class UserRepo(OrdrMateDbContext c) : IUserRepo
     {
         return await _db.User.AnyAsync(u => u.Username == username);
     }
-    
+
     public async Task<User> UpdateUser(User user)
     {
         _db.User.Update(user);
         await _db.SaveChangesAsync();
         return user;
+    }
+    
+    public async Task<bool> DeleteUser(string id)
+    {
+        var user = await _db.User.FindAsync(id);
+        if (user == null)
+        {
+            return false;
+        }
+
+        _db.User.Remove(user);
+        await _db.SaveChangesAsync();
+        return true;
     }
 }
