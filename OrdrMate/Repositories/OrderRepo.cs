@@ -181,7 +181,7 @@ public class OrderRepo : IOrderRepo
         try
         {
             return await _db.Order
-                .Where(o => o.BranchId == branchId && o.DeliveryId != null)
+                .Where(o => o.BranchId == branchId && o.OrderType == OrderType.Delivery)
                 .Include(o => o.Payment)
                 .Include(o => o.Customer)
                 .Include(o => o.Delivery)
@@ -204,6 +204,7 @@ public class OrderRepo : IOrderRepo
                 .Include(o => o.Customer)
                 .Include(o => o.Delivery)
                 .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
+                .Include(o => o.Delivery)
                 .ToListAsync();
         }
         catch (Exception ex)
@@ -253,6 +254,8 @@ public class OrderRepo : IOrderRepo
                 .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
                 .OrderByDescending(o => o.OrderDate)
                 .OrderByDescending(o => o.OrderTime)
+                .Include(o => o.Delivery)
+                .Include(o => o.Takeaway)
                 .AsSplitQuery()
                 .ToListAsync();
 

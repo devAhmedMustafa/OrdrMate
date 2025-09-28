@@ -181,8 +181,8 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
         modelBuilder.Entity<Delivery>().HasKey(d => d.OrderId);
         modelBuilder.Entity<Delivery>()
             .HasOne(d => d.Order)
-            .WithMany()
-            .HasForeignKey(d => d.OrderId)
+            .WithOne(o => o.Delivery)
+            .HasForeignKey<Delivery>(d => d.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrdrMateDbContext).Assembly);

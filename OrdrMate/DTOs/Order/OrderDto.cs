@@ -15,6 +15,7 @@ public class OrderDto
     public required decimal TotalAmount { get; set; }
     public required string BranchId { get; set; }
     public bool IsPaid { get; set; } = false;
+    public DeliveryDetailsDto? DeliveryDetails { get; set; }
 
     public int? OrderNumber { get; set; }
 }
