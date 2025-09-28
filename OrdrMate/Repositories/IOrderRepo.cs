@@ -25,4 +25,5 @@ public interface IOrderRepo
     Task<IEnumerable<Order>> GetOrdersByCustomerId(string customerId);
     Task<IEnumerable<Order>> GetOrdersWithinShift(string branchId, DateTime shiftStart, DateTime shiftEnd);
     Task<Order> UpdateOrder(Order order);
+    Task DeliverOrdersByReservationId(string reservationId);
 }

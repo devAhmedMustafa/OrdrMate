@@ -145,8 +145,11 @@ public class TableManager
             }
 
             var tableRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ITableRepo>();
+            var orderRepo = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<IOrderRepo>();
 
             await tableRepo.UpdateTableReservationStatus(reservation.ReservationId, "Left");
+            await orderRepo.DeliverOrdersByReservationId(reservation.ReservationId);
+            
             var peekReservation = queueManager.PeekReservation(tableNumber);
 
             if (peekReservation == null)

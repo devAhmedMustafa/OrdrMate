@@ -96,6 +96,7 @@ public class UserCustomizationService
                 response.Items.Add(new OrderItemCustomizationDto
                 {
                     ItemId = customization.ItemId,
+                    OrderId = customization.OrderId,
                     Customization = customization.CustomizationValues.ToDictionary()
                 });
             }
@@ -147,6 +148,7 @@ public class UserCustomizationService
                     response.Items.Add(new OrderItemCustomizationDto
                     {
                         ItemId = customization.ItemId,
+                        OrderId = customization.OrderId,
                         Customization = customization.CustomizationValues.ToDictionary()
                     });
                 }

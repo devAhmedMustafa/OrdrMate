@@ -19,6 +19,7 @@ public static class OrdersDtoMapper
             OrderType = order.OrderType.ToString(),
             OrderItems = order.OrderItems?.Select(oi => new OrderItemDto
             {
+                OrderId = oi.OrderId,
                 ItemId = oi.ItemId,
                 Quantity = oi.Quantity,
                 Price = oi.Price,
@@ -61,6 +62,7 @@ public static class OrdersDtoMapper
                 .SelectMany(o => o.OrderItems ?? Enumerable.Empty<OrderItem>())
                 .Select(oi => new OrderItemDto
                 {
+                    OrderId = oi.OrderId,
                     ItemId = oi.ItemId,
                     Quantity = oi.Quantity,
                     Price = oi.Price,
