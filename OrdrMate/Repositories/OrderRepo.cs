@@ -117,8 +117,11 @@ public class OrderRepo : IOrderRepo
 
     public async Task<Order?> GetOrderById(string orderId)
     {
-        return await _db.Order
+        var order = await _db.Order
+            .Include(o => o.Payment)
             .FirstOrDefaultAsync(o => o.Id == orderId);
+            
+        return order;
     }
 
     public async Task<Order?> SetOrderPaidStatus(string orderId, bool isPaid)
@@ -166,6 +169,7 @@ public class OrderRepo : IOrderRepo
             .OrderByDescending(o => o.OrderDate)
             .OrderByDescending(o => o.OrderTime)
             .Where(o => o.BranchId == branchId && o.IsPaid == false)
+            .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
             .Include(o => o.Payment)
             .Include(o => o.Customer)
             .Include(o => o.TableReservation)
@@ -180,6 +184,7 @@ public class OrderRepo : IOrderRepo
             .OrderByDescending(o => o.OrderTime)
             .Where(o => o.BranchId == branchId)
             .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
+            .Include(o => o.Payment)
             .Include(o => o.Customer)
             .Include(o => o.TableReservation)
             .Include(o => o.Takeaway)
