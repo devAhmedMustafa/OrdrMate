@@ -264,4 +264,20 @@ public class OrderRepo : IOrderRepo
             .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
             .ToListAsync();
     }
+
+    public async Task DeliverOrdersByReservationId(string reservationId)
+    {
+        try
+        {
+            await _db.Order.Where(o => o.TableReservationId == reservationId && o.Status == OrderStatus.Ready)
+            .ExecuteUpdateAsync(o => o.SetProperty(o => o.Status, OrderStatus.Delivered));
+
+            await _db.Order.Where(o => o.TableReservationId == reservationId && o.Status != OrderStatus.Ready && o.Status != OrderStatus.Delivered)
+                .ExecuteUpdateAsync(o => o.SetProperty(o => o.Status, OrderStatus.Cancelled));
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerException($"Error delivering orders for reservation id {reservationId}: {ex.Message}");
+        }
+    }
 }
