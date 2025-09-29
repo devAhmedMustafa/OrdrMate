@@ -140,13 +140,20 @@ namespace OrdrMate.Features.Shifts
             {
                 var orders = await GetOrdersForShift(shiftId);
 
+                var cashPaidOrdersCount = orders.Where(o => o.PaymentProvider == "cash").Count();
+                var cashPaidTotal = orders.Where(o => o.PaymentProvider == "cash").Sum(o => o.TotalAmount);
+                var instapayPaidOrdersCount = orders.Where(o => o.PaymentProvider == "instapay").Count();
+                var instapayPaidTotal = orders.Where(o => o.PaymentProvider == "instapay").Sum(o => o.TotalAmount);
+
                 var csvBuilder = new StringBuilder();
-                csvBuilder.AppendLine("OrderId,TotalAmount,PaymentProvider,OrderDate");
+                csvBuilder.AppendLine("OrderId,TotalAmount,PaymentProvider,OrderDate, Cash Paid Orders, Cash Paid Total, InstaPay Orders, InstaPay Total, Total Orders, Total Amount");
 
                 foreach (var order in orders)
                 {
                     csvBuilder.AppendLine($"{order.OrderId},{order.TotalAmount},{order.PaymentProvider},{order.OrderDate:O}");
                 }
+
+                csvBuilder.AppendLine($",,,,{cashPaidOrdersCount},{cashPaidTotal},{instapayPaidOrdersCount},{instapayPaidTotal},{orders.Count()},{orders.Sum(o => o.TotalAmount)}");
 
                 return csvBuilder.ToString();
             }
