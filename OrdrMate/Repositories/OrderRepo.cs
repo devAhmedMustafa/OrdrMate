@@ -57,13 +57,19 @@ public class OrderRepo : IOrderRepo
         return takeaway;
     }
 
+    public async Task<Delivery> CreateDeliveryOrder(Delivery delivery)
+    {
+        _db.Delivery.Add(delivery);
+        await _db.SaveChangesAsync();
+        return delivery;
+    }
+
     public async Task<OrderItem> CreateOrderItem(OrderItem orderItem)
     {
         var saved = _db.OrderItem.Add(orderItem);
         await _db.SaveChangesAsync();
         await _db.Entry(saved.Entity).Reference(oi => oi.Item).LoadAsync();
         await _db.Entry(saved.Entity).Reference(oi => oi.Order).LoadAsync();
-        await _db.Entry(saved.Entity.Item!).Reference(i => i.Kitchen).LoadAsync();
         return saved.Entity;
     }
 
@@ -71,7 +77,7 @@ public class OrderRepo : IOrderRepo
     {
         return await _db.Order
             .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
-            .Include(o => o.Branch).ThenInclude(b => b!.Restaurant)
+            .Include(o => o.Branch).ThenInclude(b => b!.Pharmacy)
             .Include(o => o.Customer)
             .Include(o => o.Payment)
             .AsSplitQuery()
@@ -85,38 +91,23 @@ public class OrderRepo : IOrderRepo
         return await _db.Takeaway.FirstOrDefaultAsync(t => t.OrderId == orderId);
     }
 
-    public async Task<Indoor?> GetDineInById(string orderId)
-    {
-        return await _db.Indoor.FirstOrDefaultAsync(i => i.OrderId == orderId);
-    }
-
     public async Task<IEnumerable<Takeaway>> GetTakeawaysByCustomerId(string customerId)
     {
         return await _db.Takeaway
-            .Include(t => t.Order).ThenInclude(o => o.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(t => t.Order).ThenInclude(o => o.Customer)
-            .Include(t => t.Order).ThenInclude(o => o.Payment)
-            .Where(t => t.Order.CustomerId == customerId)
+            .Include(t => t.Order).ThenInclude(o => o!.Branch).ThenInclude(b => b!.Pharmacy)
+            .Include(t => t.Order).ThenInclude(o => o!.Customer)
+            .Include(t => t.Order).ThenInclude(o => o!.Payment)
+            .Where(t => t.Order!.CustomerId == customerId)
             .ToListAsync();
     }
 
     public async Task<IEnumerable<Takeaway>> GetAllTakeawaysByBranchId(string branchId)
     {
         return await _db.Takeaway
-            .Include(t => t.Order).ThenInclude(o => o.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(t => t.Order).ThenInclude(o => o.Customer)
-            .Include(t => t.Order).ThenInclude(o => o.Payment)
-            .Where(t => t.Order.BranchId == branchId)
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<Indoor>> GetIndoorsByCustomerId(string customerId)
-    {
-        return await _db.Indoor
-            .Include(i => i.Order).ThenInclude(o => o.Branch).ThenInclude(b => b!.Restaurant)
-            .Include(i => i.Order).ThenInclude(o => o.Customer)
-            .Include(i => i.Order).ThenInclude(o => o.Payment)
-            .Where(i => i.Order.CustomerId == customerId)
+            .Include(t => t.Order).ThenInclude(o => o!.Branch).ThenInclude(b => b!.Pharmacy)
+            .Include(t => t.Order).ThenInclude(o => o!.Customer)
+            .Include(t => t.Order).ThenInclude(o => o!.Payment)
+            .Where(t => t.Order!.BranchId == branchId)
             .ToListAsync();
     }
 
@@ -180,7 +171,46 @@ public class OrderRepo : IOrderRepo
             .OrderByDescending(o => o.OrderDate)
             .Where(o => o.BranchId == branchId)
             .Include(o => o.Customer)
+            .Include(o => o.Payment)
+            .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
             .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Order>> GetAllDeliveryOrdersByBranchId(string branchId)
+    {
+        try
+        {
+            return await _db.Order
+                .Where(o => o.BranchId == branchId && o.OrderType == OrderType.Delivery)
+                .Include(o => o.Payment)
+                .Include(o => o.Customer)
+                .Include(o => o.Delivery)
+                .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error retrieving delivery orders for branch {branchId}: {ex.Message}", ex);
+        }
+    }
+
+    public async Task<IEnumerable<Order>> GetOrdersOutForDelivery(string branchId)
+    {
+        try
+        {
+            return await _db.Order
+                .Where(o => o.BranchId == branchId && o.Status == OrderStatus.Queued)
+                .Include(o => o.Payment)
+                .Include(o => o.Customer)
+                .Include(o => o.Delivery)
+                .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
+                .Include(o => o.Delivery)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error retrieving orders out for delivery for branch {branchId}: {ex.Message}", ex);
+        }
     }
 
     public async Task<IEnumerable<Order>> GetPaidOrdersOfBranch(string branchId)
@@ -189,26 +219,65 @@ public class OrderRepo : IOrderRepo
             .Where(o => o.BranchId == branchId && o.IsPaid == true)
             .ToListAsync();
     }
-public async Task<bool> CancelOrderAsync(string orderId)
-{
-    var order = await _db.Order
-        .FirstOrDefaultAsync(o => o.Id == orderId);
 
-    if (order == null)
+    public async Task<bool> CancelOrderAsync(string orderId)
     {
-        return false; 
-    }
+        var order = await _db.Order
+            .FirstOrDefaultAsync(o => o.Id == orderId);
 
-    if (order.Status == OrderStatus.Cancelled)
-    {
-        return false; 
-    }
+        if (order == null)
+        {
+            return false;
+        }
+
+        if (order.Status == OrderStatus.Cancelled)
+        {
+            return false;
+        }
         if (order.Status != OrderStatus.Queued)
-    {
-        return false; 
+        {
+            return false;
+        }
+
+        await SetOrderStatus(orderId, OrderStatus.Cancelled);
+        return true;
     }
 
-    await SetOrderStatus(orderId, OrderStatus.Cancelled);
-    return true;
-}
+    public async Task<IEnumerable<Order>> GetOrdersQueueByBranchId(string branchId)
+    {
+        try
+        {
+            return await _db.Order
+                .Where(o => o.BranchId == branchId && o.Status == OrderStatus.Pending)
+                .Include(o => o.Payment)
+                .Include(o => o.Customer)
+                .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
+                .OrderByDescending(o => o.OrderDate)
+                .OrderByDescending(o => o.OrderTime)
+                .Include(o => o.Delivery)
+                .Include(o => o.Takeaway)
+                .AsSplitQuery()
+                .ToListAsync();
+
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error retrieving orders queue for branch {branchId}: {ex.Message}", ex);
+        }
+    }
+
+    public async Task<Order> UpdateOrder(Order order)
+    {
+        var existingOrder = await _db.Order
+            .FirstOrDefaultAsync(o => o.Id == order.Id);
+
+        if (existingOrder == null)
+        {
+            throw new KeyNotFoundException($"Order with id {order.Id} not found.");
+        }
+
+        _db.Entry(existingOrder).CurrentValues.SetValues(order);
+        await _db.SaveChangesAsync();
+        return existingOrder;
+    }
 }

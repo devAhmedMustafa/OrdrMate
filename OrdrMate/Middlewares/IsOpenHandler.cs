@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
-using OrdrMate.Data;
 using OrdrMate.Repositories;
 
-namespace OrderMate.Middlewares;
+namespace OrdrMate.Middlewares;
 
 public class IsOpenHandler : AuthorizationHandler<IsOpenRequirement>
 {

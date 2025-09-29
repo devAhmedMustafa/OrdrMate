@@ -23,11 +23,11 @@ public class ItemController : ControllerBase
     {
         try
         {
-            var authorizationResult = await _authorizationService.AuthorizeAsync(User, dto.RestaurantId, "CanManageRestaurant");
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, dto.PharmacyId, "CanManagePharmacy");
 
             if (!authorizationResult.Succeeded)
             {
-                return Forbid("You do not have permission to manage this restaurant.");
+                return Forbid("You do not have permission to manage this Pharmacy.");
             }
 
             var result = await _service.AddItem(dto);
@@ -42,12 +42,26 @@ public class ItemController : ControllerBase
         }
     }
 
-    [HttpGet("restaurant/{restaurantId}")]
-    public async Task<ActionResult<IEnumerable<ItemDto>>> GetItemsByRestaurantId(string restaurantId)
+    [HttpGet("Pharmacy/{PharmacyId}")]
+    public async Task<ActionResult<IEnumerable<ItemDto>>> GetItemsByPharmacyId(string PharmacyId)
     {
         try
         {
-            var items = await _service.GetItemsByRestaurantId(restaurantId);
+            var items = await _service.GetItemsByPharmacyId(PharmacyId);
+            return Ok(items);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new { err = e.Message });
+        }
+    }
+
+    [HttpGet("list/{pharmacyId}/{category}")]
+    public async Task<ActionResult<IEnumerable<ItemDto>>> GetItemsByCategory(string pharmacyId, string category)
+    {
+        try
+        {
+            var items = await _service.GetItemsByCategory(pharmacyId, category);
             return Ok(items);
         }
         catch (Exception e)
@@ -87,11 +101,11 @@ public class ItemController : ControllerBase
                 return NotFound(new { err = "Item not found" });
             }
 
-            var authorizationResult = await _authorizationService.AuthorizeAsync(User, itemToUpdate.RestaurantId, "CanManageRestaurant");
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, itemToUpdate.PharmacyId, "CanManagePharmacy");
 
             if (!authorizationResult.Succeeded)
             {
-                return Forbid("You do not have permission to manage this restaurant.");
+                return Forbid("You do not have permission to manage this Pharmacy.");
             }
 
             var item = await _service.UpdateItem(id, dto);
@@ -119,11 +133,11 @@ public class ItemController : ControllerBase
                 return NotFound(new { err = "Item not found" });
             }
 
-            var authorizationResult = await _authorizationService.AuthorizeAsync(User, itemToDelete.RestaurantId, "CanManageRestaurant");
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, itemToDelete.PharmacyId, "CanManagePharmacy");
 
             if (!authorizationResult.Succeeded)
             {
-                return Forbid("You do not have permission to manage this restaurant.");
+                return Forbid("You do not have permission to manage this Pharmacy.");
             }
 
             var result = await _service.DeleteItem(id);

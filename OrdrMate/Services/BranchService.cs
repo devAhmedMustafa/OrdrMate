@@ -6,20 +6,17 @@ using OrdrMate.Models;
 using OrdrMate.Repositories;
 using OrdrMate.Utils;
 using OrdrMate.Events;
-using OrdrMate.Managers;
 
 public class BranchService(
     IBranchRepo branchRepo,
     ManagerService managerService,
-    RestaurantService restaurantService,
-    OrderManager orderManager,
+    PharmacyService PharmacyService,
     OrderService orderService
     )
 {
     private readonly IBranchRepo _branchRepo = branchRepo;
     private readonly ManagerService _managerService = managerService;
-    private readonly OrderManager _orderManager = orderManager;
-    private readonly RestaurantService _restaurantService = restaurantService;
+    private readonly PharmacyService _PharmacyService = PharmacyService;
     private readonly OrderService _orderService = orderService;
 
     public async Task<BranchDto> GetBranchById(string id)
@@ -32,11 +29,11 @@ public class BranchService(
         return new BranchDto
         {
             BranchId = branch.Id,
-            Latitude = branch.Lantitude,
+            Latitude = branch.Latitude,
             Longitude = branch.Longitude,
             BranchAddress = branch.Address,
-            RestaurantId = branch.RestaurantId,
-            RestaurantName = branch.Restaurant?.Name ?? "Unknown",
+            PharmacyId = branch.PharmacyId,
+            PharmacyName = branch.Pharmacy?.Name ?? "Unknown",
             StartWorkingHour = branch.StartWorkingHour,
             EndWorkingHour = branch.EndWorkingHour,
             BranchPhoneNumber = branch.Phone,
@@ -50,86 +47,98 @@ public class BranchService(
         return branches.Select(b => new BranchDto
         {
             BranchId = b.Id,
-            Latitude = b.Lantitude,
+            Latitude = b.Latitude,
             Longitude = b.Longitude,
             BranchAddress = b.Address,
-            RestaurantId = b.RestaurantId,
-            RestaurantName = b.Restaurant?.Name ?? "Unknown",
+            PharmacyId = b.PharmacyId,
+            PharmacyName = b.Pharmacy?.Name ?? "Unknown",
             IsOpen = TimeService.CheckWithinTimeInterval(b.StartWorkingHour, b.EndWorkingHour, b.WorkingDays),
             BranchPhoneNumber = b.Phone,
-            LogoUrl = b.Restaurant?.Profile?.LogoUrl,
+            LogoUrl = b.Pharmacy?.Profile?.LogoUrl,
+            StartWorkingHour = b.StartWorkingHour,
+            EndWorkingHour = b.EndWorkingHour,
+            WorkingDays = b.WorkingDays
         });
     }
 
-    public async Task<IEnumerable<BranchDto>> GetRestaurantBranches(string restaurantId)
+    public async Task<IEnumerable<BranchDto>> GetPharmacyBranches(string PharmacyId)
     {
-        var branches = await _branchRepo.GetRestaurantBranches(restaurantId);
+        var branches = await _branchRepo.GetPharmacyBranches(PharmacyId);
         return branches.Select(b => new BranchDto
         {
             BranchId = b.Id,
-            Latitude = b.Lantitude,
+            Latitude = b.Latitude,
             Longitude = b.Longitude,
             BranchAddress = b.Address,
             BranchPhoneNumber = b.Phone,
-            RestaurantId = b.RestaurantId,
-            RestaurantName = b.Restaurant?.Name ?? "Unknown",
+            PharmacyId = b.PharmacyId,
+            PharmacyName = b.Pharmacy?.Name ?? "Unknown",
+            StartWorkingHour = b.StartWorkingHour,
+            EndWorkingHour = b.EndWorkingHour,
+            WorkingDays = b.WorkingDays,
         });
     }
 
-    public async Task<BranchApprovalDto> CreateBranch(BranchDto branchDto)
+    public async Task<BranchApprovalDto> CreateBranch(CreateBranchDto branchDto)
     {
-
-        var restaurant = await _restaurantService.GetRestaurantById(branchDto.RestaurantId);
-
-        if (restaurant == null)
+        try
         {
-            throw new KeyNotFoundException($"Restaurant with id {branchDto.RestaurantId} not found.");
+            var Pharmacy = await _PharmacyService.GetPharmacyById(branchDto.PharmacyId);
+
+            if (Pharmacy == null) throw new KeyNotFoundException($"Pharmacy with id {branchDto.PharmacyId} not found.");
+
+
+            var username = RandomGenerator.GenerateRandomString(Pharmacy.Name.Length + 4, Pharmacy.Name);
+            var password = RandomGenerator.GenerateRandomPassword(8);
+
+            while (await _managerService.IsUsernameTaken(username))
+            {
+                username = RandomGenerator.GenerateRandomString(Pharmacy.Name.Length + 4, Pharmacy.Name);
+            }
+
+            var createdManager = await _managerService.CreateManager(new CreateManagerDTO
+            {
+                Username = username,
+                Password = password,
+            });
+
+            if (createdManager == null)
+            {
+                throw new Exception("Failed to create manager.");
+            }
+
+            var branch = new Branch
+            {
+                Id = Guid.NewGuid().ToString(),
+                Latitude = branchDto.Latitude,
+                Longitude = branchDto.Longitude,
+                Address = branchDto.BranchAddress,
+                Phone = branchDto.BranchPhoneNumber,
+                PharmacyId = branchDto.PharmacyId,
+                BranchManagerId = createdManager.Id,
+            };
+
+            var createdBranch = await _branchRepo.CreateBranch(branch);
+
+            BranchEvents.OnBranchCreated(createdBranch);
+
+            return new BranchApprovalDto
+            {
+                BranchId = createdBranch.Id,
+                BranchAddress = createdBranch.Address,
+                PharmacyId = createdBranch.PharmacyId,
+                BranchPhoneNumber = createdBranch.Phone,
+                BranchManagerId = createdBranch.BranchManagerId,
+                BranchManagerUsername = username,
+                BranchManagerPassword = password,
+            };
+
         }
-
-        var username = RandomGenerator.GenerateRandomString(restaurant.Name.Length + 4, restaurant.Name);
-        var password = RandomGenerator.GenerateRandomPassword(8);
-
-        while (await _managerService.IsUsernameTaken(username))
+        catch (Exception ex)
         {
-            username = RandomGenerator.GenerateRandomString(restaurant.Name.Length + 4, restaurant.Name);
+            Console.WriteLine($"[BranchService]: Error in CreateBranch: {ex.Message}");
+            throw new Exception($"An error occurred while creating the branch: {ex.Message}");
         }
-
-        var createdManager = await _managerService.CreateManager(new CreateManagerDTO
-        {
-            Username = username,
-            Password = password,
-        });
-
-        if (createdManager == null)
-        {
-            throw new Exception("Failed to create manager.");
-        }
-
-        var branch = new Branch
-        {
-            Id = Guid.NewGuid().ToString(),
-            Lantitude = branchDto.Latitude,
-            Longitude = branchDto.Longitude,
-            Address = branchDto.BranchAddress,
-            Phone = branchDto.BranchPhoneNumber,
-            RestaurantId = branchDto.RestaurantId,
-            BranchManagerId = createdManager.Id,
-        };
-
-        var createdBranch = await _branchRepo.CreateBranch(branch);
-
-        BranchEvents.OnBranchCreated(createdBranch);
-
-        return new BranchApprovalDto
-        {
-            BranchId = createdBranch.Id,
-            BranchAddress = createdBranch.Address,
-            RestaurantId = createdBranch.RestaurantId,
-            BranchPhoneNumber = createdBranch.Phone,
-            BranchManagerId = createdBranch.BranchManagerId,
-            BranchManagerUsername = username,
-            BranchManagerPassword = password,
-        };
     }
 
     public async Task<BranchInfoDto> GetBranchInfo(string branchId)
@@ -141,9 +150,6 @@ public class BranchService(
         }
 
         var ordersInQueue = await _branchRepo.GetOrdersInQueue(branchId);
-        var tableCount = await _branchRepo.GetTableCount(branchId);
-        var freeTables = await _branchRepo.GetAvailableTables(branchId);
-        var waitingTimes = await _orderManager.GetEstimatedTimes(branchId);
 
         var isOpen = TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays);
 
@@ -152,14 +158,9 @@ public class BranchService(
             BranchId = branch.Id,
             BranchAddress = branch.Address,
             BranchPhoneNumber = branch.Phone,
-            RestaurantId = branch.RestaurantId,
-            RestaurantName = branch.Restaurant?.Name ?? "Unknown",
-            FreeTables = freeTables,
-            TotalTables = tableCount,
+            PharmacyId = branch.PharmacyId,
+            PharmacyName = branch.Pharmacy?.Name ?? "Unknown",
             OrdersInQueue = ordersInQueue,
-            MinWaitingTime = waitingTimes.MinWaitingTime,
-            MaxWaitingTime = waitingTimes.MaxWaitingTime,
-            AverageWaitingTime = waitingTimes.AverageWaitingTime,
             StartWorkingHour = branch.StartWorkingHour,
             EndWorkingHour = branch.EndWorkingHour,
             IsOpen = isOpen,
@@ -198,14 +199,15 @@ public class BranchService(
         return new BranchDto
         {
             BranchId = branch.Id,
-            Latitude = branch.Lantitude,
+            Latitude = branch.Latitude,
             Longitude = branch.Longitude,
             BranchAddress = branch.Address,
             BranchPhoneNumber = branch.Phone,
-            RestaurantId = branch.RestaurantId,
-            RestaurantName = branch.Restaurant?.Name ?? "Unknown",
+            PharmacyId = branch.PharmacyId,
+            PharmacyName = branch.Pharmacy?.Name ?? "Unknown",
             StartWorkingHour = branch.StartWorkingHour,
-            EndWorkingHour = branch.EndWorkingHour
+            EndWorkingHour = branch.EndWorkingHour,
+            WorkingDays = branch.WorkingDays,
         };
     }
 

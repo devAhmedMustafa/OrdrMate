@@ -19,9 +19,30 @@ public class ItemAvailabilityController : ControllerBase
         _authorizationService = authorizationService;
     }
 
-    [HttpPut("toggle")]
+    [HttpGet("get-availability-items/{branchId}")]
     [Authorize(Roles = "BranchManager")]
-    public async Task<IActionResult> ToggleItemAvailability([FromBody] ToggleItemAvailabilityDto dto)
+    public async Task<ActionResult<IEnumerable<ItemAvailabilityResponse>>> GetAllItemAvailabilities(string branchId)
+    {
+        try
+        {
+            var isAuthorized = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+            if (!isAuthorized.Succeeded)
+            {
+                return Forbid();
+            }
+
+            var items = await _itemAvailabilityService.GetItemAvailabilities(branchId);
+            return Ok(items);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpPut("update-quantity")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<IActionResult> UpdateItemQuantity([FromBody] UpdateItemQuantityDto dto)
     {
         try
         {
@@ -31,8 +52,8 @@ public class ItemAvailabilityController : ControllerBase
                 return Forbid();
             }
 
-            var isAvailable = await _itemAvailabilityService.ToggleItemAvailability(dto.ItemId, dto.BranchId);
-            return Ok(isAvailable);
+            await _itemAvailabilityService.UpdateItemQuantity(dto);
+            return Ok();
         }
         catch (Exception ex)
         {

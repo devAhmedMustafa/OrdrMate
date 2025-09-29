@@ -21,10 +21,12 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
                 Description = item.Description,
                 ImageUrl = item.ImageUrl,
                 Price = item.Price,
-                CategoryName = item.Category,
-                RestaurantId = item.RestaurantId,
-                KitchenId = item.KitchenId,
-                PreperationTime = item.PreparationTime
+                Category = item.Category,
+                SubCategory = item.SubCategory,
+                PharmacyId = item.PharmacyId,
+                Brand = item.Brand,
+                Priority = item.Priority,
+                Tags = item.Tags
             };
 
             var addedItem = await _itemRepo.AddItem(newItem);
@@ -44,9 +46,11 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
                 Description = addedItem.Description,
                 ImageUrl = addedItem.ImageUrl,
                 Price = addedItem.Price,
-                Category = addedItem.CategoryName,
-                PreparationTime = addedItem.PreperationTime,
-                KitchenName = addedItem.Kitchen?.Name ?? string.Empty
+                Category = addedItem.Category,
+                SubCategory = addedItem.SubCategory,
+                Brand = addedItem.Brand,
+                Priority = addedItem.Priority,
+                Tags = addedItem.Tags
             };
 
         }
@@ -72,10 +76,9 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             Description = item.Description,
             ImageUrl = item.ImageUrl,
             Price = item.Price,
-            Category = item.CategoryName,
-            PreparationTime = item.PreperationTime,
-            KitchenName = item.Kitchen?.Name ?? string.Empty,
-            KitchenId = item.Kitchen?.Id,
+            Category = item.Category,
+            SubCategory = item.SubCategory,
+            Brand = item.Brand,
             Priority = item.Priority,
             Tags = item.Tags
         };
@@ -86,9 +89,9 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
         return await _itemRepo.GetAllItems();
     }
 
-    public async Task<IEnumerable<ItemDto>> GetItemsByRestaurantId(string restaurantId)
+    public async Task<IEnumerable<ItemDto>> GetItemsByPharmacyId(string pharmacyId)
     {
-        var items = await _itemRepo.GetItemsByRestaurantId(restaurantId);
+        var items = await _itemRepo.GetItemsByPharmacyId(pharmacyId);
 
         return items.Select(item => new ItemDto
         {
@@ -97,12 +100,11 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             Description = item.Description,
             ImageUrl = item.ImageUrl,
             Price = item.Price,
-            Category = item.CategoryName,
-            PreparationTime = item.PreperationTime,
-            KitchenId = item.Kitchen?.Id,
+            Category = item.Category,
+            SubCategory = item.SubCategory,
             Priority = item.Priority,
             Tags = item.Tags,
-            KitchenName = item.Kitchen?.Name ?? string.Empty
+            Brand = item.Brand
         });
     }
 
@@ -114,15 +116,26 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             throw new Exception("Item not found");
         }
 
-        existingItem.Name = updatedItem.Name;
-        existingItem.Description = updatedItem.Description;
-        existingItem.ImageUrl = updatedItem.ImageUrl;
-        existingItem.Price = updatedItem.Price;
-        existingItem.CategoryName = updatedItem.Category;
-        existingItem.KitchenId = updatedItem.KitchenId;
-        existingItem.PreperationTime = updatedItem.PreparationTime;
-        existingItem.Priority = updatedItem.Priority;
-        existingItem.Tags = updatedItem.Tags;
+        if (updatedItem.Name is not null)
+            existingItem.Name = updatedItem.Name;
+        if (updatedItem.Description is not null)
+            existingItem.Description = updatedItem.Description;
+        if (updatedItem.ImageUrl is not null)
+            existingItem.ImageUrl = updatedItem.ImageUrl;
+        if (updatedItem.Price is not null)
+            existingItem.Price = updatedItem.Price.Value;
+        if (updatedItem.Category is not null)
+            existingItem.Category = updatedItem.Category;
+        if (updatedItem.SubCategory is not null)
+            existingItem.SubCategory = updatedItem.SubCategory;
+        if (updatedItem.Priority is not null)
+            existingItem.Priority = updatedItem.Priority.Value;
+        if (updatedItem.Tags is not null)
+            existingItem.Tags = updatedItem.Tags;
+        if (updatedItem.Brand is not null)
+            existingItem.Brand = updatedItem.Brand;
+
+
 
         var updated = await _itemRepo.UpdateItem(existingItem);
 
@@ -138,9 +151,9 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             Description = updated.Description,
             ImageUrl = updated.ImageUrl,
             Price = updated.Price,
-            Category = updated.CategoryName,
-            PreparationTime = updated.PreperationTime,
-            KitchenName = updated.Kitchen?.Name ?? string.Empty,
+            Category = updated.Category,
+            SubCategory = updated.SubCategory,
+            Brand = updated.Brand,
             Priority = updated.Priority,
             Tags = updated.Tags
         };
@@ -164,14 +177,32 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
         return new ItemAuthInfo
         {
             Id = item.Id,
-            RestaurantId = item.RestaurantId,
+            PharmacyId = item.PharmacyId,
         };
     }
 
-    
+
     public async Task<IEnumerable<ItemDto>> GetAvailableItems(string branchId)
     {
         var items = await _itemAvailabilityService.GetAllItemAvailabilities(branchId);
         return items;
+    }
+    
+    public async Task<IEnumerable<ItemDto>> GetItemsByCategory(string pharmacyId, string category)
+    {
+        var items = await _itemRepo.GetItemsByCategory(pharmacyId, category);
+        return items.Select(item => new ItemDto
+        {
+            Id = item.Id,
+            Name = item.Name,
+            Description = item.Description,
+            ImageUrl = item.ImageUrl,
+            Price = item.Price,
+            Category = item.Category,
+            SubCategory = item.SubCategory,
+            Priority = item.Priority,
+            Tags = item.Tags,
+            Brand = item.Brand
+        });
     }
 }

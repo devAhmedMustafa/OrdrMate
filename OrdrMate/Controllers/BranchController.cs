@@ -39,10 +39,10 @@ public class BranchController : ControllerBase
         var branchRequestsDto = branchRequests.Select(br => new BranchRequestDto
         {
             BranchRequestId = br.Id,
-            RestaurantName = br.Restaurant.Name,
+            PharmacyName = br.Pharmacy!.Name,
             BranchAddress = br.Address,
             BranchPhoneNumber = br.Phone,
-            Lantitude = br.Lantitude,
+            Lantitude = br.Latitude,
             Longitude = br.Longitude
 
         }).ToList();
@@ -61,24 +61,24 @@ public class BranchController : ControllerBase
         var branchRequestDto = new BranchRequestDto
         {
             BranchRequestId = branchRequest.Id,
-            RestaurantName = branchRequest.Restaurant.Name,
+            PharmacyName = branchRequest.Pharmacy!.Name,
             BranchAddress = branchRequest.Address,
             BranchPhoneNumber = branchRequest.Phone,
-            Lantitude = branchRequest.Lantitude,
+            Lantitude = branchRequest.Latitude,
             Longitude = branchRequest.Longitude
         };
         return Ok(branchRequestDto);
     }
 
-    [HttpPost]
+    [HttpPost("request/create")]
     public async Task<IActionResult> CreateBranchRequest([FromBody] AddBranchRequestDto branchRequestDto)
     {
 
-        var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchRequestDto.RestaurantId, "CanManageRestaurant");
+        var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchRequestDto.PharmacyId, "CanManagePharmacy");
 
         if (!authorizationResult.Succeeded)
         {
-            return Forbid("You do not have permission to manage this restaurant.");
+            return Forbid("You do not have permission to manage this Pharmacy.");
         }
 
         if (branchRequestDto == null)
@@ -88,11 +88,10 @@ public class BranchController : ControllerBase
 
         var branchRequest = new Models.BranchRequest
         {
-            Id = Guid.NewGuid().ToString(),
-            RestaurantId = branchRequestDto.RestaurantId,
+            PharmacyId = branchRequestDto.PharmacyId,
             Address = branchRequestDto.BranchAddress,
             Phone = branchRequestDto.BranchPhoneNumber,
-            Lantitude = branchRequestDto.Lantitude,
+            Latitude = branchRequestDto.Latitude,
             Longitude = branchRequestDto.Longitude
         };
 
@@ -100,59 +99,69 @@ public class BranchController : ControllerBase
         return CreatedAtAction(nameof(GetBranchRequestById), new { id = createdBranchRequest.Id }, new BranchRequestDto
         {
             BranchRequestId = createdBranchRequest.Id,
-            RestaurantName = createdBranchRequest.Restaurant.Name,
+            PharmacyName = createdBranchRequest.Pharmacy!.Name,
             BranchAddress = createdBranchRequest.Address,
             BranchPhoneNumber = createdBranchRequest.Phone,
-            Lantitude = createdBranchRequest.Lantitude,
+            Lantitude = createdBranchRequest.Latitude,
             Longitude = createdBranchRequest.Longitude
         });
     }
 
-    [HttpPost("{id}")]
+    [HttpPost("request/approve/{id}")]
     [Authorize(Policy = "Admin")]
     public async Task<IActionResult> ApproveBranchRequest(string id)
     {
-        var branchRequest = await _branchRequestRepo.GetBranchRequestById(id);
-        if (branchRequest == null)
+        try
         {
-            return NotFound($"Branch request with id {id} not found.");
+            var branchRequest = await _branchRequestRepo.GetBranchRequestById(id);
+            if (branchRequest == null)
+            {
+                return NotFound($"Branch request with id {id} not found.");
+            }
+
+            var branchCreated = await _branchService.CreateBranch(new CreateBranchDto
+            {
+                Latitude = branchRequest.Latitude,
+                Longitude = branchRequest.Longitude,
+                BranchAddress = branchRequest.Address,
+                BranchPhoneNumber = branchRequest.Phone,
+                PharmacyId = branchRequest.PharmacyId,
+            });
+
+            Console.WriteLine($"[BranchService]: Branch created with ID {branchCreated.BranchId}");
+
+            if (branchCreated == null)
+            {
+                return BadRequest("Failed to create branch.");
+            }
+
+            var isDeleted = await _branchRequestRepo.DeleteBranchRequest(id);
+            if (!isDeleted)
+            {
+                return BadRequest("Failed to delete branch request.");
+            }
+
+            return CreatedAtAction(nameof(GetBranchRequestById), new { id = branchCreated.BranchId }, branchCreated);
+
         }
-
-        var branchCreated = await _branchService.CreateBranch(new BranchDto
+        catch (Exception ex)
         {
-            Latitude = branchRequest.Lantitude,
-            Longitude = branchRequest.Longitude,
-            BranchAddress = branchRequest.Address,
-            BranchPhoneNumber = branchRequest.Phone,
-            RestaurantId = branchRequest.RestaurantId
-        });
-
-        if (branchCreated == null)
-        {
-            return BadRequest("Failed to create branch.");
+            return StatusCode(500, $"An error occurred while approving the branch request: {ex.Message}");
         }
-
-        var isDeleted = await _branchRequestRepo.DeleteBranchRequest(id);
-        if (!isDeleted)
-        {
-            return BadRequest("Failed to delete branch request.");
-        }
-
-        return CreatedAtAction(nameof(GetBranchRequestById), new { id = branchCreated.BranchId }, branchCreated);
     }
 
     [HttpGet]
-    [Route("restaurant/{restaurantId}")]
-    public async Task<IActionResult> GetRestaurantBranches(string restaurantId)
+    [Route("Pharmacy/{PharmacyId}")]
+    public async Task<IActionResult> GetPharmacyBranches(string PharmacyId)
     {
         try
         {
-            var branches = await _branchService.GetRestaurantBranches(restaurantId);
+            var branches = await _branchService.GetPharmacyBranches(PharmacyId);
             return Ok(branches);
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound($"Restaurant with ID {restaurantId} not found: {ex.Message}");
+            return NotFound($"Pharmacy with ID {PharmacyId} not found: {ex.Message}");
         }
     }
 
@@ -251,7 +260,8 @@ public class BranchController : ControllerBase
             {
                 return NotFound($"Branch with ID {branchId} not found.");
             }
-            var isOpen = TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays);
+            
+            var isOpen = TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays!);
             return Ok(isOpen);
         }
         catch (KeyNotFoundException ex)

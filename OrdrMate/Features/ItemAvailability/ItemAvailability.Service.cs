@@ -27,7 +27,7 @@ public class ItemAvailabilityService
         }
         else
         {
-            return await _repository.IsItemAvailabile(itemId, branchId);
+            return await _repository.IsItemAvailable(itemId, branchId);
         }
 
     }
@@ -42,13 +42,12 @@ public class ItemAvailabilityService
             Description = ia.Item.Description,
             ImageUrl = ia.Item.ImageUrl,
             Price = ia.Item.Price,
-            PreparationTime = ia.Item.PreperationTime,
-            Category = ia.Item.CategoryName,
-            KitchenName = ia.Item.Kitchen!.Name,
-            KitchenId = ia.Item.KitchenId,
+            Category = ia.Item.Category,
+            SubCategory = ia.Item.SubCategory,
             IsAvailable = ia.IsAvailable,
             Priority = ia.Item.Priority,
-            Tags = ia.Item.Tags
+            Tags = ia.Item.Tags,
+            Brand = ia.Item.Brand
         });
     }
 
@@ -71,5 +70,50 @@ public class ItemAvailabilityService
         }
 
         return instance.IsAvailable;
+    }
+
+    public async Task<IEnumerable<ItemAvailabilityResponse>> GetItemAvailabilities(string branchId)
+    {
+        try
+        {
+            var itemAvailabilities = await _repository.GetAllItemAvailabilities(branchId);
+            return itemAvailabilities.Select(ia => new ItemAvailabilityResponse
+            {
+                ItemId = ia.ItemId,
+                BranchId = ia.BranchId,
+                IsAvailable = ia.IsAvailable,
+                Stock = ia.AvailableQuantity
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while fetching item availabilities: {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task UpdateItemQuantity(UpdateItemQuantityDto data)
+    {
+
+        if (data.Quantity < 0)
+            throw new ArgumentException("Quantity cannot be negative", nameof(data.Quantity));
+
+        await _repository.UpdateItemQuantity(data.ItemId, data.BranchId, data.Quantity);
+    }
+    
+    public async Task DecreaseItemQuantity(string itemId, string branchId, int quantity)
+    {
+        if (quantity <= 0)
+            throw new ArgumentException("Quantity must be greater than zero", nameof(quantity));
+
+        var itemAvailability = await _repository.GetItemAvailability(itemId, branchId);
+        if (itemAvailability == null)
+            throw new InvalidOperationException("Item availability record not found");
+
+        if (itemAvailability.AvailableQuantity < quantity)
+            throw new InvalidOperationException("Insufficient stock available");
+
+        itemAvailability.AvailableQuantity -= quantity;
+        await _repository.UpdateItemAvailability(itemAvailability);
     }
 }

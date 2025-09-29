@@ -10,8 +10,8 @@ public class ItemAvailabilityModule : IModule
         IHostEnvironment environment
         )
     {
-        services.AddScoped<ItemAvailabilityRepository, ItemAvailabilityRepository>();
-        services.AddScoped<ItemAvailabilityService, ItemAvailabilityService>();
+        services.AddScoped<ItemAvailabilityRepository>();
+        services.AddScoped<ItemAvailabilityService>();
 
         services.AddHostedService<ItemAvailabilityOrchestrator>();
     }

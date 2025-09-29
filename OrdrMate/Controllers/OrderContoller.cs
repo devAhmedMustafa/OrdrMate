@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrdrMate.DTOs.Order;
-using OrdrMate.Managers;
 using OrdrMate.Services;
 using OrdrMate.Utils;
 
@@ -15,7 +14,6 @@ public class OrderController : ControllerBase
 
     private readonly OrderService _orderService;
     private readonly BranchService _branchService;
-    private readonly OrderManager _orderManager;
     private readonly IAuthorizationService _authorizationService;
     private readonly GeoMaps _geoMaps;
     private readonly IWebHostEnvironment _env;
@@ -24,7 +22,6 @@ public class OrderController : ControllerBase
         OrderService orderService,
         BranchService branchService,
         IAuthorizationService authorizationService,
-        OrderManager orderManager,
         GeoMaps geoMaps,
         IWebHostEnvironment env
         )
@@ -32,7 +29,6 @@ public class OrderController : ControllerBase
         _orderService = orderService;
         _branchService = branchService;
         _authorizationService = authorizationService;
-        _orderManager = orderManager;
         _geoMaps = geoMaps;
         _env = env;
     }
@@ -50,26 +46,6 @@ public class OrderController : ControllerBase
 
 
             placeOrderDto.CustomerId = userId;
-
-            var branch = await _branchService.GetBranchById(placeOrderDto.BranchId);
-
-            if (!TimeService.CheckWithinTimeInterval(branch.StartWorkingHour, branch.EndWorkingHour, branch.WorkingDays))
-            {
-                return Forbid("Branch is not open at this time.");
-            }
-
-            double distance = await _geoMaps.CalculateDistance(
-                placeOrderDto.Latitude,
-                placeOrderDto.Longitude,
-                branch.Latitude,
-                branch.Longitude
-            );
-
-            if (distance > 50 && !_env.IsDevelopment())
-            {
-                Console.WriteLine($"[BranchController]: Coordinates: ({placeOrderDto.Latitude}, {placeOrderDto.Longitude}), Branch: ({branch.Latitude}, {branch.Longitude}), Distance: {distance} km");
-                return Forbid($"Order cannot be placed. Distance is {distance:F2} km, which exceeds the 50 km limit.");
-            }
 
             var orderIntent = await _orderService.CreateOrderIntent(placeOrderDto);
             if (orderIntent == null)
@@ -133,45 +109,6 @@ public class OrderController : ControllerBase
         }
     }
 
-    [HttpPost("check-prepared/{branchId}/{kitchenName}/{kitchenUnitId}")]
-    public async Task<ActionResult> CheckPreparedInQueue(string branchId, string kitchenName, int kitchenUnitId)
-    {
-        try
-        {
-            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
-            if (!authorizationResult.Succeeded)
-            {
-                return Forbid("You do not have permission to check prepared items in this branch.");
-            }
-
-            var response = _orderManager.CheckPreparedInQueue(branchId, kitchenName, kitchenUnitId);
-            return Ok(response);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error checking prepared items: " + ex.Message);
-            return StatusCode(500, $"An error occurred while checking prepared items: {ex.Message}");
-        }
-    }
-
-    [HttpGet("waiting_times/{branchId}")]
-    public async Task<ActionResult<OrderWaitingTimesDto>> GetEstimatedTimes(string branchId)
-    {
-        try
-        {
-            var waitingTimes = await _orderManager.GetEstimatedTimes(branchId);
-            if (waitingTimes == null)
-            {
-                return NotFound($"No estimated times found for branch {branchId}.");
-            }
-            return Ok(waitingTimes);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"An error occurred while fetching estimated times: {ex.Message}");
-        }
-    }
-
     [HttpGet("customer")]
     [Authorize(Roles = "Customer")]
     public async Task<ActionResult<IEnumerable<OrderDto>>> GetCustomerOrders()
@@ -205,21 +142,6 @@ public class OrderController : ControllerBase
         catch (KeyNotFoundException ex)
         {
             return NotFound($"Order with ID {orderId} not found: {ex.Message}");
-        }
-    }
-
-    [HttpGet("branch/{branchId}/estimated_time/{orderId}")]
-    public async Task<ActionResult<decimal>> GetEstimatedTimeForOrder(string branchId, string orderId)
-    {
-        try
-        {
-            var estimatedTime = await _orderManager.GetEstimatedTimeForOrder(branchId, orderId);
-
-            return Ok(new { EstimatedTime = estimatedTime });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"An error occurred while fetching estimated time for order {orderId}: {ex.Message}");
         }
     }
 
@@ -335,29 +257,24 @@ public class OrderController : ControllerBase
         }
     }
 
-    [HttpGet("item_queues/{branchId}")]
+    [HttpGet("branch-queue/{branchId}")]
     [Authorize(Roles = "BranchManager")]
-    public async Task<ActionResult> GetItemQueues(string branchId)
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetBranchOrderQueue(string branchId)
     {
         try
         {
             var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
             if (!authorizationResult.Succeeded)
             {
-                return Forbid("You do not have permission to view item queues for this branch.");
+                return Forbid("You do not have permission to view the order queue for this branch.");
             }
 
-            var itemQueues = _orderManager.GetItemQueues(branchId);
-            if (itemQueues == null || itemQueues.Count == 0)
-            {
-                return NotFound($"No item queues found for branch {branchId}.");
-            }
-
-            return Ok(itemQueues);
+            var queueLength = await _orderService.GetOrdersQueueByBranchId(branchId);
+            return Ok(queueLength);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"An error occurred while retrieving item queues: {ex.Message}");
+            return StatusCode(500, $"An error occurred while retrieving the order queue length: {ex.Message}");
         }
     }
 
@@ -509,6 +426,7 @@ public class OrderController : ControllerBase
         return Ok(new { message = "Order cancelled successfully." });
     }
 
+<<<<<<< HEAD
     [HttpPost("create-order")]
 [Authorize(Roles = "BranchManager")]
 public async Task<ActionResult<OrderIntentDto>> CreateOrderForBranchManager([FromBody] PlaceOrderDto placeOrderDto)
@@ -542,3 +460,68 @@ public async Task<ActionResult<OrderIntentDto>> CreateOrderForBranchManager([Fro
     }
 }
 }
+=======
+
+    [HttpPut("confirm-pending/{orderId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<IActionResult> ConfirmPendingOrder(string orderId)
+    {
+        try
+        {
+            var authResult = await _authorizationService.AuthorizeAsync(User, orderId, "OrderBranchAccess");
+            if (!authResult.Succeeded)
+            {
+                return Forbid("You do not have permission to confirm this order.");
+            }
+
+            var result = await _orderService.ConfirmPendingOrder(orderId);
+
+            return Ok(new { message = "Order confirmed successfully." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while confirming the pending order: {ex.Message}");
+        }
+    }
+
+    [HttpPut("deliver/{orderId}")]
+    [Authorize(Roles="BranchManager")]
+    public async Task<ActionResult<OrderDto>> SetOrderAsDelivered(string orderId)
+    {
+        try {
+            var result = await _orderService.SetOrderAsDelivered(orderId);
+            return Ok(result);
+        }
+        catch(Exception ex){
+            return StatusCode(500, $"An error occured while delivering the order: {ex.Message}");
+        }
+    }
+
+    [HttpGet("list/out-delivery/{branchId}")]
+    [Authorize(Roles = "BranchManager")]
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetOrdersOutForDelivery(string branchId)
+    {
+        try
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchId, "BranchManager");
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid("You do not have permission to view delivery orders for this branch.");
+            }
+
+            var deliveryOrders = await _orderService.GetOrdersOutForDelivery(branchId);
+            if (deliveryOrders == null)
+            {
+                return NotFound($"No delivery orders found for branch {branchId}.");
+            }
+
+            return Ok(deliveryOrders);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred while retrieving delivery orders: {ex.Message}");
+        }
+    }
+
+}
+>>>>>>> 3e001081afa4caee04908b24a811dbb63ce85ced

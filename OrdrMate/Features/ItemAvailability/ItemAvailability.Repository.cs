@@ -19,9 +19,9 @@ public class ItemAvailabilityRepository
         return entity.Entity;
     }
 
-    public async Task<bool> IsItemAvailabile(string itemId, string branchId)
+    public async Task<bool> IsItemAvailable(string itemId, string branchId)
     {
-        return await _db.ItemAvailabilities.AnyAsync(ia => ia.ItemId == itemId && ia.BranchId == branchId);
+        return await _db.ItemAvailabilities.AnyAsync(ia => ia.ItemId == itemId && ia.BranchId == branchId && ia.AvailableQuantity > 0);
     }
 
     public async Task<ItemAvailability?> GetItemAvailability(string itemId, string branchId)
@@ -29,22 +29,39 @@ public class ItemAvailabilityRepository
         return await _db.ItemAvailabilities.FirstOrDefaultAsync(ia => ia.ItemId == itemId && ia.BranchId == branchId);
     }
 
-    public async Task<List<ItemAvailability>> GetAllItemAvailabilities(string branchId)
+    public async Task<IEnumerable<ItemAvailability>> GetAllItemAvailabilities(string branchId)
     {
-        var itemAvailabilities = await _db.ItemAvailabilities
-            .Include(i => i.Item)
-            .ThenInclude(i => i!.Kitchen)
-            .OrderByDescending(i => i.Item!.Priority)
-            .Where(ia => ia.BranchId == branchId)
-            .ToListAsync();
+        try
+        {
+            var itemAvailabilities = await _db.ItemAvailabilities
+                .Where(ia => ia.BranchId == branchId)
+                .ToListAsync();
 
-        return itemAvailabilities;
+            return itemAvailabilities;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while fetching item availabilities: {ex.Message}");
+            throw;
+        }
     }
-    
+
     public async Task<ItemAvailability> UpdateItemAvailability(ItemAvailability itemAvailability)
     {
         var entity = _db.ItemAvailabilities.Update(itemAvailability);
         await _db.SaveChangesAsync();
         return entity.Entity;
+    }
+    
+    public async Task UpdateItemQuantity(string itemId, string branchId, int quantity)
+    {
+        var itemAvailability = await GetItemAvailability(itemId, branchId);
+        if (itemAvailability is null)
+        {
+            throw new Exception("Item availability not found");
+        }
+
+        itemAvailability.AvailableQuantity = quantity;
+        await UpdateItemAvailability(itemAvailability);
     }
 }

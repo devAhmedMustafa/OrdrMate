@@ -10,45 +10,13 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
     public async Task<Item?> AddItem(Item item)
     {
 
-        // Check if the restaurant exists
-        var restaurant = await _context.Restaurant
-            .FirstOrDefaultAsync(r => r.Id == item.RestaurantId);
-        if (restaurant == null)
+        // Check if the Pharmacy exists
+        var Pharmacy = await _context.Pharmacy
+            .FirstOrDefaultAsync(r => r.Id == item.PharmacyId);
+        if (Pharmacy == null)
         {
-            Console.Error.WriteLine($"Restaurant with ID {item.RestaurantId} not found.");
-            throw new Exception("Restaurant not found");
-        }
-
-
-        // Create a category if it doesn't exist
-        var category = await _context.Category
-            .FirstOrDefaultAsync(c => c.Name == item.CategoryName && c.RestaurantId == item.RestaurantId);
-
-        if (category == null)
-        {
-            try
-            {
-                category = new Category
-                {
-                    Name = item.CategoryName,
-                    RestaurantId = item.RestaurantId
-                };
-                // Add the new category to the database
-                await _context.Category.AddAsync(category);
-
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Error creating category: {ex.Message}");
-                throw new Exception("Failed to create category");
-            }
-        }
-        else
-        {
-            Console.WriteLine("----------------------------------------");
-            Console.WriteLine($"Category {item.CategoryName} already exists for restaurant {restaurant.Name}");
-            Console.WriteLine("----------------------------------------");
-
+            Console.Error.WriteLine($"Pharmacy with ID {item.PharmacyId} not found.");
+            throw new Exception("Pharmacy not found");
         }
 
         await _context.Item.AddAsync(item);
@@ -59,7 +27,6 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
     public async Task<Item?> GetItem(string id)
     {
         var item = await _context.Item
-            .Include(i => i.Kitchen)
             .FirstOrDefaultAsync(i => i.Id == id);
 
         return item;
@@ -70,10 +37,10 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
         return await _context.Item.ToListAsync();
     }
 
-    public async Task<IEnumerable<Item>> GetItemsByRestaurantId(string restaurantId)
+    public async Task<IEnumerable<Item>> GetItemsByPharmacyId(string pharmacyId)
     {
         return await _context.Item
-            .Where(i => i.RestaurantId == restaurantId)
+            .Where(i => i.PharmacyId == pharmacyId)
             .ToListAsync();
     }
 
@@ -89,9 +56,7 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
         existingItem.Description = item.Description;
         existingItem.ImageUrl = item.ImageUrl;
         existingItem.Price = item.Price;
-        existingItem.CategoryName = item.CategoryName;
-        existingItem.PreperationTime = item.PreperationTime;
-        existingItem.KitchenId = item.KitchenId;
+        existingItem.Category = item.Category;
         existingItem.Priority = item.Priority;
         existingItem.Tags = item.Tags;
 
@@ -122,19 +87,21 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
     public async Task<IEnumerable<Item>> GetAvailableItemsByBranchId(string branchId)
     {
         var branch = await _context.Branch
-        .Include(b => b.KitchenPowers)!.ThenInclude(kp => kp.Kitchen)
         .FirstOrDefaultAsync(b => b.Id == branchId);
 
         if (branch == null) throw new Exception("Branch not found");
-        if (branch.KitchenPowers == null) throw new Exception("Branch has no kitchen powers defined");
 
         var items = await _context.Item
-            .Where(i => i.RestaurantId == branch.RestaurantId)
+            .Where(i => i.PharmacyId == branch.PharmacyId)
             .ToListAsync();
 
-        var availableItems = items
-            .Where(i => branch.KitchenPowers.Any(kp => kp.KitchenId == i.KitchenId && kp.Units > 0));
+        return items;
+    }
 
-        return availableItems;
+    public async Task<IEnumerable<Item>> GetItemsByCategory(string pharmacyId, string category)
+    {
+        return await _context.Item
+            .Where(i => i.PharmacyId == pharmacyId && i.Category == category)
+            .ToListAsync();
     }
 }
