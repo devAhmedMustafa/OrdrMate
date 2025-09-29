@@ -57,6 +57,8 @@ public class OrderService
             var intent = new OrderIntent
             {
                 CustomerId = placeOrderDto.CustomerId,
+                CustomerName = placeOrderDto.CustomerName,
+                CustomerPhone = placeOrderDto.CustomerPhone,
                 BranchId = bestBranchId,
                 Status = PaymentStatus.INITIATED,
                 Amount = totalAmount,
@@ -79,6 +81,7 @@ public class OrderService
                 case "cash":
                     var order = await ConfirmOrder(intent);
                     intent.OrderId = order!.OrderId;
+                    await _paymentService.AddPayment(intent, "CASH_PAYMENT");
                     break;
 
                 case "paymob":
@@ -147,6 +150,8 @@ public class OrderService
             OrderDate = DateTime.UtcNow,
             Status = OrderStatus.Pending,
             IsPaid = isPaid,
+            CustomerName = orderIntent.CustomerName,
+            CustomerPhone = orderIntent.CustomerPhone,
         };
 
         order = await _orderRepo.CreateOrder(order);
@@ -155,7 +160,8 @@ public class OrderService
         {
             OrderId = order.Id,
             PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
-            Customer = order.Customer?.Username ?? "Unknown Customer",
+            Customer = order.CustomerName ?? "Unknown Customer",
+            CustomerPhone = order.CustomerPhone ?? "Unknown Phone",
             OrderType = orderIntent.OrderType.ToString(),
             PaymentMethod = orderIntent.PaymentMethod,
             OrderDate = order.OrderDate,
@@ -275,7 +281,8 @@ public class OrderService
             BranchId = t.Order.BranchId,
             OrderNumber = t.OrderNumber,
             IsPaid = t.Order.IsPaid,
-            CustomerId = t.Order.CustomerId
+            CustomerId = t.Order.CustomerId,
+            CustomerPhone = t.Order.CustomerPhone ?? "Unknown Phone"
         });
 
         var orders = takeawayDtos.OrderByDescending(o => o.OrderDate);
@@ -293,7 +300,7 @@ public class OrderService
         {
             OrderId = order.Id,
             PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
-            Customer = order.Customer?.Username ?? "Unknown Customer",
+            Customer = order.CustomerName ?? "Unknown Customer",
             OrderType = "",
             PaymentMethod = order.Payment?.PaymentMethod ?? "Unknown",
             OrderDate = order.OrderDate,
@@ -302,6 +309,7 @@ public class OrderService
             BranchId = order.BranchId,
             IsPaid = order.IsPaid,
             CustomerId = order.CustomerId,
+            CustomerPhone = order.CustomerPhone ?? "Unknown Phone"
         };
     }
 
@@ -314,8 +322,9 @@ public class OrderService
         {
             OrderId = order.Id,
             PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
-            Customer = order.Customer?.Username ?? "Unknown Customer",
+            Customer = order.CustomerName ?? "Unknown Customer",
             CustomerId = order.Customer?.Id ?? string.Empty,
+            CustomerPhone = order.CustomerPhone ?? "Unknown Phone",
             OrderType = order.OrderType.ToString(),
             PaymentMethod = order.Payment?.PaymentMethod ?? "Cash",
             OrderDate = order.OrderDate,
@@ -378,7 +387,8 @@ public class OrderService
         {
             OrderId = o.Id,
             PharmacyName = o.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
-            Customer = o.Customer?.Username ?? "Unknown Customer",
+            Customer = o.CustomerName ?? "Unknown Customer",
+            CustomerPhone = o.CustomerPhone ?? "Unknown Phone",
             OrderType = o.OrderType.ToString(),
             PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
             OrderDate = o.OrderDate,
@@ -404,7 +414,8 @@ public class OrderService
         {
             OrderId = o.Id,
             PharmacyName = o.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
-            Customer = o.Customer?.Username ?? "Unknown Customer",
+            Customer = o.CustomerName ?? "Unknown Customer",
+            CustomerPhone = o.CustomerPhone ?? "Unknown Phone",
             OrderType = o.OrderType.ToString(),
             PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
             OrderDate = o.OrderDate,
@@ -510,7 +521,8 @@ public class OrderService
         {
             OrderId = o.Id,
             PharmacyName = o.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
-            Customer = o.Customer?.Username ?? "Unknown Customer",
+            Customer = o.CustomerName ?? "Unknown Customer",
+            CustomerPhone = o.CustomerPhone ?? "Unknown Phone",
             OrderType = o.OrderType.ToString(),
             PaymentMethod = o.Payment?.PaymentMethod ?? "Unknown",
             OrderDate = o.OrderDate,
@@ -612,8 +624,9 @@ public class OrderService
         return orders.Select(o => new OrderDto
         {
             OrderId = o.OrderId,
-            Customer = o.Order!.Customer?.Username!,
+            Customer = o.Order!.CustomerName!,
             CustomerId = o.Order.Customer?.Id ?? string.Empty,
+            CustomerPhone = o.Order.CustomerPhone ?? "Unknown Phone",
             TotalAmount = o.Order.TotalAmount,
             OrderDate = o.Order.OrderDate,
             OrderStatus = o.Order.Status.ToString(),
@@ -697,7 +710,8 @@ public class OrderService
         {
             OrderId = order.Id,
             PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
-            Customer = order.Customer?.Username ?? "Unknown Customer",
+            Customer = order.CustomerName ?? "Unknown Customer",
+            CustomerPhone = order.CustomerPhone ?? "Unknown Phone",
             OrderType = order.OrderType.ToString(),
             PaymentMethod = order.Payment?.PaymentMethod ?? "Unknown",
             OrderDate = order.OrderDate,
