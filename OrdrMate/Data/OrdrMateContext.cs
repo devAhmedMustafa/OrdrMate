@@ -16,7 +16,6 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<Item> Item => Set<Item>();
     public DbSet<ItemCustomization> ItemCustomization => Set<ItemCustomization>();
     public DbSet<ItemAvailability> ItemAvailabilities => Set<ItemAvailability>();
-    // public DbSet<ItemCustomization> ItemCustomizations => Set<ItemCustomization>();
     public DbSet<Branch> Branch => Set<Branch>();
     public DbSet<BranchRequest> BranchRequest => Set<BranchRequest>();
     public DbSet<Order> Order => Set<Order>();
@@ -172,12 +171,12 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
 
         // Item Customization
 
-        // modelBuilder.Entity<ItemCustomization>().HasKey(ic => new { ic.ItemId, ic.CategoryId });
-        // modelBuilder.Entity<ItemCustomization>()
-        //     .HasOne(ic => ic.Item)
-        //     .WithMany(i => i.Customizations)
-        //     .HasForeignKey(ic => ic.ItemId)
-        //     .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ItemCustomization>().HasKey(ic => new { ic.ItemId, ic.CategoryId });
+        modelBuilder.Entity<ItemCustomization>()
+            .HasOne(ic => ic.Item)
+            .WithMany()
+            .HasForeignKey(ic => ic.ItemId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Delivery
         modelBuilder.Entity<Delivery>().HasKey(d => d.OrderId);

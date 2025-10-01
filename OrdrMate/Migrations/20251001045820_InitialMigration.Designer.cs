@@ -12,7 +12,7 @@ using OrdrMate.Data;
 namespace OrdrMate.Migrations
 {
     [DbContext(typeof(OrdrMateDbContext))]
-    [Migration("20250915033252_InitialMigration")]
+    [Migration("20251001045820_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -24,6 +24,19 @@ namespace OrdrMate.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("OrdrMate.Features.Customization.ItemCustomization", b =>
+                {
+                    b.Property<string>("ItemId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CategoryId")
+                        .HasColumnType("text");
+
+                    b.HasKey("ItemId", "CategoryId");
+
+                    b.ToTable("ItemCustomization");
+                });
 
             modelBuilder.Entity("OrdrMate.Features.ItemAvailability.ItemAvailability", b =>
                 {
@@ -100,16 +113,16 @@ namespace OrdrMate.Migrations
                     b.Property<float>("Longitude")
                         .HasColumnType("real");
 
-                    b.Property<string>("PharmacyId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<TimeSpan>("StartWorkingHour")
                         .HasColumnType("interval");
+
+                    b.Property<string>("StoreId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<bool[]>("WorkingDays")
                         .IsRequired()
@@ -119,12 +132,12 @@ namespace OrdrMate.Migrations
 
                     b.HasIndex("BranchManagerId");
 
-                    b.HasIndex("PharmacyId");
-
                     b.HasIndex("Phone")
                         .IsUnique();
 
-                    b.HasIndex("Latitude", "Longitude", "PharmacyId")
+                    b.HasIndex("StoreId");
+
+                    b.HasIndex("Latitude", "Longitude", "StoreId")
                         .IsUnique();
 
                     b.ToTable("Branch");
@@ -145,45 +158,22 @@ namespace OrdrMate.Migrations
                     b.Property<float>("Longitude")
                         .HasColumnType("real");
 
-                    b.Property<string>("PharmacyId")
+                    b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Phone")
+                    b.Property<string>("StoreId")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PharmacyId");
+                    b.HasIndex("StoreId");
 
-                    b.HasIndex("Latitude", "Longitude", "PharmacyId")
+                    b.HasIndex("Latitude", "Longitude", "StoreId")
                         .IsUnique();
 
                     b.ToTable("BranchRequest");
-                });
-
-            modelBuilder.Entity("OrdrMate.Models.Category", b =>
-                {
-                    b.Property<string>("Name")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PharmacyId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Parent")
-                        .HasColumnType("text");
-
-                    b.HasKey("Name", "PharmacyId");
-
-                    b.HasIndex("PharmacyId");
-
-                    b.HasIndex("Name", "PharmacyId")
-                        .IsUnique();
-
-                    b.HasIndex("Parent", "PharmacyId");
-
-                    b.ToTable("Category");
                 });
 
             modelBuilder.Entity("OrdrMate.Models.DeliverRequest", b =>
@@ -210,6 +200,12 @@ namespace OrdrMate.Migrations
 
                     b.Property<DateTime>("DeliveryTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision");
 
                     b.HasKey("OrderId");
 
@@ -242,7 +238,7 @@ namespace OrdrMate.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("CategoryName")
+                    b.Property<string>("Category")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -258,15 +254,18 @@ namespace OrdrMate.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("PharmacyId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
 
                     b.Property<int>("Priority")
                         .HasColumnType("integer");
+
+                    b.Property<string>("StoreId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SubCategory")
+                        .HasColumnType("text");
 
                     b.Property<string>("Tags")
                         .IsRequired()
@@ -274,27 +273,12 @@ namespace OrdrMate.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PharmacyId");
+                    b.HasIndex("StoreId");
 
-                    b.HasIndex("CategoryName", "PharmacyId");
-
-                    b.HasIndex("Name", "CategoryName", "PharmacyId")
+                    b.HasIndex("Name", "Category", "SubCategory", "StoreId")
                         .IsUnique();
 
                     b.ToTable("Item");
-                });
-
-            modelBuilder.Entity("OrdrMate.Models.ItemCustomization", b =>
-                {
-                    b.Property<string>("ItemId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("CategoryId")
-                        .HasColumnType("text");
-
-                    b.HasKey("ItemId", "CategoryId");
-
-                    b.ToTable("ItemCustomizations");
                 });
 
             modelBuilder.Entity("OrdrMate.Models.Order", b =>
@@ -310,7 +294,12 @@ namespace OrdrMate.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("DeliveryId")
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CustomerPhone")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsPaid")
@@ -331,9 +320,6 @@ namespace OrdrMate.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<string>("TakeawayId")
-                        .HasColumnType("text");
-
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("numeric");
 
@@ -342,8 +328,6 @@ namespace OrdrMate.Migrations
                     b.HasIndex("BranchId");
 
                     b.HasIndex("CustomerId");
-
-                    b.HasIndex("DeliveryId");
 
                     b.HasIndex("OrderDate");
 
@@ -364,6 +348,20 @@ namespace OrdrMate.Migrations
 
                     b.Property<string>("CustomerId")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CustomerPhone")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DeliveryDetailsJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
                         .HasColumnType("text");
 
                     b.Property<string>("OrderId")
@@ -459,7 +457,7 @@ namespace OrdrMate.Migrations
                     b.ToTable("Payment");
                 });
 
-            modelBuilder.Entity("OrdrMate.Models.Pharmacy", b =>
+            modelBuilder.Entity("OrdrMate.Models.Store", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -487,12 +485,12 @@ namespace OrdrMate.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Pharmacy");
+                    b.ToTable("Store");
                 });
 
-            modelBuilder.Entity("OrdrMate.Models.PharmacyProfile", b =>
+            modelBuilder.Entity("OrdrMate.Models.StoreProfile", b =>
                 {
-                    b.Property<string>("PharmacyId")
+                    b.Property<string>("StoreId")
                         .HasColumnType("text");
 
                     b.Property<string>("CoverImageUrl")
@@ -507,9 +505,9 @@ namespace OrdrMate.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("PharmacyId");
+                    b.HasKey("StoreId");
 
-                    b.ToTable("PharmacyProfile");
+                    b.ToTable("StoreProfile");
                 });
 
             modelBuilder.Entity("OrdrMate.Models.Takeaway", b =>
@@ -549,6 +547,17 @@ namespace OrdrMate.Migrations
                     b.ToTable("User");
                 });
 
+            modelBuilder.Entity("OrdrMate.Features.Customization.ItemCustomization", b =>
+                {
+                    b.HasOne("OrdrMate.Models.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+                });
+
             modelBuilder.Entity("OrdrMate.Features.ItemAvailability.ItemAvailability", b =>
                 {
                     b.HasOne("OrdrMate.Models.Branch", "Branch")
@@ -576,44 +585,26 @@ namespace OrdrMate.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("OrdrMate.Models.Pharmacy", "Pharmacy")
+                    b.HasOne("OrdrMate.Models.Store", "Store")
                         .WithMany("Branches")
-                        .HasForeignKey("PharmacyId")
+                        .HasForeignKey("StoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("BranchManager");
 
-                    b.Navigation("Pharmacy");
+                    b.Navigation("Store");
                 });
 
             modelBuilder.Entity("OrdrMate.Models.BranchRequest", b =>
                 {
-                    b.HasOne("OrdrMate.Models.Pharmacy", "Pharmacy")
+                    b.HasOne("OrdrMate.Models.Store", "Store")
                         .WithMany("BranchRequests")
-                        .HasForeignKey("PharmacyId")
+                        .HasForeignKey("StoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Pharmacy");
-                });
-
-            modelBuilder.Entity("OrdrMate.Models.Category", b =>
-                {
-                    b.HasOne("OrdrMate.Models.Pharmacy", "Pharmacy")
-                        .WithMany("Categories")
-                        .HasForeignKey("PharmacyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("OrdrMate.Models.Category", "ParentCategory")
-                        .WithMany("Subcategories")
-                        .HasForeignKey("Parent", "PharmacyId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("ParentCategory");
-
-                    b.Navigation("Pharmacy");
+                    b.Navigation("Store");
                 });
 
             modelBuilder.Entity("OrdrMate.Models.DeliverRequest", b =>
@@ -630,8 +621,8 @@ namespace OrdrMate.Migrations
             modelBuilder.Entity("OrdrMate.Models.Delivery", b =>
                 {
                     b.HasOne("OrdrMate.Models.Order", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId")
+                        .WithOne("Delivery")
+                        .HasForeignKey("OrdrMate.Models.Delivery", "OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -651,32 +642,13 @@ namespace OrdrMate.Migrations
 
             modelBuilder.Entity("OrdrMate.Models.Item", b =>
                 {
-                    b.HasOne("OrdrMate.Models.Pharmacy", "Pharmacy")
+                    b.HasOne("OrdrMate.Models.Store", "Store")
                         .WithMany("Items")
-                        .HasForeignKey("PharmacyId")
+                        .HasForeignKey("StoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("OrdrMate.Models.Category", "Category")
-                        .WithMany("Items")
-                        .HasForeignKey("CategoryName", "PharmacyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Pharmacy");
-                });
-
-            modelBuilder.Entity("OrdrMate.Models.ItemCustomization", b =>
-                {
-                    b.HasOne("OrdrMate.Models.Item", "Item")
-                        .WithMany("Customizations")
-                        .HasForeignKey("ItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Item");
+                    b.Navigation("Store");
                 });
 
             modelBuilder.Entity("OrdrMate.Models.Order", b =>
@@ -693,15 +665,9 @@ namespace OrdrMate.Migrations
                         .OnDelete(DeleteBehavior.SetNull)
                         .IsRequired();
 
-                    b.HasOne("OrdrMate.Models.Delivery", "Delivery")
-                        .WithMany()
-                        .HasForeignKey("DeliveryId");
-
                     b.Navigation("Branch");
 
                     b.Navigation("Customer");
-
-                    b.Navigation("Delivery");
                 });
 
             modelBuilder.Entity("OrdrMate.Models.OrderIntent", b =>
@@ -753,7 +719,7 @@ namespace OrdrMate.Migrations
                     b.Navigation("Order");
                 });
 
-            modelBuilder.Entity("OrdrMate.Models.Pharmacy", b =>
+            modelBuilder.Entity("OrdrMate.Models.Store", b =>
                 {
                     b.HasOne("OrdrMate.Models.User", "Manager")
                         .WithMany()
@@ -764,15 +730,15 @@ namespace OrdrMate.Migrations
                     b.Navigation("Manager");
                 });
 
-            modelBuilder.Entity("OrdrMate.Models.PharmacyProfile", b =>
+            modelBuilder.Entity("OrdrMate.Models.StoreProfile", b =>
                 {
-                    b.HasOne("OrdrMate.Models.Pharmacy", "Pharmacy")
+                    b.HasOne("OrdrMate.Models.Store", "Store")
                         .WithOne("Profile")
-                        .HasForeignKey("OrdrMate.Models.PharmacyProfile", "PharmacyId")
+                        .HasForeignKey("OrdrMate.Models.StoreProfile", "StoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Pharmacy");
+                    b.Navigation("Store");
                 });
 
             modelBuilder.Entity("OrdrMate.Models.Takeaway", b =>
@@ -791,20 +757,10 @@ namespace OrdrMate.Migrations
                     b.Navigation("Orders");
                 });
 
-            modelBuilder.Entity("OrdrMate.Models.Category", b =>
-                {
-                    b.Navigation("Items");
-
-                    b.Navigation("Subcategories");
-                });
-
-            modelBuilder.Entity("OrdrMate.Models.Item", b =>
-                {
-                    b.Navigation("Customizations");
-                });
-
             modelBuilder.Entity("OrdrMate.Models.Order", b =>
                 {
+                    b.Navigation("Delivery");
+
                     b.Navigation("OrderItems");
 
                     b.Navigation("Payment");
@@ -812,13 +768,11 @@ namespace OrdrMate.Migrations
                     b.Navigation("Takeaway");
                 });
 
-            modelBuilder.Entity("OrdrMate.Models.Pharmacy", b =>
+            modelBuilder.Entity("OrdrMate.Models.Store", b =>
                 {
                     b.Navigation("BranchRequests");
 
                     b.Navigation("Branches");
-
-                    b.Navigation("Categories");
 
                     b.Navigation("Items");
 

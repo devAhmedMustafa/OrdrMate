@@ -61,7 +61,7 @@ namespace OrdrMate.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Pharmacy",
+                name: "Store",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
@@ -72,9 +72,9 @@ namespace OrdrMate.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Pharmacy", x => x.Id);
+                    table.PrimaryKey("PK_Store", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Pharmacy_User_ManagerId",
+                        name: "FK_Store_User_ManagerId",
                         column: x => x.ManagerId,
                         principalTable: "User",
                         principalColumn: "Id",
@@ -93,16 +93,16 @@ namespace OrdrMate.Migrations
                     StartWorkingHour = table.Column<TimeSpan>(type: "interval", nullable: false),
                     EndWorkingHour = table.Column<TimeSpan>(type: "interval", nullable: false),
                     WorkingDays = table.Column<bool[]>(type: "boolean[]", nullable: false),
-                    PharmacyId = table.Column<string>(type: "text", nullable: false),
+                    StoreId = table.Column<string>(type: "text", nullable: false),
                     BranchManagerId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Branch", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Branch_Pharmacy_PharmacyId",
-                        column: x => x.PharmacyId,
-                        principalTable: "Pharmacy",
+                        name: "FK_Branch_Store_StoreId",
+                        column: x => x.StoreId,
+                        principalTable: "Store",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -122,62 +122,98 @@ namespace OrdrMate.Migrations
                     Longitude = table.Column<float>(type: "real", nullable: false),
                     Address = table.Column<string>(type: "text", nullable: false),
                     Phone = table.Column<string>(type: "text", nullable: false),
-                    PharmacyId = table.Column<string>(type: "text", nullable: false)
+                    StoreId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BranchRequest", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_BranchRequest_Pharmacy_PharmacyId",
-                        column: x => x.PharmacyId,
-                        principalTable: "Pharmacy",
+                        name: "FK_BranchRequest_Store_StoreId",
+                        column: x => x.StoreId,
+                        principalTable: "Store",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Category",
+                name: "Item",
                 columns: table => new
                 {
+                    Id = table.Column<string>(type: "text", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    PharmacyId = table.Column<string>(type: "text", nullable: false),
-                    Parent = table.Column<string>(type: "text", nullable: true)
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    ImageUrl = table.Column<string>(type: "text", nullable: false),
+                    Price = table.Column<decimal>(type: "numeric", nullable: false),
+                    Priority = table.Column<int>(type: "integer", nullable: false),
+                    Tags = table.Column<string>(type: "text", nullable: false),
+                    Category = table.Column<string>(type: "text", nullable: false),
+                    SubCategory = table.Column<string>(type: "text", nullable: true),
+                    StoreId = table.Column<string>(type: "text", nullable: false),
+                    Brand = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Category", x => new { x.Name, x.PharmacyId });
+                    table.PrimaryKey("PK_Item", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Category_Category_Parent_PharmacyId",
-                        columns: x => new { x.Parent, x.PharmacyId },
-                        principalTable: "Category",
-                        principalColumns: new[] { "Name", "PharmacyId" },
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Category_Pharmacy_PharmacyId",
-                        column: x => x.PharmacyId,
-                        principalTable: "Pharmacy",
+                        name: "FK_Item_Store_StoreId",
+                        column: x => x.StoreId,
+                        principalTable: "Store",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "PharmacyProfile",
+                name: "StoreProfile",
                 columns: table => new
                 {
-                    PharmacyId = table.Column<string>(type: "text", nullable: false),
+                    StoreId = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: false),
                     LogoUrl = table.Column<string>(type: "text", nullable: false),
                     CoverImageUrl = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PharmacyProfile", x => x.PharmacyId);
+                    table.PrimaryKey("PK_StoreProfile", x => x.StoreId);
                     table.ForeignKey(
-                        name: "FK_PharmacyProfile_Pharmacy_PharmacyId",
-                        column: x => x.PharmacyId,
-                        principalTable: "Pharmacy",
+                        name: "FK_StoreProfile_Store_StoreId",
+                        column: x => x.StoreId,
+                        principalTable: "Store",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Order",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    BranchId = table.Column<string>(type: "text", nullable: false),
+                    CustomerId = table.Column<string>(type: "text", nullable: false),
+                    CustomerName = table.Column<string>(type: "text", nullable: false),
+                    CustomerPhone = table.Column<string>(type: "text", nullable: false),
+                    OrderTime = table.Column<TimeOnly>(type: "time without time zone", nullable: false),
+                    OrderDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OrderType = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    TotalAmount = table.Column<decimal>(type: "numeric", nullable: false),
+                    IsPaid = table.Column<bool>(type: "boolean", nullable: false),
+                    ReadyTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Order", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Order_Branch_BranchId",
+                        column: x => x.BranchId,
+                        principalTable: "Branch",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Order_User_CustomerId",
+                        column: x => x.CustomerId,
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -186,11 +222,15 @@ namespace OrdrMate.Migrations
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
                     CustomerId = table.Column<string>(type: "text", nullable: false),
+                    CustomerName = table.Column<string>(type: "text", nullable: false),
+                    CustomerPhone = table.Column<string>(type: "text", nullable: false),
                     BranchId = table.Column<string>(type: "text", nullable: false),
                     Amount = table.Column<decimal>(type: "numeric", nullable: false),
                     PaymentMethod = table.Column<string>(type: "text", nullable: false),
                     PaymentProvider = table.Column<string>(type: "text", nullable: false),
                     OrderType = table.Column<int>(type: "integer", nullable: false),
+                    Notes = table.Column<string>(type: "text", nullable: true),
+                    DeliveryDetailsJson = table.Column<string>(type: "text", nullable: true),
                     OrderItemsJson = table.Column<string>(type: "text", nullable: false),
                     OrderId = table.Column<string>(type: "text", nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false)
@@ -208,38 +248,6 @@ namespace OrdrMate.Migrations
                         name: "FK_OrderIntent_User_CustomerId",
                         column: x => x.CustomerId,
                         principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Item",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: false),
-                    ImageUrl = table.Column<string>(type: "text", nullable: false),
-                    Price = table.Column<decimal>(type: "numeric", nullable: false),
-                    Priority = table.Column<int>(type: "integer", nullable: false),
-                    Tags = table.Column<string>(type: "text", nullable: false),
-                    CategoryName = table.Column<string>(type: "text", nullable: false),
-                    PharmacyId = table.Column<string>(type: "text", nullable: false),
-                    Brand = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Item", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Item_Category_CategoryName_PharmacyId",
-                        columns: x => new { x.CategoryName, x.PharmacyId },
-                        principalTable: "Category",
-                        principalColumns: new[] { "Name", "PharmacyId" },
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Item_Pharmacy_PharmacyId",
-                        column: x => x.PharmacyId,
-                        principalTable: "Pharmacy",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -271,7 +279,7 @@ namespace OrdrMate.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ItemCustomizations",
+                name: "ItemCustomization",
                 columns: table => new
                 {
                     ItemId = table.Column<string>(type: "text", nullable: false),
@@ -279,9 +287,9 @@ namespace OrdrMate.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ItemCustomizations", x => new { x.ItemId, x.CategoryId });
+                    table.PrimaryKey("PK_ItemCustomization", x => new { x.ItemId, x.CategoryId });
                     table.ForeignKey(
-                        name: "FK_ItemCustomizations_Item_ItemId",
+                        name: "FK_ItemCustomization_Item_ItemId",
                         column: x => x.ItemId,
                         principalTable: "Item",
                         principalColumn: "Id",
@@ -298,6 +306,12 @@ namespace OrdrMate.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DeliverRequest", x => x.OrderId);
+                    table.ForeignKey(
+                        name: "FK_DeliverRequest_Order_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Order",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -306,50 +320,19 @@ namespace OrdrMate.Migrations
                 {
                     OrderId = table.Column<string>(type: "text", nullable: false),
                     Address = table.Column<string>(type: "text", nullable: false),
+                    Latitude = table.Column<double>(type: "double precision", nullable: false),
+                    Longitude = table.Column<double>(type: "double precision", nullable: false),
                     DeliveryTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Delivery", x => x.OrderId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Order",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    BranchId = table.Column<string>(type: "text", nullable: false),
-                    CustomerId = table.Column<string>(type: "text", nullable: false),
-                    OrderTime = table.Column<TimeOnly>(type: "time without time zone", nullable: false),
-                    OrderDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OrderType = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    TotalAmount = table.Column<decimal>(type: "numeric", nullable: false),
-                    IsPaid = table.Column<bool>(type: "boolean", nullable: false),
-                    TakeawayId = table.Column<string>(type: "text", nullable: true),
-                    DeliveryId = table.Column<string>(type: "text", nullable: true),
-                    ReadyTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Order", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Order_Branch_BranchId",
-                        column: x => x.BranchId,
-                        principalTable: "Branch",
+                        name: "FK_Delivery_Order_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Order",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Order_Delivery_DeliveryId",
-                        column: x => x.DeliveryId,
-                        principalTable: "Delivery",
-                        principalColumn: "OrderId");
-                    table.ForeignKey(
-                        name: "FK_Order_User_CustomerId",
-                        column: x => x.CustomerId,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -426,15 +409,10 @@ namespace OrdrMate.Migrations
                 column: "BranchManagerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Branch_Latitude_Longitude_PharmacyId",
+                name: "IX_Branch_Latitude_Longitude_StoreId",
                 table: "Branch",
-                columns: new[] { "Latitude", "Longitude", "PharmacyId" },
+                columns: new[] { "Latitude", "Longitude", "StoreId" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Branch_PharmacyId",
-                table: "Branch",
-                column: "PharmacyId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Branch_Phone",
@@ -443,31 +421,20 @@ namespace OrdrMate.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_BranchRequest_Latitude_Longitude_PharmacyId",
+                name: "IX_Branch_StoreId",
+                table: "Branch",
+                column: "StoreId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BranchRequest_Latitude_Longitude_StoreId",
                 table: "BranchRequest",
-                columns: new[] { "Latitude", "Longitude", "PharmacyId" },
+                columns: new[] { "Latitude", "Longitude", "StoreId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_BranchRequest_PharmacyId",
+                name: "IX_BranchRequest_StoreId",
                 table: "BranchRequest",
-                column: "PharmacyId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Category_Name_PharmacyId",
-                table: "Category",
-                columns: new[] { "Name", "PharmacyId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Category_Parent_PharmacyId",
-                table: "Category",
-                columns: new[] { "Parent", "PharmacyId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Category_PharmacyId",
-                table: "Category",
-                column: "PharmacyId");
+                column: "StoreId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FirebaseToken_UserId",
@@ -476,20 +443,15 @@ namespace OrdrMate.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Item_CategoryName_PharmacyId",
+                name: "IX_Item_Name_Category_SubCategory_StoreId",
                 table: "Item",
-                columns: new[] { "CategoryName", "PharmacyId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Item_Name_CategoryName_PharmacyId",
-                table: "Item",
-                columns: new[] { "Name", "CategoryName", "PharmacyId" },
+                columns: new[] { "Name", "Category", "SubCategory", "StoreId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Item_PharmacyId",
+                name: "IX_Item_StoreId",
                 table: "Item",
-                column: "PharmacyId");
+                column: "StoreId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ItemAvailabilities_BranchId",
@@ -505,11 +467,6 @@ namespace OrdrMate.Migrations
                 name: "IX_Order_CustomerId",
                 table: "Order",
                 column: "CustomerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Order_DeliveryId",
-                table: "Order",
-                column: "DeliveryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Order_OrderDate",
@@ -544,13 +501,13 @@ namespace OrdrMate.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Pharmacy_ManagerId",
-                table: "Pharmacy",
+                name: "IX_Store_ManagerId",
+                table: "Store",
                 column: "ManagerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Pharmacy_Name",
-                table: "Pharmacy",
+                name: "IX_Store_Name",
+                table: "Store",
                 column: "Name",
                 unique: true);
 
@@ -559,48 +516,19 @@ namespace OrdrMate.Migrations
                 table: "User",
                 column: "Username",
                 unique: true);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_DeliverRequest_Order_OrderId",
-                table: "DeliverRequest",
-                column: "OrderId",
-                principalTable: "Order",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Delivery_Order_OrderId",
-                table: "Delivery",
-                column: "OrderId",
-                principalTable: "Order",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Branch_Pharmacy_PharmacyId",
-                table: "Branch");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Branch_User_BranchManagerId",
-                table: "Branch");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Order_User_CustomerId",
-                table: "Order");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Delivery_Order_OrderId",
-                table: "Delivery");
-
             migrationBuilder.DropTable(
                 name: "BranchRequest");
 
             migrationBuilder.DropTable(
                 name: "DeliverRequest");
+
+            migrationBuilder.DropTable(
+                name: "Delivery");
 
             migrationBuilder.DropTable(
                 name: "FirebaseToken");
@@ -609,7 +537,7 @@ namespace OrdrMate.Migrations
                 name: "ItemAvailabilities");
 
             migrationBuilder.DropTable(
-                name: "ItemCustomizations");
+                name: "ItemCustomization");
 
             migrationBuilder.DropTable(
                 name: "OrderIntent");
@@ -621,10 +549,10 @@ namespace OrdrMate.Migrations
                 name: "Payment");
 
             migrationBuilder.DropTable(
-                name: "PharmacyProfile");
+                name: "PickupReports");
 
             migrationBuilder.DropTable(
-                name: "PickupReports");
+                name: "StoreProfile");
 
             migrationBuilder.DropTable(
                 name: "Takeaway");
@@ -633,22 +561,16 @@ namespace OrdrMate.Migrations
                 name: "Item");
 
             migrationBuilder.DropTable(
-                name: "Category");
-
-            migrationBuilder.DropTable(
-                name: "Pharmacy");
-
-            migrationBuilder.DropTable(
-                name: "User");
-
-            migrationBuilder.DropTable(
                 name: "Order");
 
             migrationBuilder.DropTable(
                 name: "Branch");
 
             migrationBuilder.DropTable(
-                name: "Delivery");
+                name: "Store");
+
+            migrationBuilder.DropTable(
+                name: "User");
         }
     }
 }
