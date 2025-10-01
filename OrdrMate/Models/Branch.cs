@@ -10,9 +10,9 @@ public class Branch
     public TimeSpan StartWorkingHour { get; set; }
     public TimeSpan EndWorkingHour { get; set; }
     public bool[] WorkingDays { get; set; } = [true, true, true, true, true, true, true];
-    public required string PharmacyId { get; set; }
+    public required string StoreId { get; set; }
     public required string BranchManagerId { get; set; }
     public User? BranchManager { get; set; }
-    public Pharmacy? Pharmacy { get; set; }
+    public Store? Store { get; set; }
     public ICollection<Order>? Orders { get; set; }
 }

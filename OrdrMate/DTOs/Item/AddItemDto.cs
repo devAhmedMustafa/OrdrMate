@@ -15,5 +15,5 @@ public class AddItemDto
     public int Priority { get; set; } = 0;
     public string Tags { get; set; } = string.Empty;
     public required string Brand { get; set; }
-    public required string PharmacyId { get; set; }
+    public required string StoreId { get; set; }
 }

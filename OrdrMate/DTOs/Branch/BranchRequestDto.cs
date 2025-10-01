@@ -7,5 +7,5 @@ public class BranchRequestDto
     public float Longitude { get; set; }
     public required string BranchAddress { get; set; }
     public required string BranchPhoneNumber { get; set; }
-    public required string PharmacyName { get; set; }
+    public required string StoreName { get; set; }
 }

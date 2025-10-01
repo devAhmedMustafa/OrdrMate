@@ -7,10 +7,10 @@ using OrdrMate.Enums;
 
 namespace OrdrMate.Services;
 
-public class ManagerService(IUserRepo r, IPharmacyRepo rr, IConfiguration c, IBranchRepo branchRepo)
+public class ManagerService(IUserRepo r, IStoreRepo rr, IConfiguration c, IBranchRepo branchRepo)
 {
     private readonly IUserRepo _repo = r;
-    private readonly IPharmacyRepo _PharmacyRepo = rr;
+    private readonly IStoreRepo _StoreRepo = rr;
     private readonly IBranchRepo _branchRepo = branchRepo;
     private readonly IConfiguration _config = c;
 
@@ -72,7 +72,7 @@ public class ManagerService(IUserRepo r, IPharmacyRepo rr, IConfiguration c, IBr
 
         if (manager.Role == UserRole.TopManager)
         {
-            var Pharmacy = await _PharmacyRepo.GetPharmacyByManagerId(manager.Id);
+            var Store = await _StoreRepo.GetStoreByManagerId(manager.Id);
             if (Pharmacy != null)
             {
                 PharmacyId = Pharmacy.Id;

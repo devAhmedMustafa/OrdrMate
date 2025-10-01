@@ -10,13 +10,13 @@ using OrdrMate.Events;
 public class BranchService(
     IBranchRepo branchRepo,
     ManagerService managerService,
-    PharmacyService PharmacyService,
+    StoreService StoreService,
     OrderService orderService
     )
 {
     private readonly IBranchRepo _branchRepo = branchRepo;
     private readonly ManagerService _managerService = managerService;
-    private readonly PharmacyService _PharmacyService = PharmacyService;
+    private readonly StoreService _StoreService = StoreService;
     private readonly OrderService _orderService = orderService;
 
     public async Task<BranchDto> GetBranchById(string id)
@@ -83,9 +83,9 @@ public class BranchService(
     {
         try
         {
-            var Pharmacy = await _PharmacyService.GetPharmacyById(branchDto.PharmacyId);
+            var Store = await _StoreService.GetStoreById(branchDto.StoreId);
 
-            if (Pharmacy == null) throw new KeyNotFoundException($"Pharmacy with id {branchDto.PharmacyId} not found.");
+            if (Store == null) throw new KeyNotFoundException($"Store with id {branchDto.StoreId} not found.");
 
 
             var username = RandomGenerator.GenerateRandomString(Pharmacy.Name.Length + 4, Pharmacy.Name);

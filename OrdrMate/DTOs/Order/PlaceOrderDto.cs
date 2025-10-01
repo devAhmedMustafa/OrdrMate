@@ -5,7 +5,7 @@ namespace OrdrMate.DTOs.Order;
 
 public class PlaceOrderDto
 {
-    [Required] public required string PharmacyId { get; set; }
+    [Required] public required string StoreId { get; set; }
     public string CustomerId { get; set; } = string.Empty;
     public required string CustomerName { get; set; }
     public required string CustomerPhone { get; set; }

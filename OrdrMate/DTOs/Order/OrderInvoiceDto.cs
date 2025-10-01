@@ -5,7 +5,7 @@ public class OrderInvoiceDto
     public required string OrderId { get; set; }
     public required string OrderNumber { get; set; }
     public required string CustomerName { get; set; }
-    public required string PharmacyName { get; set; }
+    public required string StoreName { get; set; }
     public required string BranchAddress { get; set; }
     public required decimal TotalAmount { get; set; }
     public required string PaymentMethod { get; set; }

@@ -1,4 +1,4 @@
-namespace OrdrMate.DTOs.Pharmacy;
+namespace OrdrMate.DTOs.Store;
 
 public class CategoryDto
 {

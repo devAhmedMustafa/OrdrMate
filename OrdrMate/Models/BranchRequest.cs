@@ -7,6 +7,6 @@ public class BranchRequest
     public float Longitude { get; set; }
     public string Address { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
-    public required string PharmacyId { get; set; }
-    public Pharmacy? Pharmacy { get; set; }
+    public required string StoreId { get; set; }
+    public Store? Store { get; set; }
 }

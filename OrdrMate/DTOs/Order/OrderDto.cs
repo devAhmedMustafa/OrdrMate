@@ -3,7 +3,7 @@ namespace OrdrMate.DTOs.Order;
 public class OrderDto
 {
     public required string OrderId { get; set; }
-    public required string PharmacyName { get; set; }
+    public required string StoreName { get; set; }
     public required string CustomerId { get; set; }
     public required string Customer { get; set; }
     public required string CustomerPhone { get; set; }

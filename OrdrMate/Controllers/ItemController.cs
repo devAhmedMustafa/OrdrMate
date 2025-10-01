@@ -23,7 +23,7 @@ public class ItemController : ControllerBase
     {
         try
         {
-            var authorizationResult = await _authorizationService.AuthorizeAsync(User, dto.PharmacyId, "CanManagePharmacy");
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, dto.StoreId, "CanManageStore");
 
             if (!authorizationResult.Succeeded)
             {
@@ -101,7 +101,7 @@ public class ItemController : ControllerBase
                 return NotFound(new { err = "Item not found" });
             }
 
-            var authorizationResult = await _authorizationService.AuthorizeAsync(User, itemToUpdate.PharmacyId, "CanManagePharmacy");
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, itemToUpdate.StoreId, "CanManageStore");
 
             if (!authorizationResult.Succeeded)
             {
@@ -133,7 +133,7 @@ public class ItemController : ControllerBase
                 return NotFound(new { err = "Item not found" });
             }
 
-            var authorizationResult = await _authorizationService.AuthorizeAsync(User, itemToDelete.PharmacyId, "CanManagePharmacy");
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, itemToDelete.StoreId, "CanManageStore");
 
             if (!authorizationResult.Succeeded)
             {

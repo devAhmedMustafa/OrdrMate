@@ -1,6 +1,6 @@
-namespace OrdrMate.DTOs.Pharmacy;
+namespace OrdrMate.DTOs.Store;
 
-public class PharmacyDTO
+public class StoreDTO
 {
     public required string Id { get; set; }
     public required string Name { get; set; }

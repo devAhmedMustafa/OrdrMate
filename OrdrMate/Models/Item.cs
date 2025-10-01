@@ -11,7 +11,7 @@ public class Item
     public string Tags { get; set; } = string.Empty;
     public required string Category { get; set; }
     public string? SubCategory { get; set; }
-    public required string PharmacyId { get; set; }
+    public required string StoreId { get; set; }
     public required string Brand { get; set; }
-    public Pharmacy? Pharmacy { get; set; }
+    public Store? Store { get; set; }
 }

@@ -1,6 +1,6 @@
-namespace OrdrMate.DTOs.Pharmacy;
+namespace OrdrMate.DTOs.Store;
 
-public class UpdatePharmacyProfileDto
+public class UpdateStoreProfileDto
 {
     public string? Description { get; set; }
     public string? LogoUrl { get; set; }

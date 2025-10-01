@@ -74,7 +74,7 @@ public class BranchController : ControllerBase
     public async Task<IActionResult> CreateBranchRequest([FromBody] AddBranchRequestDto branchRequestDto)
     {
 
-        var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchRequestDto.PharmacyId, "CanManagePharmacy");
+        var authorizationResult = await _authorizationService.AuthorizeAsync(User, branchRequestDto.StoreId, "CanManageStore");
 
         if (!authorizationResult.Succeeded)
         {
