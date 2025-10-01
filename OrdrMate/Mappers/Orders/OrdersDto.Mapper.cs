@@ -13,7 +13,7 @@ public static class OrdersDtoMapper
         return new OrderDto
         {
             OrderId = order.Id,
-            PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
+            StoreName = order.Branch?.Store?.Name ?? "Unknown Store",
             CustomerId = order.CustomerId,
             Customer = order.CustomerName ?? "Unknown",
             CustomerPhone = order.CustomerPhone ?? "Unknown Phone",

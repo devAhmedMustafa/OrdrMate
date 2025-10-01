@@ -77,7 +77,7 @@ public class OrderRepo : IOrderRepo
     {
         return await _db.Order
             .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
-            .Include(o => o.Branch).ThenInclude(b => b!.Pharmacy)
+            .Include(o => o.Branch).ThenInclude(b => b!.Store)
             .Include(o => o.Customer)
             .Include(o => o.Payment)
             .AsSplitQuery()
@@ -94,7 +94,7 @@ public class OrderRepo : IOrderRepo
     public async Task<IEnumerable<Takeaway>> GetTakeawaysByCustomerId(string customerId)
     {
         return await _db.Takeaway
-            .Include(t => t.Order).ThenInclude(o => o!.Branch).ThenInclude(b => b!.Pharmacy)
+            .Include(t => t.Order).ThenInclude(o => o!.Branch).ThenInclude(b => b!.Store)
             .Include(t => t.Order).ThenInclude(o => o!.Customer)
             .Include(t => t.Order).ThenInclude(o => o!.Payment)
             .Where(t => t.Order!.CustomerId == customerId)
@@ -104,7 +104,7 @@ public class OrderRepo : IOrderRepo
     public async Task<IEnumerable<Takeaway>> GetAllTakeawaysByBranchId(string branchId)
     {
         return await _db.Takeaway
-            .Include(t => t.Order).ThenInclude(o => o!.Branch).ThenInclude(b => b!.Pharmacy)
+            .Include(t => t.Order).ThenInclude(o => o!.Branch).ThenInclude(b => b!.Store)
             .Include(t => t.Order).ThenInclude(o => o!.Customer)
             .Include(t => t.Order).ThenInclude(o => o!.Payment)
             .Where(t => t.Order!.BranchId == branchId)

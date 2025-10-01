@@ -3,7 +3,7 @@ using OrdrMate.Models;
 using MongoDB.Driver;
 using Microsoft.EntityFrameworkCore;
 
-namespace OrdrMate.Repositories;
+namespace OrdrMate.Features.Customization;
 
 public class CustomizationRepo : ICustomizationRepo
 {

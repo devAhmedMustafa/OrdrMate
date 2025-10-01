@@ -32,8 +32,8 @@ public class BranchService(
             Latitude = branch.Latitude,
             Longitude = branch.Longitude,
             BranchAddress = branch.Address,
-            PharmacyId = branch.PharmacyId,
-            PharmacyName = branch.Pharmacy?.Name ?? "Unknown",
+            StoreId = branch.StoreId,
+            StoreName = branch.Store?.Name ?? "Unknown",
             StartWorkingHour = branch.StartWorkingHour,
             EndWorkingHour = branch.EndWorkingHour,
             BranchPhoneNumber = branch.Phone,
@@ -50,20 +50,20 @@ public class BranchService(
             Latitude = b.Latitude,
             Longitude = b.Longitude,
             BranchAddress = b.Address,
-            PharmacyId = b.PharmacyId,
-            PharmacyName = b.Pharmacy?.Name ?? "Unknown",
+            StoreId = b.StoreId,
+            StoreName = b.Store?.Name ?? "Unknown",
             IsOpen = TimeService.CheckWithinTimeInterval(b.StartWorkingHour, b.EndWorkingHour, b.WorkingDays),
             BranchPhoneNumber = b.Phone,
-            LogoUrl = b.Pharmacy?.Profile?.LogoUrl,
+            LogoUrl = b.Store?.Profile?.LogoUrl,
             StartWorkingHour = b.StartWorkingHour,
             EndWorkingHour = b.EndWorkingHour,
             WorkingDays = b.WorkingDays
         });
     }
 
-    public async Task<IEnumerable<BranchDto>> GetPharmacyBranches(string PharmacyId)
+    public async Task<IEnumerable<BranchDto>> GetStoreBranches(string StoreId)
     {
-        var branches = await _branchRepo.GetPharmacyBranches(PharmacyId);
+        var branches = await _branchRepo.GetStoreBranches(StoreId);
         return branches.Select(b => new BranchDto
         {
             BranchId = b.Id,
@@ -71,8 +71,8 @@ public class BranchService(
             Longitude = b.Longitude,
             BranchAddress = b.Address,
             BranchPhoneNumber = b.Phone,
-            PharmacyId = b.PharmacyId,
-            PharmacyName = b.Pharmacy?.Name ?? "Unknown",
+            StoreId = b.StoreId,
+            StoreName = b.Store?.Name ?? "Unknown",
             StartWorkingHour = b.StartWorkingHour,
             EndWorkingHour = b.EndWorkingHour,
             WorkingDays = b.WorkingDays,
@@ -88,12 +88,12 @@ public class BranchService(
             if (Store == null) throw new KeyNotFoundException($"Store with id {branchDto.StoreId} not found.");
 
 
-            var username = RandomGenerator.GenerateRandomString(Pharmacy.Name.Length + 4, Pharmacy.Name);
+            var username = RandomGenerator.GenerateRandomString(Store.Name.Length + 4, Store.Name);
             var password = RandomGenerator.GenerateRandomPassword(8);
 
             while (await _managerService.IsUsernameTaken(username))
             {
-                username = RandomGenerator.GenerateRandomString(Pharmacy.Name.Length + 4, Pharmacy.Name);
+                username = RandomGenerator.GenerateRandomString(Store.Name.Length + 4, Store.Name);
             }
 
             var createdManager = await _managerService.CreateManager(new CreateManagerDTO
@@ -114,7 +114,7 @@ public class BranchService(
                 Longitude = branchDto.Longitude,
                 Address = branchDto.BranchAddress,
                 Phone = branchDto.BranchPhoneNumber,
-                PharmacyId = branchDto.PharmacyId,
+                StoreId = branchDto.StoreId,
                 BranchManagerId = createdManager.Id,
             };
 
@@ -126,7 +126,7 @@ public class BranchService(
             {
                 BranchId = createdBranch.Id,
                 BranchAddress = createdBranch.Address,
-                PharmacyId = createdBranch.PharmacyId,
+                StoreId = createdBranch.StoreId,
                 BranchPhoneNumber = createdBranch.Phone,
                 BranchManagerId = createdBranch.BranchManagerId,
                 BranchManagerUsername = username,
@@ -158,8 +158,8 @@ public class BranchService(
             BranchId = branch.Id,
             BranchAddress = branch.Address,
             BranchPhoneNumber = branch.Phone,
-            PharmacyId = branch.PharmacyId,
-            PharmacyName = branch.Pharmacy?.Name ?? "Unknown",
+            StoreId = branch.StoreId,
+            StoreName = branch.Store?.Name ?? "Unknown",
             OrdersInQueue = ordersInQueue,
             StartWorkingHour = branch.StartWorkingHour,
             EndWorkingHour = branch.EndWorkingHour,
@@ -203,8 +203,8 @@ public class BranchService(
             Longitude = branch.Longitude,
             BranchAddress = branch.Address,
             BranchPhoneNumber = branch.Phone,
-            PharmacyId = branch.PharmacyId,
-            PharmacyName = branch.Pharmacy?.Name ?? "Unknown",
+            StoreId = branch.StoreId,
+            StoreName = branch.Store?.Name ?? "Unknown",
             StartWorkingHour = branch.StartWorkingHour,
             EndWorkingHour = branch.EndWorkingHour,
             WorkingDays = branch.WorkingDays,

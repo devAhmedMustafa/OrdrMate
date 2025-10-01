@@ -15,7 +15,7 @@ public class BranchRepo : IBranchRepo
 
     public async Task<Branch> GetBranchById(string id)
     {
-        return await _context.Branch.Include(b => b.Pharmacy)
+        return await _context.Branch.Include(b => b.Store)
         .FirstOrDefaultAsync(b => b.Id == id)
         ?? throw new KeyNotFoundException($"Branch with id {id} not found.");
     }
@@ -33,17 +33,17 @@ public class BranchRepo : IBranchRepo
     public async Task<IEnumerable<Branch>> GetAllBranches()
     {
         return await _context.Branch
-        .Include(b => b.Pharmacy).ThenInclude(r => r!.Profile)
+        .Include(b => b.Store).ThenInclude(r => r!.Profile)
         .Include(b => b.Orders!.OrderBy(o => o.OrderDate)).ThenInclude(o => o.OrderItems)!.ThenInclude(oi => oi.Item)
         .AsSplitQuery()
         .AsNoTracking()
         .ToListAsync();
     }
 
-    public async Task<IEnumerable<Branch>> GetPharmacyBranches(string PharmacyId)
+    public async Task<IEnumerable<Branch>> GetStoreBranches(string storeId)
     {
         return await _context.Branch
-            .Where(b => b.PharmacyId == PharmacyId)
+            .Where(b => b.StoreId == storeId)
             .ToListAsync();
     }
 
@@ -59,8 +59,8 @@ public class BranchRepo : IBranchRepo
         await _context.Branch.AddAsync(branch);
         await _context.SaveChangesAsync();
 
-        var Pharmacy = await _context.Pharmacy
-            .FirstOrDefaultAsync(r => r.Id == branch.PharmacyId) ?? throw new KeyNotFoundException($"Pharmacy with id {branch.PharmacyId} not found.");
+        var store = await _context.Store
+            .FirstOrDefaultAsync(r => r.Id == branch.StoreId) ?? throw new KeyNotFoundException($"Store with id {branch.StoreId} not found.");
 
         return branch;
     }
@@ -103,11 +103,11 @@ public class BranchRepo : IBranchRepo
 
         if (branch.BranchManagerId == managerId) return true;
 
-        var Pharmacy = await _context.Pharmacy
+        var store = await _context.Store
             .Include(r => r.Branches)
-            .FirstOrDefaultAsync(r => r.Id == branch.PharmacyId);
+            .FirstOrDefaultAsync(r => r.Id == branch.StoreId);
 
-        return Pharmacy?.ManagerId == managerId;
+        return store?.ManagerId == managerId;
     }
 
     public async Task<int> GetOrdersInQueue(string branchId)

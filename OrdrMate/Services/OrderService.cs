@@ -6,15 +6,9 @@ using OrdrMate.Utils;
 using OrdrMate.Repositories;
 using OrdrMate.Events;
 using Hangfire;
-<<<<<<< HEAD
-using OrdrMate.Features.Customization;
-using MongoDB.Bson;
-using OrdrMate.Features.ItemAvailability;
-=======
 using OrdrMate.Features.BestBranchToOrder;
 using OrdrMate.Features.ItemAvailability;
 using OrdrMate.Mappers.Orders;
->>>>>>> 3e001081afa4caee04908b24a811dbb63ce85ced
 
 namespace OrdrMate.Services;
 
@@ -26,13 +20,8 @@ public class OrderService
     private readonly PaymobService _paymobService;
     private readonly CloudMessaging _cloudMessaging;
     private readonly IBackgroundJobClient _backgroundJobs;
-<<<<<<< HEAD
-    private readonly ItemAvailabilityService _itemAvailabilityService;
-    private readonly UserCustomizationService _userCustomizationService;
-=======
     private readonly BestBranchToOrderService _bestBranchService;
     private readonly ItemAvailabilityService _itemAvailabilityService;
->>>>>>> 3e001081afa4caee04908b24a811dbb63ce85ced
 
     private static readonly Dictionary<string, string> _jobIds = new Dictionary<string, string>();
 
@@ -43,11 +32,7 @@ public class OrderService
         PaymobService paymobService,
         CloudMessaging cloudMessaging,
         IBackgroundJobClient backgroundJobs,
-<<<<<<< HEAD
-        UserCustomizationService userCustomizationService,
-=======
         BestBranchToOrderService bestBranchService,
->>>>>>> 3e001081afa4caee04908b24a811dbb63ce85ced
         ItemAvailabilityService itemAvailabilityService
     )
     {
@@ -57,42 +42,12 @@ public class OrderService
         _paymobService = paymobService;
         _cloudMessaging = cloudMessaging;
         _backgroundJobs = backgroundJobs;
-<<<<<<< HEAD
-        _userCustomizationService = userCustomizationService;
-=======
         _bestBranchService = bestBranchService;
->>>>>>> 3e001081afa4caee04908b24a811dbb63ce85ced
         _itemAvailabilityService = itemAvailabilityService;
     }
 
     public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto)
     {
-<<<<<<< HEAD
-
-        foreach (var item in placeOrderDto.Items)
-        {
-            var isAvailable = await _itemAvailabilityService.IsItemAvailable(item.ItemId, placeOrderDto.BranchId);
-            if (!isAvailable)
-            {
-                throw new InvalidOperationException($"Item with id {item.ItemId} is not available in branch {placeOrderDto.BranchId}.");
-            }
-        }
-
-        var totalAmount = placeOrderDto.Items.Sum(oi => oi.Price * oi.Quantity);
-
-        var intent = new OrderIntent
-        {
-            CustomerId = placeOrderDto.CustomerId,
-            BranchId = placeOrderDto.BranchId,
-            Status = PaymentStatus.INITIATED,
-            Amount = totalAmount,
-            PaymentMethod = placeOrderDto.PaymentMethod,
-            OrderType = placeOrderDto.OrderType,
-            PaymentProvider = placeOrderDto.PaymentMethod == "cash" ? "cash" : "paymob",
-            OrderItems = [..placeOrderDto.Items],
-            TableNumber = placeOrderDto.TableNumber,
-        };
-=======
         try
         {
             var bestBranchId = await _bestBranchService.FindBestBranchToOrder(placeOrderDto);
@@ -118,7 +73,6 @@ public class OrderService
                     Longitude = placeOrderDto.DeliveryDetails?.Longitude ?? 0,
                 } : null,
             };
->>>>>>> 3e001081afa4caee04908b24a811dbb63ce85ced
 
             var redirectUrl = string.Empty;
 
@@ -205,7 +159,7 @@ public class OrderService
         var orderDto = new OrderDto
         {
             OrderId = order.Id,
-            PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
+            StoreName = order.Branch?.Store?.Name ?? "Unknown Store",
             Customer = order.CustomerName ?? "Unknown Customer",
             CustomerPhone = order.CustomerPhone ?? "Unknown Phone",
             OrderType = orderIntent.OrderType.ToString(),
@@ -240,35 +194,6 @@ public class OrderService
 
                 await _itemAvailabilityService.DecreaseItemQuantity(item.ItemId, order.BranchId, item.Quantity);
                 orderItems.Add(savedOrderItem);
-
-                try
-                {
-                    // Validate user customization input
-                    if (!await _userCustomizationService.ValidateUserCustomization(item))
-                    {
-                        throw new ArgumentException($"Invalid customizations for item {item.ItemId}");
-                    }
-
-                    Console.WriteLine($"Valid customizations for item {item.ItemId}");
-
-                    var userCustomization = new UserCustomization
-                    {
-                        OrderId = order.Id,
-                        ItemId = item.ItemId,
-                        CustomizationValues = item.Customizations.ToBsonDocument()
-                    };
-
-                    Console.WriteLine($"Creating user customization for item {item.ItemId} with values: {userCustomization.CustomizationValues}");
-
-                    await _userCustomizationService.CreateUserCustomization(userCustomization);
-
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error processing customizations for item {item.ItemId}: {ex.Message}");
-                    throw new InvalidOperationException($"Failed to process customizations for item {item.ItemId}.", ex);
-                }
-
             }
 
             order.OrderItems = orderItems;
@@ -346,7 +271,7 @@ public class OrderService
         var takeawayDtos = takeaways.Select(t => new OrderDto
         {
             OrderId = t.Order!.Id,
-            PharmacyName = t.Order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
+            StoreName = t.Order.Branch?.Store?.Name ?? "Unknown Store",
             Customer = t.Order.Customer?.Username ?? "Unknown Customer",
             OrderType = OrderType.Takeaway.ToString(),
             PaymentMethod = t.Order.Payment?.PaymentMethod ?? "Cash",
@@ -374,7 +299,7 @@ public class OrderService
         return new OrderDto
         {
             OrderId = order.Id,
-            PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
+            StoreName = order.Branch?.Store?.Name ?? "Unknown Store",
             Customer = order.CustomerName ?? "Unknown Customer",
             OrderType = "",
             PaymentMethod = order.Payment?.PaymentMethod ?? "Unknown",
@@ -396,7 +321,7 @@ public class OrderService
         var orderDto = new OrderDto
         {
             OrderId = order.Id,
-            PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
+            StoreName = order.Branch?.Store?.Name ?? "Unknown Store",
             Customer = order.CustomerName ?? "Unknown Customer",
             CustomerId = order.Customer?.Id ?? string.Empty,
             CustomerPhone = order.CustomerPhone ?? "Unknown Phone",
@@ -461,7 +386,7 @@ public class OrderService
         return orders.Select(o => new OrderDto
         {
             OrderId = o.Id,
-            PharmacyName = o.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
+            StoreName = o.Branch?.Store?.Name ?? "Unknown Store",
             Customer = o.CustomerName ?? "Unknown Customer",
             CustomerPhone = o.CustomerPhone ?? "Unknown Phone",
             OrderType = o.OrderType.ToString(),
@@ -488,7 +413,7 @@ public class OrderService
         return orders.Select(o => new OrderDto
         {
             OrderId = o.Id,
-            PharmacyName = o.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
+            StoreName = o.Branch?.Store?.Name ?? "Unknown Store",
             Customer = o.CustomerName ?? "Unknown Customer",
             CustomerPhone = o.CustomerPhone ?? "Unknown Phone",
             OrderType = o.OrderType.ToString(),
@@ -553,7 +478,7 @@ public class OrderService
         {
             OrderId = order.Id,
             OrderNumber = orderNumber ?? "N/A",
-            PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
+            StoreName = order.Branch?.Store?.Name ?? "Unknown Store",
             CustomerName = order.Customer?.Username ?? "Unknown Customer",
             OrderType = order.OrderType.ToString(),
             PaymentMethod = order.Payment?.PaymentMethod ?? "Cash",
@@ -595,7 +520,7 @@ public class OrderService
         return orders.Select(o => new OrderDto
         {
             OrderId = o.Id,
-            PharmacyName = o.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
+            StoreName = o.Branch?.Store?.Name ?? "Unknown Store",
             Customer = o.CustomerName ?? "Unknown Customer",
             CustomerPhone = o.CustomerPhone ?? "Unknown Phone",
             OrderType = o.OrderType.ToString(),
@@ -635,7 +560,7 @@ public class OrderService
         _jobIds.Add(createdRequest.OrderId, jobId);
 
         var token = await _cloudMessaging.GetTokenByUserId(order.CustomerId);
-        await _cloudMessaging.SendNotificationAsync(token, "Did you receive your order?", $"Your order from {order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy"}. Will considered as a yes after 15 minutes.", new Dictionary<string, string>
+        await _cloudMessaging.SendNotificationAsync(token, "Did you receive your order?", $"Your order from {order.Branch?.Store?.Name ?? "Unknown Store"}. Will considered as a yes after 15 minutes.", new Dictionary<string, string>
         {
             { "type", "DELIVER_CONFIRMATION" },
             { "orderId", createdRequest.OrderId },
@@ -709,7 +634,7 @@ public class OrderService
             IsPaid = o.Order.IsPaid,
             OrderType = o.Order.OrderType.ToString(),
             PaymentMethod = o.Order.Payment?.PaymentMethod ?? "Unknown",
-            PharmacyName = o.Order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
+            StoreName = o.Order.Branch?.Store?.Name ?? "Unknown Store",
             OrderNumber = o.OrderNumber
         });
     }
@@ -784,7 +709,7 @@ public class OrderService
         return new OrderDto
         {
             OrderId = order.Id,
-            PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
+            StoreName = order.Branch?.Store?.Name ?? "Unknown Store",
             Customer = order.CustomerName ?? "Unknown Customer",
             CustomerPhone = order.CustomerPhone ?? "Unknown Phone",
             OrderType = order.OrderType.ToString(),

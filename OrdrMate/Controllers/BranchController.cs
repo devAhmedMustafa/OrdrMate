@@ -39,7 +39,7 @@ public class BranchController : ControllerBase
         var branchRequestsDto = branchRequests.Select(br => new BranchRequestDto
         {
             BranchRequestId = br.Id,
-            PharmacyName = br.Pharmacy!.Name,
+            StoreName = br.Store!.Name,
             BranchAddress = br.Address,
             BranchPhoneNumber = br.Phone,
             Lantitude = br.Latitude,
@@ -61,7 +61,7 @@ public class BranchController : ControllerBase
         var branchRequestDto = new BranchRequestDto
         {
             BranchRequestId = branchRequest.Id,
-            PharmacyName = branchRequest.Pharmacy!.Name,
+            StoreName = branchRequest.Store!.Name,
             BranchAddress = branchRequest.Address,
             BranchPhoneNumber = branchRequest.Phone,
             Lantitude = branchRequest.Latitude,
@@ -78,7 +78,7 @@ public class BranchController : ControllerBase
 
         if (!authorizationResult.Succeeded)
         {
-            return Forbid("You do not have permission to manage this Pharmacy.");
+            return Forbid("You do not have permission to manage this Store.");
         }
 
         if (branchRequestDto == null)
@@ -88,7 +88,7 @@ public class BranchController : ControllerBase
 
         var branchRequest = new Models.BranchRequest
         {
-            PharmacyId = branchRequestDto.PharmacyId,
+            StoreId = branchRequestDto.StoreId,
             Address = branchRequestDto.BranchAddress,
             Phone = branchRequestDto.BranchPhoneNumber,
             Latitude = branchRequestDto.Latitude,
@@ -99,7 +99,7 @@ public class BranchController : ControllerBase
         return CreatedAtAction(nameof(GetBranchRequestById), new { id = createdBranchRequest.Id }, new BranchRequestDto
         {
             BranchRequestId = createdBranchRequest.Id,
-            PharmacyName = createdBranchRequest.Pharmacy!.Name,
+            StoreName = createdBranchRequest.Store!.Name,
             BranchAddress = createdBranchRequest.Address,
             BranchPhoneNumber = createdBranchRequest.Phone,
             Lantitude = createdBranchRequest.Latitude,
@@ -125,7 +125,7 @@ public class BranchController : ControllerBase
                 Longitude = branchRequest.Longitude,
                 BranchAddress = branchRequest.Address,
                 BranchPhoneNumber = branchRequest.Phone,
-                PharmacyId = branchRequest.PharmacyId,
+                StoreId = branchRequest.StoreId,
             });
 
             Console.WriteLine($"[BranchService]: Branch created with ID {branchCreated.BranchId}");
@@ -151,17 +151,17 @@ public class BranchController : ControllerBase
     }
 
     [HttpGet]
-    [Route("Pharmacy/{PharmacyId}")]
-    public async Task<IActionResult> GetPharmacyBranches(string PharmacyId)
+    [Route("Store/{StoreId}")]
+    public async Task<IActionResult> GetStoreBranches(string StoreId)
     {
         try
         {
-            var branches = await _branchService.GetPharmacyBranches(PharmacyId);
+            var branches = await _branchService.GetStoreBranches(StoreId);
             return Ok(branches);
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound($"Pharmacy with ID {PharmacyId} not found: {ex.Message}");
+            return NotFound($"Store with ID {StoreId} not found: {ex.Message}");
         }
     }
 

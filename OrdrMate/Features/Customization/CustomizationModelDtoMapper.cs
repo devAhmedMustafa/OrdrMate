@@ -1,11 +1,10 @@
 using OrdrMate.Enums;
 using OrdrMate.DTOs.Customization;
-using OrdrMate.Models;
 using OrdrMate.Schemas.CustomizationMetadata;
 
 using MongoDB.Bson;
 
-namespace OrdrMate.Mappers.Customization;
+namespace OrdrMate.Features.Customization;
 
 public class CustomizationModelDtoMapper
 {

@@ -10,13 +10,13 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
     public async Task<Item?> AddItem(Item item)
     {
 
-        // Check if the Pharmacy exists
-        var Pharmacy = await _context.Pharmacy
-            .FirstOrDefaultAsync(r => r.Id == item.PharmacyId);
-        if (Pharmacy == null)
+        // Check if the Store exists
+        var Store = await _context.Store
+            .FirstOrDefaultAsync(r => r.Id == item.StoreId);
+        if (Store == null)
         {
-            Console.Error.WriteLine($"Pharmacy with ID {item.PharmacyId} not found.");
-            throw new Exception("Pharmacy not found");
+            Console.Error.WriteLine($"Store with ID {item.StoreId} not found.");
+            throw new Exception("Store not found");
         }
 
         await _context.Item.AddAsync(item);
@@ -37,10 +37,10 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
         return await _context.Item.ToListAsync();
     }
 
-    public async Task<IEnumerable<Item>> GetItemsByPharmacyId(string pharmacyId)
+    public async Task<IEnumerable<Item>> GetItemsByStoreId(string storeId)
     {
         return await _context.Item
-            .Where(i => i.PharmacyId == pharmacyId)
+            .Where(i => i.StoreId == storeId)
             .ToListAsync();
     }
 
@@ -92,16 +92,16 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
         if (branch == null) throw new Exception("Branch not found");
 
         var items = await _context.Item
-            .Where(i => i.PharmacyId == branch.PharmacyId)
+            .Where(i => i.StoreId == branch.StoreId)
             .ToListAsync();
 
         return items;
     }
 
-    public async Task<IEnumerable<Item>> GetItemsByCategory(string pharmacyId, string category)
+    public async Task<IEnumerable<Item>> GetItemsByCategory(string storeId, string category)
     {
         return await _context.Item
-            .Where(i => i.PharmacyId == pharmacyId && i.Category == category)
+            .Where(i => i.StoreId == storeId && i.Category == category)
             .ToListAsync();
     }
 }

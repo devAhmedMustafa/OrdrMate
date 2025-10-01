@@ -7,7 +7,7 @@ public interface IBranchRepo
     Task<Branch> GetBranchById(string id);
     Task<Branch> GetBranchByManagerId(string managerId);
     Task<IEnumerable<Branch>> GetAllBranches();
-    Task<IEnumerable<Branch>> GetPharmacyBranches(string pharmacyId);
+    Task<IEnumerable<Branch>> GetStoreBranches(string storeId);
     Task<Branch> CreateBranch(Branch branch);
     Task<bool> DeleteBranch(string id);
     Task<bool> UpdateBranch(Branch branch);

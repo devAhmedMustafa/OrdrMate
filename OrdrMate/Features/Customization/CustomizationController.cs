@@ -3,8 +3,8 @@ namespace OrdrMate.Controllers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrdrMate.DTOs.Customization;
+using OrdrMate.Features.Customization;
 using OrdrMate.Features.Customization.DTOs;
-using OrdrMate.Services;
 
 [ApiController]
 [Route("api/[controller]")]

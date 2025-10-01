@@ -27,7 +27,7 @@ public class ItemController : ControllerBase
 
             if (!authorizationResult.Succeeded)
             {
-                return Forbid("You do not have permission to manage this Pharmacy.");
+                return Forbid("You do not have permission to manage this Store.");
             }
 
             var result = await _service.AddItem(dto);
@@ -42,12 +42,12 @@ public class ItemController : ControllerBase
         }
     }
 
-    [HttpGet("Pharmacy/{PharmacyId}")]
-    public async Task<ActionResult<IEnumerable<ItemDto>>> GetItemsByPharmacyId(string PharmacyId)
+    [HttpGet("Store/{StoreId}")]
+    public async Task<ActionResult<IEnumerable<ItemDto>>> GetItemsByStoreId(string StoreId)
     {
         try
         {
-            var items = await _service.GetItemsByPharmacyId(PharmacyId);
+            var items = await _service.GetItemsByStoreId(StoreId);
             return Ok(items);
         }
         catch (Exception e)
@@ -56,12 +56,12 @@ public class ItemController : ControllerBase
         }
     }
 
-    [HttpGet("list/{pharmacyId}/{category}")]
-    public async Task<ActionResult<IEnumerable<ItemDto>>> GetItemsByCategory(string pharmacyId, string category)
+    [HttpGet("list/{storeId}/{category}")]
+    public async Task<ActionResult<IEnumerable<ItemDto>>> GetItemsByCategory(string storeId, string category)
     {
         try
         {
-            var items = await _service.GetItemsByCategory(pharmacyId, category);
+            var items = await _service.GetItemsByCategory(storeId, category);
             return Ok(items);
         }
         catch (Exception e)
@@ -105,7 +105,7 @@ public class ItemController : ControllerBase
 
             if (!authorizationResult.Succeeded)
             {
-                return Forbid("You do not have permission to manage this Pharmacy.");
+                return Forbid("You do not have permission to manage this Store.");
             }
 
             var item = await _service.UpdateItem(id, dto);
@@ -137,7 +137,7 @@ public class ItemController : ControllerBase
 
             if (!authorizationResult.Succeeded)
             {
-                return Forbid("You do not have permission to manage this Pharmacy.");
+                return Forbid("You do not have permission to manage this Store.");
             }
 
             var result = await _service.DeleteItem(id);

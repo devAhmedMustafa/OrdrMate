@@ -67,15 +67,15 @@ public class ManagerService(IUserRepo r, IStoreRepo rr, IConfiguration c, IBranc
 
         var jwtService = new JWTService(_config);
 
-        var PharmacyId = "";
+        var StoreId = "";
         var branchId = "";
 
         if (manager.Role == UserRole.TopManager)
         {
             var Store = await _StoreRepo.GetStoreByManagerId(manager.Id);
-            if (Pharmacy != null)
+            if (Store != null)
             {
-                PharmacyId = Pharmacy.Id;
+                StoreId = Store.Id;
                 branchId = "HEAD";
             }
         }
@@ -85,7 +85,7 @@ public class ManagerService(IUserRepo r, IStoreRepo rr, IConfiguration c, IBranc
             var branch = await _branchRepo.GetBranchByManagerId(manager.Id);
             if (branch != null)
             {
-                PharmacyId = branch.PharmacyId;
+                StoreId = branch.StoreId;
                 branchId = branch.Id;
             }
         }
@@ -94,7 +94,7 @@ public class ManagerService(IUserRepo r, IStoreRepo rr, IConfiguration c, IBranc
         {
             Token = jwtService.GenerateJWT(manager.Id, manager.Role),
             Role = manager.Role.ToString(),
-            PharmacyId = PharmacyId,
+            StoreId = StoreId,
             BranchId = branchId
         };
     }

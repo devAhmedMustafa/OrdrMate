@@ -1,30 +1,28 @@
 using MongoDB.Driver;
 using OrdrMate.Configs;
-// using OrdrMate.Features.Customization;
-using OrdrMate.Models;
+using OrdrMate.Features.Customization;
 
 namespace OrdrMate.Data;
 
 public class OrdrMateMongoContext
 {
-    // private readonly IMongoDatabase _database;
-    // public OrdrMateMongoContext(IConfiguration configuration, IMongoClient mongoClient)
-    // {
-    //     var settings = configuration.GetSection("MongoDb").Get<MongoDbSettings>();
-    //     _database = mongoClient.GetDatabase(settings?.Database);
+    private readonly IMongoDatabase _database;
+    public OrdrMateMongoContext(IConfiguration configuration, IMongoClient mongoClient)
+    {
+        var settings = configuration.GetSection("MongoDb").Get<MongoDbSettings>();
+        _database = mongoClient.GetDatabase(settings?.Database);
 
-    //     if (_database == null)
-    //     {
-    //         throw new InvalidOperationException("MongoDB database is not configured properly.");
-    //     }
+        if (_database == null)
+        {
+            throw new InvalidOperationException("MongoDB database is not configured properly.");
+        }
 
-    //     EnsureIndexes();
-    // }
+        EnsureIndexes();
+    }
 
-    // public IMongoCollection<CustomizationCategory> CustomizationCategories =>
-    // _database.GetCollection<CustomizationCategory>("CustomizationCategories");
+    public IMongoCollection<CustomizationCategory> CustomizationCategories =>
+    _database.GetCollection<CustomizationCategory>("CustomizationCategories");
 
-<<<<<<< HEAD
     public IMongoCollection<UserCustomization> UserCustomizations =>
     _database.GetCollection<UserCustomization>("UserCustomizations");
 
@@ -72,23 +70,4 @@ public class OrdrMateMongoContext
             UserCustomizations.Indexes.CreateOne(userCustomizationIndexModel);
         }
     }
-
-=======
-    // public IMongoCollection<ItemCustomization> ItemCustomizations =>
-    // _database.GetCollection<ItemCustomization>("ItemCustomizations");
-
-    // public IMongoCollection<UserCustomization> UserCustomizations =>
-    // _database.GetCollection<UserCustomization>("UserCustomizations");
-
-    // public void EnsureIndexes()
-    // {
-    //     var indexKeys = Builders<CustomizationCategory>.IndexKeys
-    //         .Ascending(c => c.RestaurantId)
-    //         .Ascending(c => c.Name);
-
-    //     var indexOptions = new CreateIndexOptions { Unique = true };
-    //     var indexModel = new CreateIndexModel<CustomizationCategory>(indexKeys, indexOptions);
-    //     CustomizationCategories.Indexes.CreateOne(indexModel);
-    // }
->>>>>>> 3e001081afa4caee04908b24a811dbb63ce85ced
 }

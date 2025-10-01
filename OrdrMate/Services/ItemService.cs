@@ -23,7 +23,7 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
                 Price = item.Price,
                 Category = item.Category,
                 SubCategory = item.SubCategory,
-                PharmacyId = item.PharmacyId,
+                StoreId = item.StoreId,
                 Brand = item.Brand,
                 Priority = item.Priority,
                 Tags = item.Tags
@@ -89,9 +89,9 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
         return await _itemRepo.GetAllItems();
     }
 
-    public async Task<IEnumerable<ItemDto>> GetItemsByPharmacyId(string pharmacyId)
+    public async Task<IEnumerable<ItemDto>> GetItemsByStoreId(string storeId)
     {
-        var items = await _itemRepo.GetItemsByPharmacyId(pharmacyId);
+        var items = await _itemRepo.GetItemsByStoreId(storeId);
 
         return items.Select(item => new ItemDto
         {
@@ -177,7 +177,7 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
         return new ItemAuthInfo
         {
             Id = item.Id,
-            PharmacyId = item.PharmacyId,
+            StoreId = item.StoreId,
         };
     }
 
@@ -188,9 +188,9 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
         return items;
     }
     
-    public async Task<IEnumerable<ItemDto>> GetItemsByCategory(string pharmacyId, string category)
+    public async Task<IEnumerable<ItemDto>> GetItemsByCategory(string storeId, string category)
     {
-        var items = await _itemRepo.GetItemsByCategory(pharmacyId, category);
+        var items = await _itemRepo.GetItemsByCategory(storeId, category);
         return items.Select(item => new ItemDto
         {
             Id = item.Id,

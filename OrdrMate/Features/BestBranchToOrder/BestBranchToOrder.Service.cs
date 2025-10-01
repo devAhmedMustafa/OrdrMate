@@ -26,7 +26,7 @@ public class BestBranchToOrderService
 
     public async Task<string> FindBestBranchToOrder(PlaceOrderDto orderDto)
     {
-        var branches = await _branchRepo.GetPharmacyBranches(orderDto.PharmacyId);
+        var branches = await _branchRepo.GetStoreBranches(orderDto.StoreId);
         branches = FilterBranchesByWorkingHours(branches);
         branches = await FilterBranchesWithAllItemsAvailable(orderDto, branches);
         var bestBranch = FindClosestBranch(orderDto.Latitude, orderDto.Longitude, branches);
@@ -72,7 +72,7 @@ public class BestBranchToOrderService
 
                 foreach (var item in orderDto.Items)
                 {
-                    bool isAvailable = await _itemAvailabilityService.IsItemAvailabile(item.ItemId, branch.Id);
+                    bool isAvailable = await _itemAvailabilityService.IsItemAvailable(item.ItemId, branch.Id);
                     if (!isAvailable)
                     {
                         allItemsAvailable = false;
