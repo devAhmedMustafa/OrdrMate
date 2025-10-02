@@ -1,14 +1,17 @@
 using OrdrMate.DTOs.Item;
+using OrdrMate.Features.Storage;
 
 namespace OrdrMate.Features.ItemAvailability;
 
 public class ItemAvailabilityService
 {
     private readonly ItemAvailabilityRepository _repository;
+    private readonly IStorageService _storageService;
 
-    public ItemAvailabilityService(ItemAvailabilityRepository repository)
+    public ItemAvailabilityService(ItemAvailabilityRepository repository, IStorageService storageService)
     {
         _repository = repository;
+        _storageService = storageService;
     }
 
     public async Task<bool> IsItemAvailable(string itemId, string branchId)
@@ -40,7 +43,7 @@ public class ItemAvailabilityService
             Id = ia.ItemId,
             Name = ia.Item!.Name,
             Description = ia.Item.Description,
-            ImageUrl = ia.Item.ImageUrl,
+            ImageUrl = _storageService.GetDownloadPresignedUrl(ia.Item.ImageUrl).Data?.FileUrl,
             Price = ia.Item.Price,
             Category = ia.Item.Category,
             SubCategory = ia.Item.SubCategory,

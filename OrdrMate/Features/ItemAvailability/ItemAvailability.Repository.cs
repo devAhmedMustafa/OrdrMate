@@ -35,6 +35,7 @@ public class ItemAvailabilityRepository
         {
             var itemAvailabilities = await _db.ItemAvailabilities
                 .Where(ia => ia.BranchId == branchId)
+                .Include(ia => ia.Item)
                 .ToListAsync();
 
             return itemAvailabilities;

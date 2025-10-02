@@ -14,8 +14,10 @@ var modules = typeof(Program).Assembly.GetTypes()
     .Where(t => typeof(IModule).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
     .Select(Activator.CreateInstance).Cast<IModule>();
 
+Console.WriteLine("Found modules:");
 foreach (var module in modules)
 {
+    Console.WriteLine($"Registering module: {module.GetType().Name}");
     module.Register(builder.Services, builder.Configuration, env);
 }
 
