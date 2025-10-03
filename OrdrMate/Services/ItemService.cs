@@ -5,10 +5,12 @@ using OrdrMate.Models;
 using OrdrMate.DTOs.Item;
 using OrdrMate.Features.ItemAvailability;
 using OrdrMate.Events;
+using OrdrMate.Features.Storage;
 
-public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailabilityService)
+public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailabilityService, IStorageService storageService)
 {
     private readonly IItemRepo _itemRepo = itemRepo;
+    private readonly IStorageService _storageService = storageService;
     private readonly ItemAvailabilityService _itemAvailabilityService = itemAvailabilityService;
 
     public async Task<ItemDto?> AddItem(AddItemDto item)
@@ -74,7 +76,7 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             Id = item.Id,
             Name = item.Name,
             Description = item.Description,
-            ImageUrl = item.ImageUrl,
+            ImageUrl = _storageService.GetDownloadPresignedUrl(item.ImageUrl).Data?.FileUrl,
             Price = item.Price,
             Category = item.Category,
             SubCategory = item.SubCategory,
