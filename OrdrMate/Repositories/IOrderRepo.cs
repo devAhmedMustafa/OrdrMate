@@ -16,6 +16,7 @@ public interface IOrderRepo
     Task<Order> GetDetailedOrderById(string orderId);
     Task<Takeaway?> GetTakeawayById(string orderId);
     Task<IEnumerable<Takeaway>> GetTakeawaysByCustomerId(string customerId);
+    Task<IEnumerable<Order>> GetOrdersByCustomerId(string customerId);
     Task<IEnumerable<Takeaway>> GetAllTakeawaysByBranchId(string branchId);
     Task<IEnumerable<Order>> GetAllDeliveryOrdersByBranchId(string branchId);
     Task<IEnumerable<Order>> GetOrdersOutForDelivery(string branchId);

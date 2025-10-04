@@ -260,34 +260,32 @@ public class OrderService
 
     public async Task<IEnumerable<OrderDto>> GetCustomerOrders(string customerId)
     {
-        var takeaways = await _orderRepo.GetTakeawaysByCustomerId(customerId);
+        var orders = await _orderRepo.GetOrdersByCustomerId(customerId);
 
-        if (takeaways == null)
+        if (orders == null)
         {
-            Console.WriteLine($"No takeaways orders found for customer with ID: {customerId}");
-            takeaways = [];
+            Console.WriteLine($"No orders found for customer with ID: {customerId}");
+            orders = [];
         }
 
-        var takeawayDtos = takeaways.Select(t => new OrderDto
+        var orderDtos = orders.Select(o => new OrderDto
         {
-            OrderId = t.Order!.Id,
-            PharmacyName = t.Order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
-            Customer = t.Order.Customer?.Username ?? "Unknown Customer",
-            OrderType = OrderType.Takeaway.ToString(),
-            PaymentMethod = t.Order.Payment?.PaymentMethod ?? "Cash",
-            OrderDate = t.Order.OrderDate,
-            OrderStatus = t.Order.Status.ToString(),
-            TotalAmount = t.Order.TotalAmount,
-            BranchId = t.Order.BranchId,
-            OrderNumber = t.OrderNumber,
-            IsPaid = t.Order.IsPaid,
-            CustomerId = t.Order.CustomerId,
-            CustomerPhone = t.Order.CustomerPhone ?? "Unknown Phone"
+            OrderId = o.Id,
+            PharmacyName = o.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
+            Customer = o.Customer?.Username ?? "Unknown Customer",
+            OrderType = o.OrderType.ToString(),
+            PaymentMethod = o.Payment?.PaymentMethod ?? "Cash",
+            OrderDate = o.OrderDate,
+            OrderStatus = o.Status.ToString(),
+            TotalAmount = o.TotalAmount,
+            BranchId = o.BranchId,
+            OrderNumber = o.Takeaway?.OrderNumber,
+            IsPaid = o.IsPaid,
+            CustomerId = o.CustomerId,
+            CustomerPhone = o.CustomerPhone ?? "Unknown Phone"
         });
 
-        var orders = takeawayDtos.OrderByDescending(o => o.OrderDate);
-        return orders;
-
+        return orderDtos;
     }
 
     public async Task<OrderDto> GetOrderById(string orderId)
