@@ -7,6 +7,8 @@ public class Order
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public required string BranchId { get; set; }
     public required string CustomerId { get; set; }
+    public required string CustomerName { get; set; }
+    public required string CustomerPhone { get; set; }
     public TimeOnly OrderTime { get; set; } = TimeOnly.FromDateTime(DateTime.UtcNow);
     public DateTime OrderDate { get; set; } = DateTime.UtcNow;
     public OrderType OrderType { get; set; }

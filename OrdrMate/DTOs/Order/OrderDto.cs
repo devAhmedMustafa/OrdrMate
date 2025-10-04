@@ -6,6 +6,7 @@ public class OrderDto
     public required string PharmacyName { get; set; }
     public required string CustomerId { get; set; }
     public required string Customer { get; set; }
+    public required string CustomerPhone { get; set; }
     public required string OrderType { get; set; }
     public OrderItemDto[]? OrderItems { get; set; }
     public required string PaymentMethod { get; set; }

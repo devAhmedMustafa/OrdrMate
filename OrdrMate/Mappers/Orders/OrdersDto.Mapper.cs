@@ -15,7 +15,8 @@ public static class OrdersDtoMapper
             OrderId = order.Id,
             PharmacyName = order.Branch?.Pharmacy?.Name ?? "Unknown Pharmacy",
             CustomerId = order.CustomerId,
-            Customer = order.Customer?.Username ?? "Unknown",
+            Customer = order.CustomerName ?? "Unknown",
+            CustomerPhone = order.CustomerPhone ?? "Unknown Phone",
             OrderType = order.OrderType.ToString(),
             OrderItems = order.OrderItems?.Select(oi => new OrderItemDto
             {
