@@ -22,6 +22,7 @@ public class OrderService
     private readonly IBackgroundJobClient _backgroundJobs;
     private readonly BestBranchToOrderService _bestBranchService;
     private readonly ItemAvailabilityService _itemAvailabilityService;
+    private readonly IItemRepo _itemRepo;
 
     private static readonly Dictionary<string, string> _jobIds = new Dictionary<string, string>();
 
@@ -33,7 +34,8 @@ public class OrderService
         CloudMessaging cloudMessaging,
         IBackgroundJobClient backgroundJobs,
         BestBranchToOrderService bestBranchService,
-        ItemAvailabilityService itemAvailabilityService
+        ItemAvailabilityService itemAvailabilityService,
+        IItemRepo itemRepo
     )
     {
         _paymentService = paymentService;
@@ -44,6 +46,7 @@ public class OrderService
         _backgroundJobs = backgroundJobs;
         _bestBranchService = bestBranchService;
         _itemAvailabilityService = itemAvailabilityService;
+        _itemRepo = itemRepo;
     }
 
     public async Task<OrderIntentDto> CreateOrderIntent(PlaceOrderDto placeOrderDto)
@@ -52,7 +55,16 @@ public class OrderService
         {
             var bestBranchId = await _bestBranchService.FindBestBranchToOrder(placeOrderDto);
 
-            var totalAmount = placeOrderDto.Items.Sum(oi => oi.Price * oi.Quantity);
+            var totalAmount = 0.0m;
+            foreach (var item in placeOrderDto.Items)
+            {
+                var itemDetails = await _itemRepo.GetItem(item.ItemId);
+                if (itemDetails == null)
+                {
+                    throw new KeyNotFoundException($"Item with id {item.ItemId} not found.");
+                }
+                totalAmount += itemDetails.Price * item.Quantity;
+            }
 
             var intent = new OrderIntent
             {
@@ -260,34 +272,17 @@ public class OrderService
 
     public async Task<IEnumerable<OrderDto>> GetCustomerOrders(string customerId)
     {
-        var takeaways = await _orderRepo.GetTakeawaysByCustomerId(customerId);
+        var orders = await _orderRepo.GetOrdersByCustomerId(customerId);
 
-        if (takeaways == null)
+        if (orders == null)
         {
-            Console.WriteLine($"No takeaways orders found for customer with ID: {customerId}");
-            takeaways = [];
+            Console.WriteLine($"No orders found for customer with ID: {customerId}");
+            orders = [];
         }
 
-        var takeawayDtos = takeaways.Select(t => new OrderDto
-        {
-            OrderId = t.Order!.Id,
-            StoreName = t.Order.Branch?.Store?.Name ?? "Unknown Store",
-            Customer = t.Order.Customer?.Username ?? "Unknown Customer",
-            OrderType = OrderType.Takeaway.ToString(),
-            PaymentMethod = t.Order.Payment?.PaymentMethod ?? "Cash",
-            OrderDate = t.Order.OrderDate,
-            OrderStatus = t.Order.Status.ToString(),
-            TotalAmount = t.Order.TotalAmount,
-            BranchId = t.Order.BranchId,
-            OrderNumber = t.OrderNumber,
-            IsPaid = t.Order.IsPaid,
-            CustomerId = t.Order.CustomerId,
-            CustomerPhone = t.Order.CustomerPhone ?? "Unknown Phone"
-        });
+        var orderDtos = orders.Select(OrdersDtoMapper.ToDto).ToList();
 
-        var orders = takeawayDtos.OrderByDescending(o => o.OrderDate);
-        return orders;
-
+        return orderDtos;
     }
 
     public async Task<OrderDto> GetOrderById(string orderId)

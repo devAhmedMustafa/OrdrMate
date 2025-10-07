@@ -26,11 +26,23 @@ public class BestBranchToOrderService
 
     public async Task<string> FindBestBranchToOrder(PlaceOrderDto orderDto)
     {
-        var branches = await _branchRepo.GetStoreBranches(orderDto.StoreId);
-        branches = FilterBranchesByWorkingHours(branches);
-        branches = await FilterBranchesWithAllItemsAvailable(orderDto, branches);
-        var bestBranch = FindClosestBranch(orderDto.Latitude, orderDto.Longitude, branches);
-        return bestBranch.Id;
+        try
+        {
+            var branches = await _branchRepo.GetStoreBranches(orderDto.StoreId);
+
+            if (branches == null || !branches.Any())
+                throw new Exception("No branches found for the specified store");
+
+            branches = FilterBranchesByWorkingHours(branches);
+            branches = await FilterBranchesWithAllItemsAvailable(orderDto, branches);
+            var bestBranch = FindClosestBranch(orderDto.Latitude, orderDto.Longitude, branches);
+            return bestBranch.Id;
+
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error finding the best branch to order from", ex);
+        }
     }
 
     private List<Branch> FilterBranchesByWorkingHours(IEnumerable<Branch> branches)

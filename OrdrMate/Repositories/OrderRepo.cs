@@ -101,6 +101,20 @@ public class OrderRepo : IOrderRepo
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Order>> GetOrdersByCustomerId(string customerId)
+    {
+        return await _db.Order
+            .Where(o => o.CustomerId == customerId)
+            .Include(o => o.Payment)
+            .Include(o => o.Branch).ThenInclude(b => b!.Store)
+            .Include(o => o.Delivery)
+            .Include(o => o.Takeaway)
+            .Include(o => o.OrderItems!).ThenInclude(oi => oi.Item)
+            .OrderByDescending(o => o.OrderDate)
+            .ThenByDescending(o => o.OrderTime)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<Takeaway>> GetAllTakeawaysByBranchId(string branchId)
     {
         return await _db.Takeaway
