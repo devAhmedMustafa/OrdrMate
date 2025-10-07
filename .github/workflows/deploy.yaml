@@ -2,7 +2,7 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [main]
+    branches: [gcm-beta]
 
 jobs:
   deploy:
@@ -24,33 +24,33 @@ jobs:
           chmod 600 ec2_key.pem
 
         env:
-          EC2_KEY: ${{ secrets.EC2_KEY }}
+          EC2_KEY: ${{ secrets.GCM_KEY }}
 
       - name: Pause service on EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-              sudo systemctl stop ${{ secrets.SERVICE_NAME }}
+            ${{ secrets.GCM_USER }}@${{ secrets.GCM_HOST }} << 'EOF'
+              sudo systemctl stop ${{ secrets.GCM_SERVICE_NAME }}
           EOF
 
       - name: Copy source code to EC2
         run: |
           rsync -avz -e "ssh -o StrictHostKeyChecking=no -i ec2_key.pem" \
-            ./OrdrMate/ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/app
+            ./OrdrMate/ ${{ secrets.GCM_USER }}@${{ secrets.GCM_HOST }}:~/app
 
       - name: Build on EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            ${{ secrets.GCM_USER }}@${{ secrets.GCM_HOST }} << 'EOF'
               cd ~/app
               dotnet restore
-              dotnet publish -c Release -o publish
+              dotnet publish -c Debug -o publish
           EOF
 
       - name: Apply Migrations on EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            ${{ secrets.GCM_USER }}@${{ secrets.GCM_HOST }} << 'EOF'
               cd ~/app
               dotnet ef database update
           EOF
@@ -58,6 +58,6 @@ jobs:
       - name: Restart Service on EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-              sudo systemctl start ${{ secrets.SERVICE_NAME }}
+            ${{ secrets.GCM_USER }}@${{ secrets.GCM_HOST }} << 'EOF'
+              sudo systemctl start ${{ secrets.GCM_SERVICE_NAME }}
           EOF

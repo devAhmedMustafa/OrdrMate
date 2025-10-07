@@ -3,25 +3,34 @@ using OrdrMate.Data;
 using OrdrMate.Models;
 using OrdrMate.Repositories;
 
-public class ItemRepo(OrdrMateDbContext context) : IItemRepo
+public class ItemRepo(OrdrMateDbContext context, ItemCacheRepo cache) : IItemRepo
 {
     private readonly OrdrMateDbContext _context = context;
+    private readonly ItemCacheRepo _cache = cache;
 
     public async Task<Item?> AddItem(Item item)
     {
-
-        // Check if the Pharmacy exists
-        var Pharmacy = await _context.Pharmacy
-            .FirstOrDefaultAsync(r => r.Id == item.PharmacyId);
-        if (Pharmacy == null)
+        try
         {
-            Console.Error.WriteLine($"Pharmacy with ID {item.PharmacyId} not found.");
-            throw new Exception("Pharmacy not found");
-        }
+            var Pharmacy = await _context.Pharmacy
+                .FirstOrDefaultAsync(r => r.Id == item.PharmacyId);
 
-        await _context.Item.AddAsync(item);
-        await _context.SaveChangesAsync();
-        return item;
+            if (Pharmacy == null)
+            {
+                Console.Error.WriteLine($"Pharmacy with ID {item.PharmacyId} not found.");
+                throw new Exception("Pharmacy not found");
+            }
+
+            await _context.Item.AddAsync(item);
+            await _context.SaveChangesAsync();
+
+            return item;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error adding item: {ex.Message}");
+            throw new Exception("Failed to add item");
+        }
     }
 
     public async Task<Item?> GetItem(string id)
