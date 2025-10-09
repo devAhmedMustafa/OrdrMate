@@ -313,43 +313,7 @@ public class OrderService
         var order = await _orderRepo.GetDetailedOrderById(orderId);
         if (order == null) throw new KeyNotFoundException($"Order with id {orderId} not found.");
 
-        var orderDto = new OrderDto
-        {
-            OrderId = order.Id,
-            StoreName = order.Branch?.Store?.Name ?? "Unknown Store",
-            Customer = order.CustomerName ?? "Unknown Customer",
-            CustomerId = order.Customer?.Id ?? string.Empty,
-            CustomerPhone = order.CustomerPhone ?? "Unknown Phone",
-            OrderType = order.OrderType.ToString(),
-            PaymentMethod = order.Payment?.PaymentMethod ?? "Cash",
-            OrderDate = order.OrderDate,
-            OrderStatus = order.Status.ToString(),
-            TotalAmount = order.TotalAmount,
-            BranchId = order.BranchId,
-            IsPaid = order.IsPaid,
-            OrderNumber = order.OrderType == OrderType.Takeaway ? order.Takeaway?.OrderNumber : null,
-            OrderItems = order.OrderItems?.Select(oi => new OrderItemDto
-            {
-                ItemId = oi.ItemId,
-                Item = new ItemDto
-                {
-                    Id = oi.Item?.Id ?? string.Empty,
-                    Name = oi.Item?.Name ?? "Unknown Item",
-                    Description = oi.Item?.Description ?? "No description available",
-                    ImageUrl = oi.Item?.ImageUrl ?? string.Empty,
-                    Price = oi.Item?.Price ?? 0,
-                    Category = oi.Item?.Category ?? "Uncategorized",
-                    Priority = oi.Item?.Priority ?? 0,
-                    Tags = oi.Item?.Tags ?? string.Empty,
-                    Brand = oi.Item?.Brand ?? "Unknown Brand",
-                },
-                Quantity = oi.Quantity,
-                Price = oi.Price,
-            }).ToArray()
-
-        };
-
-        return orderDto;
+        return OrdersDtoMapper.ToDto(order);
 
     }
 
