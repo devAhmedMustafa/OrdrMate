@@ -189,7 +189,7 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
         var items = await _itemAvailabilityService.GetAllItemAvailabilities(branchId);
         return items;
     }
-    
+
     public async Task<IEnumerable<ItemDto>> GetItemsByCategory(string storeId, string category)
     {
         var items = await _itemRepo.GetItemsByCategory(storeId, category);
@@ -206,5 +206,31 @@ public class ItemService(IItemRepo itemRepo, ItemAvailabilityService itemAvailab
             Tags = item.Tags,
             Brand = item.Brand
         });
+    }
+
+    public async Task<IEnumerable<ItemDto>> GetFeaturedItems(string storeId)
+    {
+        try
+        {
+            var items = await _itemRepo.GetFeaturedItems(storeId);
+            return items.Select(item => new ItemDto
+            {
+                Id = item.Id,
+                Name = item.Name,
+                Description = item.Description,
+                ImageUrl = _storageService.GetDownloadPresignedUrl(item.ImageUrl).Data?.FileUrl,
+                Price = item.Price,
+                Category = item.Category,
+                SubCategory = item.SubCategory,
+                Priority = item.Priority,
+                Tags = item.Tags,
+                Brand = item.Brand
+            });
+
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error retrieving featured items: {ex.Message}");
+        }
     }
 }

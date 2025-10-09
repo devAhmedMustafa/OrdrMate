@@ -104,4 +104,12 @@ public class ItemRepo(OrdrMateDbContext context) : IItemRepo
             .Where(i => i.StoreId == storeId && i.Category == category)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Item>> GetFeaturedItems(string storeId)
+    {
+        return await _context.Item
+            .Where(i => i.StoreId == storeId && i.Tags.Contains("featured"))
+            .OrderBy(i => i.Priority)
+            .ToListAsync();
+    }
 }

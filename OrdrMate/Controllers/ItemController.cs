@@ -175,4 +175,18 @@ public class ItemController : ControllerBase
         }
     }
 
+    [HttpGet("GetFeaturedItems/{storeId}")]
+    public async Task<ActionResult<IEnumerable<ItemDto>>> GetFeaturedItems(string storeId)
+    {
+        try
+        {
+            var items = await _service.GetFeaturedItems(storeId);
+            return Ok(items);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new { err = e.Message });
+        }
+    }
+
 }
