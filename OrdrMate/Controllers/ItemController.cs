@@ -175,7 +175,7 @@ public class ItemController : ControllerBase
         }
     }
 
-    [HttpGet("GetFeaturedItems/{storeId}")]
+    [HttpGet("featured/{storeId}")]
     public async Task<ActionResult<IEnumerable<ItemDto>>> GetFeaturedItems(string storeId)
     {
         try
