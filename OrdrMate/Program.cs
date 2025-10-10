@@ -34,7 +34,7 @@ builder.Services.AddCors(options =>
         else if (env.IsProduction())
         {
             builder.WithOrigins(
-                "https://gcm-manager-psi.vercel.app")
+                "https://gcm-manager-psi.vercel.app", "https://greencitymed.vercel.app")
                 .AllowAnyMethod()
                 .AllowAnyHeader();
         }
