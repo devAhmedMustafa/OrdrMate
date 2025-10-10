@@ -34,7 +34,7 @@ builder.Services.AddCors(options =>
         else if (env.IsProduction())
         {
             builder.WithOrigins(
-                "https://ordrmate-manager.vercel.app", "https://gahezz.vercel.app")
+                "https://gcm-manager-psi.vercel.app")
                 .AllowAnyMethod()
                 .AllowAnyHeader();
         }
@@ -56,7 +56,6 @@ builder.Services.Configure<AuthorizationOptions>(options =>
 builder.Services.AddScoped<IAuthorizationHandler, AdminHandler>();
 
 var app = builder.Build();
-app.UseCors("AllowSpecificOrigin");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -65,10 +64,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
     app.UseHangfireDashboard();
 }
-
-app.UseWebSockets();
-app.UseAuthentication();
-app.UseAuthorization();
 
 var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
 if (!Directory.Exists(uploadsPath))
@@ -83,5 +78,14 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseHttpsRedirection();
+
+app.UseRouting();
+
+app.UseCors("AllowSpecificOrigin");
+
+app.UseWebSockets();
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllers();
 app.Run();
