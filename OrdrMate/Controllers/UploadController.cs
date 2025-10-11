@@ -21,7 +21,7 @@ public class UploadController(IWebHostEnvironment env, IConfiguration config, S3
 
         // if (_env.IsDevelopment())
         // {
-            var uploadUrl = $"http://localhost:5126/api/Upload/upload/{fileUrl}";
+            var uploadUrl = $"{_config["Host:Url"]}/api/Upload/upload/{fileUrl}";
 
             return Ok(new
             {
