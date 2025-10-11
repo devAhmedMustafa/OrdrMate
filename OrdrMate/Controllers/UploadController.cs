@@ -54,7 +54,7 @@ public class UploadController(IWebHostEnvironment env, IConfiguration config, S3
             {
                 return NotFound("File not found.");
             }
-            var fileUrl = $"http://localhost:5126/uploads/{filename}";
+            var fileUrl = $"{_config["Host:Url"]}/uploads/{filename}";
             return Ok(new { fileUrl });
         // }
         // if (_env.IsProduction())
