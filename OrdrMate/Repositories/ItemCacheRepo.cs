@@ -3,6 +3,6 @@ using StackExchange.Redis;
 
 namespace OrdrMate.Repositories;
 
-public class ItemCacheRepo(IConnectionMultiplexer redis) : CacheRepo<List<Item>>(redis)
+public class CategoryItemsCacheRepo(IConnectionMultiplexer redis) : CacheRepo<IEnumerable<Item>>(redis)
 {
 }

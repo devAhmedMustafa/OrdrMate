@@ -3,10 +3,10 @@ using OrdrMate.Data;
 using OrdrMate.Models;
 using OrdrMate.Repositories;
 
-public class ItemRepo(OrdrMateDbContext context, ItemCacheRepo cache) : IItemRepo
+public class ItemRepo(OrdrMateDbContext context, CategoryItemsCacheRepo cache) : IItemRepo
 {
     private readonly OrdrMateDbContext _context = context;
-    private readonly ItemCacheRepo _cache = cache;
+    private readonly CategoryItemsCacheRepo _cache = cache;
 
     public async Task<Item?> AddItem(Item item)
     {
@@ -23,6 +23,8 @@ public class ItemRepo(OrdrMateDbContext context, ItemCacheRepo cache) : IItemRep
 
             await _context.Item.AddAsync(item);
             await _context.SaveChangesAsync();
+            
+            _cache.MarkForUpdate();
 
             return item;
         }
@@ -48,9 +50,17 @@ public class ItemRepo(OrdrMateDbContext context, ItemCacheRepo cache) : IItemRep
 
     public async Task<IEnumerable<Item>> GetItemsByPharmacyId(string pharmacyId)
     {
-        return await _context.Item
-            .Where(i => i.PharmacyId == pharmacyId)
-            .ToListAsync();
+        try
+        {
+            return await _context.Item
+                .Where(i => i.PharmacyId == pharmacyId)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error fetching items by pharmacy ID: {ex.Message}");
+            throw new Exception("Failed to fetch items");
+        }
     }
 
     public async Task<Item?> UpdateItem(string id, Item item)
@@ -69,6 +79,8 @@ public class ItemRepo(OrdrMateDbContext context, ItemCacheRepo cache) : IItemRep
         existingItem.Priority = item.Priority;
         existingItem.Tags = item.Tags;
 
+        _cache.MarkForUpdate();
+
         await _context.SaveChangesAsync();
         return existingItem;
     }
@@ -77,6 +89,8 @@ public class ItemRepo(OrdrMateDbContext context, ItemCacheRepo cache) : IItemRep
     {
         var entity = _context.Item.Update(item);
         await _context.SaveChangesAsync();
+        _cache.MarkForUpdate();
+
         return entity.Entity;
     }
 
@@ -90,6 +104,8 @@ public class ItemRepo(OrdrMateDbContext context, ItemCacheRepo cache) : IItemRep
 
         _context.Item.Remove(item);
         await _context.SaveChangesAsync();
+        _cache.MarkForUpdate();
+
         return true;
     }
 
@@ -109,8 +125,28 @@ public class ItemRepo(OrdrMateDbContext context, ItemCacheRepo cache) : IItemRep
 
     public async Task<IEnumerable<Item>> GetItemsByCategory(string pharmacyId, string category)
     {
-        return await _context.Item
-            .Where(i => i.PharmacyId == pharmacyId && i.Category == category)
-            .ToListAsync();
+        try
+        {
+            const string cacheKeyFormat = "pharmacy:{0}:category:{1}:items";
+            string cacheKey = string.Format(cacheKeyFormat, pharmacyId, category);
+            
+            if (_cache.NeedsUpdate())
+            {
+                var itemsFromDb = await _context.Item
+                    .Where(i => i.PharmacyId == pharmacyId && i.Category == category)
+                    .ToListAsync();
+
+                await _cache.SetAsync(cacheKey, itemsFromDb, TimeSpan.FromMinutes(30));
+                
+                return itemsFromDb;
+            }
+
+            return await _cache.GetAsync(cacheKey) ?? [];
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error fetching items by category: {ex.Message}");
+            throw new Exception("Failed to fetch items");
+        }
     }
 }
