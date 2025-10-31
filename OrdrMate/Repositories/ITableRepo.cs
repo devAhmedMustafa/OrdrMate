@@ -19,4 +19,5 @@ public interface ITableRepo
     Task<Table?> GetTableByNumber(string branchId, int tableNumber);
     Task<bool> UpdateTableReservationTableNumber(string reservationId, int newTableNumber);
     Task<Table> UpdateTable(Table table);
+    Task<Features.Orders.TableReservation?> CreateTableReservation(Features.Orders.TableReservation tableReservation);
 }
