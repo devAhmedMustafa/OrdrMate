@@ -146,6 +146,7 @@ public class TableService
             ReservationId = r.ReservationId,
             TableNumber = r.TableNumber,
             CustomerName = r.Customer?.Username ?? "Unknown",
+            CustomerId = r.CustomerId,
             ReservationDate = r.ReservationTime,
             ReservationStatus = r.ReservationStatus,
         });
