@@ -20,4 +20,8 @@ public class BranchSocketHandler : BaseSocketHandler
 
         _ = SendTo(branchId, JsonSerializer.Serialize(message));
     }
+
+    protected override void MessageListener(string message)
+    {
+    }
 }

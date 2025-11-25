@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OrdrMate.Features.ItemAvailability;
+using OrdrMate.Features.Orders.Delivery;
 using OrdrMate.Features.Preport;
 using OrdrMate.Features.Shifts;
 using OrdrMate.Models;
@@ -25,6 +26,7 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<KitchenPower> KitchenPower => Set<KitchenPower>();
     public DbSet<Order> Order => Set<Order>();
     public DbSet<Takeaway> Takeaway => Set<Takeaway>();
+    public DbSet<Delivery> Delivery => Set<Delivery>();
     public DbSet<OrderItem> OrderItem => Set<OrderItem>();
     public DbSet<Payment> Payment => Set<Payment>();
     public DbSet<OrderIntent> OrderIntent => Set<OrderIntent>();
@@ -262,6 +264,14 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .HasOne(ic => ic.Item)
             .WithMany(i => i.Customizations)
             .HasForeignKey(ic => ic.ItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+
+        modelBuilder.Entity<Delivery>().HasKey(d => d.OrderId);
+        modelBuilder.Entity<Delivery>()
+            .HasOne(d => d.Order)
+            .WithOne(o => o.Delivery)
+            .HasForeignKey<Delivery>(d => d.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
 

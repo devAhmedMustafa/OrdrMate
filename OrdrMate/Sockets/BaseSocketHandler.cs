@@ -25,11 +25,18 @@ public abstract class BaseSocketHandler
         while (socket.State == WebSocketState.Open)
         {
             var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-
-            if (result.MessageType == WebSocketMessageType.Close)
-                await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by client", CancellationToken.None);
+            if (result.MessageType == WebSocketMessageType.Text)
+            {
+                var message = System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count);
+                MessageListener(message);
+            }
+            else
+                if (result.MessageType == WebSocketMessageType.Close)
+                    await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by client", CancellationToken.None);
         }
     }
+
+    protected abstract void MessageListener(string message);
 
     public async Task SendTo(string key, string message)
     {
