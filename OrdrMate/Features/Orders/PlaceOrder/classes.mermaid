@@ -1,0 +1,73 @@
+classDiagram
+    class PlaceOrderService ~T~{
+        <<abstract>>
+        <<where T : PlaceOrderRequest>>
+        # paymentService: PaymentService
+        # itemAvailabilityService: ItemAvailabilityService
+        # userCustomizationService: UserCustomizationService
+        # orderTaxService: OrderTaxService
+        # orderRepository: OrderRepository
+
+        + placeOrder(placeOrderRequest: T) PlaceOrderResponse
+        - validateItemsAvailability(orderItems: List~OrderItemDto~) Boolean
+        - validateUserCustomizations(orderItems: List~OrderItemDto~) Boolean
+        - calculateSubtotal(orderItems: List~OrderItemDto~) Decimal
+        - calculateTotal(subtotal: Decimal) Decimal
+        - saveOrderRecord(orderDetails: T, subtotalAmount: Decimal, totalAmount: Decimal) void
+        - processPayment(orderId: String, paymentDetails: PaymentDetailsDto, totalAmount: Decimal) PaymentDto
+        + confirmOrder(orderId: String) void
+    }
+
+    class PaymentService {
+        # orderService: PlaceOrderService
+
+        <<abstract>>
+        + handlePayment(orderId: string, totalAmount: decimal) PaymentDto
+        + confirmPayment(orderId: string) void
+    }
+
+    PlaceOrderService --o PaymentService : uses
+    PlaceOrderService --o ItemAvailabilityService : uses
+    PlaceOrderService --o UserCustomizationService : uses
+    PlaceOrderService --o OrderTaxService : uses
+    PlaceOrderService --o OrderRepository : uses
+
+    class PlaceOrderRequest {
+        customerId: String
+        storeId: String
+        orderItems: List~OrderItemDto~
+        paymentDetails: PaymentDetailsDto
+    }
+
+    class PaymentDetailsDto {
+        paymentMethod: String
+        paymentProvider: String
+    }
+
+    PlaceOrderRequest -- PaymentDetailsDto : contains
+    PlaceOrderService -- PlaceOrderRequest
+
+    class PlaceOrderResponse {
+        orderId: String
+        orderStatus: String
+        redirectUrl: String
+    }
+
+    PlaceOrderService -- PlaceOrderResponse
+
+    class PlaceDeliveryService {
+        - saveOrderRecord(orderDetails: PlaceDeliveryOrderRequest, subtotalAmount: Decimal, totalAmount: Decimal) void
+    }
+
+    class PlaceDeliveryOrderRequest {
+        address: String
+        deliveryInstructions: String
+        latitude: Decimal
+        longitude: Decimal
+        contactNumber: String
+    }
+
+    PlaceDeliveryOrderRequest --|> PlaceOrderRequest : extends
+
+    PlaceDeliveryService --|> PlaceOrderService
+    PlaceDeliveryService -- PlaceDeliveryOrderRequest
