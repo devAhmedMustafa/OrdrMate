@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using OrdrMate.Features.ItemAvailability;
 using OrdrMate.Features.Orders.Delivery;
 using OrdrMate.Features.Preport;
+using OrdrMate.Features.Profiles.Customer;
 using OrdrMate.Features.Shifts;
 using OrdrMate.Models;
 
@@ -33,6 +34,7 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
     public DbSet<DeliverRequest> DeliverRequest => Set<DeliverRequest>();
     public DbSet<PickupReport> PickupReports { get; set; }
     public DbSet<BranchShift> BranchShifts { get; set; }
+    public DbSet<CustomerProfile> CustomerProfiles => Set<CustomerProfile>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -272,6 +274,14 @@ public class OrdrMateDbContext(DbContextOptions<OrdrMateDbContext> options)
             .HasOne(d => d.Order)
             .WithOne(o => o.Delivery)
             .HasForeignKey<Delivery>(d => d.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+
+        modelBuilder.Entity<CustomerProfile>().HasKey(cp => cp.CustomerId);
+        modelBuilder.Entity<CustomerProfile>()
+            .HasOne(cp => cp.User)
+            .WithOne()
+            .HasForeignKey<CustomerProfile>(cp => cp.CustomerId)
             .OnDelete(DeleteBehavior.Cascade);
 
 
