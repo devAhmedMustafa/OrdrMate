@@ -24,6 +24,13 @@ public class DeliveryRepo
         return delivery;
     }
 
+    public async Task<Delivery> CreateDeliveryOrder(Delivery delivery)
+    {
+        await _db.Delivery.AddAsync(delivery);
+        await _db.SaveChangesAsync();
+        return delivery;
+    }
+
     public async Task UpdateDelivery(Delivery delivery)
     {
         _db.Delivery.Update(delivery);

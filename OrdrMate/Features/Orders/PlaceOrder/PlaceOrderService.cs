@@ -47,7 +47,7 @@ public abstract class PlaceOrderService<T>
             // 3. Calculate subtotal
             var subtotal = CalculateSubtotal(placeOrderDto);
             // 4. Calculate taxes and total amount
-            var totalAmount = await CalculateTotalAmount(subtotal);
+            var totalAmount = await CalculateTotalAmount(placeOrderDto, subtotal);
             // 5. Save order record
             var order = await SaveOrderRecord(placeOrderDto, subtotal, totalAmount);
             // 6. Process payment
@@ -126,7 +126,7 @@ public abstract class PlaceOrderService<T>
         return subtotal;
     }
 
-    protected abstract Task<decimal> CalculateTotalAmount(decimal subtotal);
+    protected abstract Task<decimal> CalculateTotalAmount(PlaceOrderRequest placeOrderRequest, decimal subtotal);
     protected abstract Task<Order> SaveOrderRecord(PlaceOrderRequest placeOrderRequest, decimal subtotal, decimal totalAmount);
 
     private async Task<PaymentIntentDto> ProcessPayment(PlaceOrderRequest placeOrderRequest, decimal totalAmount, string orderId)
