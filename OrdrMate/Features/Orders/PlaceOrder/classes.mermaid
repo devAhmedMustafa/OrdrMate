@@ -1,0 +1,78 @@
+classDiagram
+    class PlaceOrderService ~T~{
+        <<abstract>>
+        <<where T : PlaceOrderRequest>>
+        # paymentService: PaymentService
+        # itemAvailabilityService: ItemAvailabilityService
+        # userCustomizationService: UserCustomizationService
+        # orderTaxService: OrderTaxService
+        # orderRepository: OrderRepository
+        # branchWebSocketHandler: BranchWebSocketHandler
+
+        + placeOrder(placeOrderRequest: T) PlaceOrderResponse
+        - validateItemsAvailability(orderItems: List~OrderItemDto~) Boolean
+        - validateUserCustomizations(orderItems: List~OrderItemDto~) Boolean
+        - calculateSubtotal(orderItems: List~OrderItemDto~) Decimal
+        - calculateTotal(subtotal: Decimal) Decimal
+        - saveOrderRecord(orderDetails: T, subtotalAmount: Decimal, totalAmount: Decimal) void
+        - notifyBranch(orderId: String, branchId: String) void
+        - processPayment(orderId: String, paymentDetails: PaymentDetailsDto, totalAmount: Decimal) PaymentDto
+    }
+
+    class PaymentService {
+        <<abstract>>
+
+        # orderService: OrderService
+
+        + handlePayment(orderId: string, totalAmount: decimal) PaymentIntentDto
+        + confirmPayment(orderId: string) void
+    }
+
+    PaymentService --o OrderService : uses
+
+    PlaceOrderService --o PaymentService : uses
+    PlaceOrderService --o ItemAvailabilityService : uses
+    PlaceOrderService --o UserCustomizationService : uses
+    PlaceOrderService --o OrderTaxService : uses
+    PlaceOrderService --o OrderRepository : uses
+    PlaceOrderService --o BranchWebSocketHandler : uses
+
+    class PlaceOrderRequest {
+        customerId: String
+        storeId: String
+        orderItems: List~OrderItemDto~
+        paymentDetails: PaymentDetailsDto
+    }
+
+    class PaymentDetailsDto {
+        paymentMethod: String
+        paymentProvider: String
+    }
+
+    PlaceOrderRequest -- PaymentDetailsDto : contains
+    PlaceOrderService -- PlaceOrderRequest
+
+    class PlaceOrderResponse {
+        orderId: String
+        orderStatus: String
+        redirectUrl: String
+    }
+
+    PlaceOrderService -- PlaceOrderResponse
+
+    class PlaceDeliveryService {
+        - saveOrderRecord(orderDetails: PlaceDeliveryOrderRequest, subtotalAmount: Decimal, totalAmount: Decimal) void
+    }
+
+    class PlaceDeliveryOrderRequest {
+        address: String
+        deliveryInstructions: String
+        latitude: Decimal
+        longitude: Decimal
+        contactNumber: String
+    }
+
+    PlaceDeliveryOrderRequest --|> PlaceOrderRequest : extends
+
+    PlaceDeliveryService --|> PlaceOrderService
+    PlaceDeliveryService -- PlaceDeliveryOrderRequest

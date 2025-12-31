@@ -76,6 +76,10 @@ if (!Directory.Exists(uploadsPath))
     Directory.CreateDirectory(uploadsPath);
 }
 
+// Health enpoint
+
+app.MapGet("api/health", () => Results.Ok("OrdrMate is running"));
+
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsPath),

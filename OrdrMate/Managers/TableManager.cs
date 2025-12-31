@@ -118,6 +118,7 @@ public class TableManager
                     ReservationId = createdReservation.ReservationId,
                     TableNumber = createdReservation.TableNumber,
                     CustomerName = createdReservation.Customer?.Username ?? "Unknown",
+                    CustomerId = createdReservation.CustomerId,
                     ReservationDate = createdReservation.ReservationTime,
                     ReservationStatus = createdReservation.ReservationStatus,
                 }

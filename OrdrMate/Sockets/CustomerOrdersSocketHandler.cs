@@ -37,4 +37,9 @@ public class CustomerOrdersSocketHandler : BaseSocketHandler
         await SendTo(customerId, askForLocationMessage);
     }
 
+    protected override void MessageListener(string message)
+    {
+        // Handle incoming messages from customers if needed
+    }
+
 }
